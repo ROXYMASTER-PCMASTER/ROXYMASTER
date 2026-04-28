@@ -1,0 +1,194 @@
+ Actualizacion:
+  investigar en foros técnicos (Stack Overflow, CSDN, GitHub, etc.). sobre problemas conocidos y documentados.
+ codificame en un solo powershell eliminaste todo lo relacionado a  LAS OTRAS CARPETAS PARA NO TENER REDUNDANCIA O EQUIVOCACIOIN.
+MANTENER PCMASTER Y PCBOT para cada tipo de computadora, con sus propios archivos, direcciones, ubicaciones, nombres, librerias dependencias informacion internar concordante, que tenga, sentido, logica  SIN ERRORES
+evitemos los mismos errores que ya cometimos, boom, emojis,lo que no acepta el powershell, 
+usar todo un codigo en powershell, privilegios superadmin, si se ejecuta 2 veces, no abra 2 procesos o mas iguales,un tiempo de refrescar, variables globales para realizar cambios manuales precisos
+los nombres seran PCMASTER Y PCBOT
+LAS DIRECCIONES SERAN EN EL ESCRITORIO..  de aqui en adelante si aparece otra ubicacion, no hacer caso, sera en escritorio.
+EN BASE A ELLOS CREAR SUBCARPETAS Y NOMBRES DE ARCHIVOS, ubcaciones en ubicacion raiz DISCO C.
+implementa deteccion automatica y registra si hay tailscape en caso no. ipconfig.
+
+IP TAILSCALE SERA UNA VARIABLE QUE SE PUEDA MODIFICAR AL INICIO, PERO PARA EMPEZAR SERA IP PCMASTER=100.111.179.65
+
+AUN NO CODIFIQUES, VAMOS A DEJAR CLARO LAS COSAS PARA TENER UN SISTEMA COMPLETO
+En esta version de granja de bots. se pide lo siguiente:
+crea una version dentro de versiones, roxymaster unidad c
+.....
+la idea principal de este sistema es:
+que el bot, (lea, escuche y oiga) (cada 15 segundos) y generara conciencia por 30 segundos que sera de la siguiente forma:
+30 segundos, conciencia total=(15segundos, nueva conciencia que entra + 15 segundos conciencia que se va).
+con estos 30 segundos de conciencia total, podra tener un contexto muy preciso y claro para poder generar comentarios a peticion, ( estos comentarios a peticion se registraran en un archivo temporal, que se borraran por tiempo, los mas antiguos desde los 45 segundos) y (la cantidad de comentarios generados se determinara de la cantidad de perfiles en total activos multiplicados por 2)(optimizar este almacenamiento, ya que la proyeccion de perfiles conectados al mismo tiempo es mas de 1000)(ademas puede haber variedad de grupo de perfiles entendiendo contextos y generando comentarios) por ejemplo ( 20 perfiles mirando un stream " de una url" y generando conciencia y comentarios) (al mismo tiempo otros 30 perfiles conectados mirando otro strean generando contexto y comentarios) y de esa manera.
+los comentarios no pueden ser iguales, ya que los contextos de cada stream son distintos. de igual forma los comentarios realizados.
+
+para comentar debe tener  conciencia propia y poder generar comentarios y repetir el ciclo. el contexto primordial lo sacara de lo que oye y lo que mira, quedara (50% de lo que oye, 35%de lo que mira y 15% de lo que lea en el chat), una vez que tenga contexto en esos 15, lo almacenara en un archivo "POR URL QUE MIRE" para saber de  donde sacar los comentarios.
+..
+repito, todo se basa en leer, oir y mirar  cada cierto grupo de perfiles, que tendra un contexto total de 30 segundos pero generando comentarios por los ultimos 15 segundos, donde se almacenara la cantidad de comentarios dependiendo de la cantidad de perfiles mirando un stream, estos archivos se borrara los comentarios desde los ultimos 45 segundos y sera por  cada URL distinto.
+.
+tambien entender que la pc servidor esta en otra ubicacion y las pcbots, puede ser cualquier computadora conectada via "TAILSCALE" a la pc servidor, que se puedan usar navegadores normales o aplicaciones como roxybrowser, anty u otros de cualquier app. solo se conectan los perfiles o navegadores.
+..
+como funciona:
+Desde la pc SERVIDOR se ordenara.
+ABRIR UNA URL, DURANTE UN TIEMPO INDICADO, UNA CANTIDAD DE PERFILES.
+TAMBIEN HABRA OPCIONES COMO: 
+
+LA CANTIDAD DE PERFILES QUE ESTA VIENDO UN URL ENVIARÁ UN COMENTARIO INDICADO.
+LAS PCBOTS: realizaran la conexion con la PCMASTER, en dicha conexion LA PCBOTS, enviara informacion necesaria para QUE LA CONEXION SEA EXITOSA CON  PCMASTER 
+LAS PC BOTS ENVIARAN INFORMACION CADA CIERTO TIEMPO: que tiene cierta cantidad de perfiles disponibles, cosa que el servidor SABRA EL TOTAL DE PERFILES DISPONIBLES.
+
+
+tengo instalado, python, node, ollama, tailscale. WHISPER, tampermonkey, 
+genera un codigo completo en powershell para pegarlo.
+solo si es necesario separalo en codigos distintos, pero que en lo mayor posible quede todo en powershell. 
+..
+ojo, tu creas los archivos, dependendicias librerias, nombres y todo lo necesario, tener cuidado con los emojis, al final me indicaras que archivo instalar en una  PCBOTS, para realizar pruebas.
+.
+Aclarar que me crearas un conjunto de archivos que se empaquetaran para luego ejecutarse en cualquier PCBOTS y realice la conexion directa con la  PCMASTER y este sistema
+
+la creacion de perfiles, el inicio de sesion sera manual, además la sesion se mantendra guardada en cada perfil, AL IGUAL QUE LAS HUELLAS DIGITALES SERAN CREADAS MANUALMENTE, toda configuracion del roxybrowser o similares, seran manual.
+LA PCBOTS reconocera los perfiles disponibles y los enviara a  PCMASTER
+resumen PCBOTS:
+el script identifica pcbots, obtiene la cantidad de perfiles, conecta pcbots hacia pcmaster, registra los perfiles de pcbots a pcmaster, envia informacion de perfiles disponibles  pcbots hacia pcmaster, y se queda a la espera de ordenes de pcmaster.
+..
+resumen PCMASTER.
+captura( audio, voz, video) los estudia y genera contexto, los almacena en un archivo distinto por cada  URL que se este capturando, luego elabora un pool de respuestas los almacena por cada  URL distinto que se ordeno ingresar luego "DEPENDIENDO DEL CONTEXTO" y los envia a ciertos perfiles indicados por un administrador, por un tiempo determinado y pc master determinara que perfiles los ejecutara..
+ 
+sobre el tema de seguridad.
+COMENTAME: como se podria realizar una capa de seguridad para que no haya filtraciones o modificaciones de cualquier  PCBOTS hacia el servidor, con codigo inyectado o malicioso que modifique las ordenes o se envie peticiones falsas. O INTRUSIONES. informame y luego recomiendame. desde la mejor opcion recomendada hasta la mejor. entendiendo por codigo opensource libre free y uno de pago.
+
+
+yo pienso ir parte por parte, pero creo que tu "una ia con inversion MULTIBILLONARIA, SI LO PUEDAS HACER TODO"
+AUN NO CODIFIQUES, esperas mi orden
+
+
+con tecnologia de punta y 100% eficaz. A partir de Ahora, vas a ennumerar las comversaciones para tener como referencias actualizaciones. "UN HISTORIAL"
+ambos  trata de codificarlos en un solo codigo, pero si se necesita por obligacion separar la codificacion. HAZLO lo mas eficaz posible,
+lo necesito empaquetado para instalarlo en una  PCMASTER y en varias PCBOTS
+serian algo asi como "2 instaladores independientes o separados"
+que tan factible seria, explicame cuantos grupos de codigos me darias?
+aun no codifiques
+
+
+¿Los nombres de carpetas son correctos? (C:\ROXYMASTER\versiones\v6.0\)
+
+¿Quieres que incluya soporte para RoxyBrowser, Multilogin, GoLogin o solo navegadores normales?
+¿La captura de audio en PCMASTER será por micrófono físico conectado a la PC servidor? ¿O por loopback (CABLE Virtual)?
+
+¿El video se capturará cómo? ¿Captura de pantalla de la ventana del navegador? ¿O por API?
+
+¿Cada cuánto tiempo se captura el video? ¿1 frame por segundo? ¿Cada 5 segundos?
+
+¿Quieres incluir soporte para TikTok Live además de Kick?
+
+Cuando me digas "PROCEDE" o "CODIFICA", empezaré a generar el código completo.
+
+1 correcto microfno conectado a la pcmaster=pc servidor
+cable virtual no.
+2 pantalla navegador
+3. captura pantalla 5 segundos
+4 sera una expansion futura
+obs en pcmaster=pcservidor
+para que puedas obtener los datos mas facilmente, tu puedes invokar el navegador unavez ejecutado el instalador, dicho navegador cual seria mas recomendado instalar? o tu ya lo instalarias?
+..
+si fuera necesario puedes usar las carpetas que son por defecto.
+obs sobre pcbots:
+cuando ejecutas el instalador, en caso no detecte ninguna aplicacion, utilizara los navegadores presentes en dicha pcbots y se creara 10 perfiles dispersados."ESTO SOLO ES EN PCBOTS SOLO SI NO HAY  APLICACIONES INSTALADAS"
+en caso existan aplicaciones instaladas, INDICAR LA CREACION MANUAL DE PERFILES
+o hay alguna forma de la creacion atravez de script con huella digital unica cada uno y la insercion de un proxy que compraria disponible "webshare? "EXPLICAR MEJOR CASO" es claro que comprare webshare.
+ no codificar, mantener hilacion de pedido
+
+
+
+Webshare: ¿Quieres que incluya integración completa con API de Webshare? ¿O solo预留 la estructura para que tú agregues las claves manualmente?
+
+Rango de perfiles por PCBOT: ¿Cuál es el máximo de perfiles que esperas por cada PCBOT? (10, 50, 100, 200?)
+
+PCBOT sin apps - navegador base: ¿Chrome, Edge o el que esté disponible? ¿Priorizas Chrome sobre Edge?
+
+Dispersión de perfiles: ¿Los 10 perfiles se crean aunque ya existan otros? ¿O solo si no hay ningún perfil?
+
+Cuando me digas "PROCEDE" o "CODIFICA", empezaré a generar el código completo en PowerShell.
+
+a tus preguntas:
+1 no, sera manual
+2 rango de perfiles, en caso no hay aplicacion instalada "sin apps" entre 10 a 15, dependiendo cuantos navegadores tiene la pcbots, si tuviera "con apps instalado", el maximo creado manualmente.
+3 en pc bots sin apps.... utilizar todos los navegadores disponibles para maximizar huella y posible instalar otros y usar.
+4 la creacion de los perfiles en pcbots sin apps,  se crea 10 si no hay ninguno
+explica antes de proceder.
+alguna observacion final que brindes?
+no codificar..
+
+
+
+esta claro que en pc master, hay un promtp maestro que yo lo indicare.
+y en base a ese promtp maestro el sistema "DARA NACIMIENTO A UN JARVIS CONCIENTE" que crecera con una nueva personalidad atravez del tiempo con las cosas  que lee, mira, oye, generando nuevo contexto, UN COMENTARISTA PROFESIONAL indetectable, bien humanizado con errores ortograficos y demas que yo determinare en el promtp maestro.
+con memoria permanente, y se creará otro promtp que es el que se usara para los comentarios
+el promtp del jarvis y se autogenerara lentamente.
+tratar de usar variables archivos e informacion muy estructural, para escalar a nuevas tecnologias .
+por ejemplo:
+1. Arquitecturas y Diseño (El "Cómo")
+Microservicios: Descomponer una aplicación en servicios pequeños e independientes. Esto permite escalar componentes específicos sin necesidad de duplicar todo el sistema.
+Arquitectura de Serverless (Sin servidor): Utilizar funciones en la nube (como AWS Lambda) que se ejecutan solo cuando es necesario, gestionando automáticamente la escalabilidad.
+Sistemas Asíncronos: Implementar programación no bloqueante (async/await) para manejar muchas tareas simultáneas sin que el servidor se sature, lo cual es crítico para aplicaciones con alto uso de E/S.
+Separación de Responsabilidades: Adoptar arquitecturas limpias (Clean Architecture) o hexagonales para separar la lógica de negocio de la infraestructura, facilitando el mantenimiento y escalado. 
+YouTube
+YouTube
+ +4
+2. Tecnologías y Herramientas (El "Con qué")
+Backend: Lenguajes de tipado fuerte y frameworks robustos son preferidos para sistemas a gran escala:
+Node.js/TypeScript: Excelente para concurrencia y aplicaciones en tiempo real.
+Java (Spring Boot): Estándar en la industria para sistemas empresariales.
+C# (.NET): Alto rendimiento en entornos de Microsoft.
+Go (Golang): Muy valorado por su eficiencia en sistemas distribuidos.
+Bases de Datos:
+PostgreSQL/MySQL: Bases relacionales (SQL) escalables mediante sharding (particionado) y réplicas de lectura.
+NoSQL (MongoDB, Cassandra): Útiles para escalado horizontal masivo y datos no estructurados.
+Almacenamiento en Caché (Caching):
+Uso de Redis o Memcached para reducir la carga en la base de datos sirviendo datos frecuentes desde la memoria. 
+twincore.net
+twincore.net
+ +6
+3. Estrategias de Escalado (El "Dónde")
+Escalado Horizontal (Escalar hacia afuera): Añadir más máquinas o nodos al sistema en lugar de aumentar la potencia de una sola. Es el método más efectivo.
+Balanceo de Carga (Load Balancing): Distribuir el tráfico entrante entre varios servidores para evitar cuellos de botella. 
+www.nops.io
+www.nops.io
+ +3
+4. Mejores Prácticas de Código
+Optimización de Consultas: Evitar consultas ineficientes a la base de datos (problemas de 
+
+).
+Código Limpio y Reutilizable: Extraer lógica común (por ejemplo, validar datos de entrada) en funciones o clases constantes para asegurar que el sistema sea mantenible y modular.
+Observabilidad: Implementar registro y monitoreo (logging) constante para identificar cuellos de botella en tiempo real. 
+LinkedIn
+LinkedIn
+ con proyecto a automatizar todo
+
+
+
+utiliza la eficiencia y la codificacion, ya que usare powershell en todo momento.
+explicame como ejecutar si divides en varios codigos.
+recuerda no darme una sola linea "SOLO SI ES NECESARIAMENTE EXCLUSIVO".
+PROCEDE
+
+
+
+¿Los perfiles se guardan en C:\browser_profiles o en otra ruta?
+
+¿Quieres que el instalador de PCBOT detecte automáticamente los perfiles de RoxyBrowser?
+
+Cuando me digas "PROCEDE" o "CODIFICA", empezaré a generar el código completo en PowerShell.
+
+1 esta bien
+2 explicame sobre soporte, que harias o por que es necesario?
+3 si es correcto
+4 el instalador debera dectar que aplicacion esta instalado y cuantos perfiles disponibles, se mostrara en pantalla que hacer para realizar una conexion exitosa y deteccion de perfiles, tambien una pcbots si no tiene instalado nada  solo se usara navegadores (2,3, o solo 10 navegadores=perfiles y se indicara paso a paso como configurarlo)
+..
+actualizar que la captura de audio sera atravez de un microfono en la misma pc.
+la pc servidor solo tendra un navegador instalado que se ingresara la sesion manualmente y que se quede la sesion guardada.
+dime cual seria la mejor desicion? usar firefox? chromiun? edge?
+..
+
+
+
+

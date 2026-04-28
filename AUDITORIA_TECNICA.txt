@@ -1,0 +1,236 @@
+================================================================================
+AUDITORIA TECNICA - ROXYMASTER v6.0
+Sistema Distribuido de WebSockets - PCMASTER y PCBOT
+Fecha: 28 de abril de 2026
+================================================================================
+
+RESUMEN EJECUTIVO
+================================================================================
+Se ha realizado auditoría de código fuente en tres componentes críticos:
+1. server_corregido.py (PCMASTER - Servidor WebSocket)
+2. pcbot.py (PCBOT - Cliente WebSocket)
+3. ui.py (Interfaz gráfica - NiceGUI)
+
+Hallazgos totales: 24 problemas identificados
+Criticidad crítica: 8 | Alta: 9 | Media: 7 | Baja: 0
+
+================================================================================
+PROBLEMAS IDENTIFICADOS POR CRITICIDAD
+================================================================================
+
+[CRÍTICA] - Problemas de Seguridad y Estabilidad
+================================================================================
+
+1. CONDICIÓN DE CARRERA EN PCBOTS (CRÍTICA)
+   Archivo: server_corregido.py, línea ~165-190
+   Problema: Acceso concurrente a diccionario 'pcbots' sin sincronización
+   
+   Código problemático:
+   ```
+   pcbots[cid] = ws
+   # ... sin lock en lectura
+   if pcbot_id not in pcbots:
+   ```
+   
+   Impacto: Corrupción de datos, pérdida de conexiones, crashes
+   Severidad: CRÍTICA
+   Recomendación: Usar asyncio.Lock en lugar de threading.Lock para async
+
+2. FALTA DE VALIDACIÓN DE ENTRADA EN HANDSHAKE (CRÍTICA)
+   Archivo: server_corregido.py, línea ~140-155
+   Problema: No valida campos obligatorios después de JSON.loads
+   
+   Riesgo: Inyección de comandos, desconfiguración del sistema
+   Severidad: CRÍTICA
+   Recomendación: Validar schema con jsonschema o pydantic
+
+3. RECONEXIÓN SIN LÍMITE DE INTENTOS (CRÍTICA)
+   Archivo: pcbot.py, línea ~197-200
+   Problema: Loop infinito sin backoff exponencial
+   
+   Código:
+   ```
+   except Exception as e:
+       await asyncio.sleep(5)
+   ```
+   
+   Impacto: Congestión de red, consumo infinito de recursos
+   Severidad: CRÍTICA
+   Recomendación: Implementar backoff exponencial 2-32 segundos
+
+4. HEARTBEAT SIN MANEJO DE EXCEPCIONES ESPECÍFICAS (CRÍTICA)
+   Archivo: server_corregido.py, línea ~119-130
+   Problema: Captura genérica "except Exception"
+   
+   Impacto: No distingue desconexiones normales de errores reales
+   Severidad: CRÍTICA
+   Recomendación: Usar tipos específicos: ConnectionClosed, TimeoutError
+
+5. TOKENS DE AUTENTICACIÓN SIN EXPIRACIÓN REAL (CRÍTICA)
+   Archivo: server_corregido.py, línea ~70-85
+   Problema: Token_timeout=3600 pero no se fuerza renovación
+   
+   Riesgo: Token comprometido permanece válido 1 hora
+   Severidad: CRÍTICA
+   Recomendación: Renovación cada 30 minutos, revocación en logout
+
+6. MEMORIA NO LIBERADA EN JARVIS.MEMORIA_POR_URL (CRÍTICA)
+   Archivo: server_corregido.py, línea ~105-110
+   Problema: URLs nuevas se agregan sin limite
+   
+   Impacto: Memory leak, consumo indefinido de RAM
+   Severidad: CRÍTICA
+   Recomendación: Usar caché con TTL (time-to-live)
+
+7. CARRERA EN WEBSOCKET.SEND EN THREADING (CRÍTICA)
+   Archivo: server_corregido.py, línea ~145-155
+   Problema: websockets.send() no es thread-safe
+   
+   Impacto: Corrupción de frames, conexión inestable
+   Severidad: CRÍTICA
+   Recomendación: Usar asyncio.Queue + single coroutine sender
+
+8. FALTA DE RATE LIMITING (CRÍTICA)
+   Archivo: server_corregido.py, funciones enviar()
+   Problema: Sin restricción de mensajes por cliente
+   
+   Riesgo: DoS interno, flooding de servidor
+   Severidad: CRÍTICA
+   Recomendación: Implementar token bucket algorithm
+
+[ALTA] - Manejo de Excepciones y Errores
+================================================================================
+
+9. EXCEPCIONES GENÉRICAS EN PCBOT (ALTA)
+   Archivo: pcbot.py, línea ~50, ~95, ~130
+   Problema: Captura "except Exception" sin logging
+   
+   Impacto: Imposible debuggear, silencia errores críticos
+   Recomendación: Usar logging.exception() y tipos específicos
+
+10. FALTA DE TIMEOUT EN PLAYWRIGHT (ALTA)
+    Archivo: pcbot.py, línea ~80
+    Problema: page.goto() podría colgar indefinidamente
+    
+    Impacto: Bloquea client, consume recursos
+    Recomendación: Agregar timeout=30000ms explícito
+
+11. FALTA DE VALIDACIÓN DE URLs (ALTA)
+    Archivo: pcbot.py, línea ~75 (abrir_url)
+    Problema: No valida si URL es http/https
+    
+    Riesgo: Inyección de JavaScript, XSS
+    Recomendación: Usar urllib.parse.urlparse + whitelist
+
+12. NO EXISTE MANEJO DE CONEXIÓN PERDIDA (ALTA)
+    Archivo: ui.py, línea ~30
+    Problema: conectar_websocket() no reintentar
+    
+    Impacto: Interfaz queda en estado inconsistente
+    Recomendación: Implementar reconexión automática
+
+13. FALTA DE SINCRONIZACIÓN EN estado_global (ALTA)
+    Archivo: ui.py, línea ~20
+    Problema: Acceso concurrente sin locks
+    
+    Impacto: Race conditions en estado_global["conectado"]
+    Recomendación: Usar asyncio.Lock o threading.Lock
+
+14. TIMER SIN CANCELACIÓN (ALTA)
+    Archivo: ui.py, línea ~155, ~160
+    Problema: ui.timer() crea multiples instancias sin control
+    
+    Impacto: Memory leak, consumo CPU indefinido
+    Recomendación: Guardar referencias y cancelar
+
+15. FALTA DE VALIDACIÓN EN INYECTAR_COMENTARIO (ALTA)
+    Archivo: pcbot.py, línea ~45-70
+    Problema: No valida longitud, caracteres o inyección
+    
+    Riesgo: XSS, buffer overflow en páginas
+    Recomendación: Sanitizar entrada, validar longitud máxima
+
+16. EXCEPTION HANDLING INCOMPLETO EN ASYNC (ALTA)
+    Archivo: server_corregido.py, línea ~210-250
+    Problema: asyncio.gather() sin error handler
+    
+    Impacto: Si una tarea falla, otras continúan sin supervisión
+    Recomendación: Envolver en try-except con logging
+
+17. FALTA DE CLEANUP EN FINALLY (ALTA)
+    Archivo: pcbot.py, línea ~195-200
+    Problema: perfiles_abiertos nunca se limpian
+    
+    Impacto: Handles de browser quedan abiertos
+    Recomendación: Implementar context managers
+
+[MEDIA] - Diseño y Arquitectura
+================================================================================
+
+18. FALTA DE LOGGING ESTRUCTURADO (MEDIA)
+    Archivo: Todos los archivos
+    Problema: Solo print(), sin niveles o rotación
+    
+    Recomendación: Usar logging.handlers.RotatingFileHandler
+
+19. CONFIGURACIÓN HARDCODED (MEDIA)
+    Archivo: pcbot.py, línea ~1, ui.py, línea ~37
+    Problema: IPs, puertos, timeouts en código
+    
+    Recomendación: Mover a config.json centralizado
+
+20. FALTA DE HEALTH CHECK (MEDIA)
+    Archivo: server_corregido.py
+    Problema: Sin endpoint /health para monitoreo
+    
+    Recomendación: Agregar endpoint que retorne JSON con métricas
+
+21. DESCRIPTOR DE ARCHIVO SIN CERRAR (MEDIA)
+    Archivo: server_corregido.py, línea ~20
+    Problema: open(config.json) sin context manager
+    
+    Impacto: Resource leak si hay error
+    Recomendación: Usar "with open()" siempre
+
+22. FALTA DE METRICAS Y OBSERVABILIDAD (MEDIA)
+    Archivo: server_corregido.py, línea ~100
+    Problema: stats solo contiene "generados"
+    
+    Recomendación: Agregar: uptime, conexiones activas, errores
+
+23. AUSENCIA DE CIRCUIT BREAKER (MEDIA)
+    Archivo: Todos (especialmente reconexión)
+    Problema: Reintentos indefinidos sin pausa
+    
+    Recomendación: Parar reconexiones tras N fallos
+
+24. FALTA DE TESTS AUTOMATIZADOS (MEDIA)
+    Archivo: Proyecto completo
+    Problema: Cero tests unitarios
+    
+    Recomendación: Agregar pytest, fixtures, mocks
+
+================================================================================
+RESUMEN DE RECOMENDACIONES
+================================================================================
+
+INMEDIATAS (Antes de producción):
+✓ Cambiar threading.Lock a asyncio.Lock
+✓ Implementar backoff exponencial en pcbot.py
+✓ Agregar validación de entrada con jsonschema
+✓ Implementar rate limiting con token bucket
+✓ Cambiar excepciones genéricas por específicas
+
+A CORTO PLAZO (Próxima iteración):
+✓ Agregar logging estructurado
+✓ Implementar health checks
+✓ Crear tests unitarios básicos
+✓ Centralizar configuración
+
+A LARGO PLAZO (Escalabilidad):
+✓ Agregar Redis para state compartido
+✓ Implementar TLS/SSL en WebSocket
+✓ Agregar autenticación OAuth2
+✓ Implementar monitoreo con Prometheus/Grafana
+
+================================================================================

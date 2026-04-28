@@ -1,0 +1,60 @@
+﻿============================================================
+DIAGNÓSTICO DE PC: PCWILMER
+Fecha: 2026-04-18 12:46:50
+============================================================
+
+[1] SISTEMA OPERATIVO
+  Nombre: Microsoft Windows 10 Enterprise LTSC
+  Versión: 10.0.19044
+  Build: 19044
+  Arquitectura: 64 bits
+
+[2] POWERSHELL
+  Versión: 5.1.19041.7181
+  Edición: Desktop
+  GitCommitId: 
+
+[3] POLÍTICA DE EJECUCIÓN
+  CurrentUser: Unrestricted
+  LocalMachine: Undefined
+
+[4] CONSOLA
+  Codificación activa: Página de códigos activa: 850
+  OutputEncoding: Europa occidental (DOS)
+
+[5] PYTHON
+  Versión: Python 3.10.8
+  Paquetes pip (primeros 20):
+    Package                                  Version ---------------------------------------- ----------- annotated-doc                            0.0.4 annotated-types                          0.7.0 anyio                                    4.13.0 attrs                                    26.1.0 bcrypt                                   5.0.0 build                                    1.4.3 certifi                                  2026.2.25 charset-normalizer                       3.4.7 chromadb                                 1.5.7 click                                    8.3.2 colorama                                 0.4.6 coloredlogs                              15.0.1 durationpy                               0.10 exceptiongroup                           1.3.1 filelock                                 3.28.0 flatbuffers                              25.12.19 fsspec                                   2026.3.0 googleapis-common-protos                 1.74.0
+
+[7] VARIABLES DE ENTORNO
+  PATH (primeros 500 caracteres): C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files\Tailscale\;C:\Program Files\ProxyBridge;C:\Program Files\nodejs\;C:\Users\CYBER\AppData\Local\Microsoft\WindowsApps;C:\ffmpeg\bin;C:\Users\CYBER\AppData\Local\Programs\Ollama;C:\Users\CYBER\AppData\Local\Python\bin;C:\Users\CYBER\AppData\Roaming\npm
+  VIRTUAL_ENV: 
+  PYTHONHOME: 
+
+[8] SERVICIOS
+
+[9] DISPOSITIVOS DE AUDIO (VB-Cable)
+  Traceback (most recent call last):   File "<string>", line 1, in <module> ModuleNotFoundError: No module named 'sounddevice'
+
+[10] ARCHIVOS EN C:\RoxyFarm\Master
+  .env (279 bytes)
+  ai_service.py (1334 bytes)
+  master_config.py (570 bytes)
+  memory_manager.py (1608 bytes)
+  transcriber_service.py (2034 bytes)
+
+[11] RED
+  Tailscale IP: 100.85.100.109
+
+[12] POWERSHELL 7: NO INSTALADO
+
+[13] POSIBLES CAUSAS DE ERROR EN PC MASTER
+  - Política de ejecución diferente
+  - Codificación de consola (chcp)
+  - Versión de PowerShell (5.1 vs 7)
+  - Dependencias Python faltantes
+  - Variables de entorno PATH
+  - Permisos de carpeta C:\RoxyFarm
+  - Instalación de VB-Cable (ID correcto)
+  - Servicio Ollama no iniciado

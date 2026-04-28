@@ -1,0 +1,19 @@
+AGENDA AUTOPILOT - PRUEBA NOCTURNA
+
+TAREA 1: Verificar conexión SSH a PCMASTER
+- Ejecutar: ssh PCMASTER@192.168.1.17 "echo SSH_OK"
+- Si falla 2 veces, crear ERROR_CRITICO.txt y DETENER.
+
+TAREA 2: Listar archivos en PCMASTER
+- Ejecutar: ssh PCMASTER@192.168.1.17 "dir Desktop\ROXYMASTER\PCMASTER\scripts\*.py"
+- Mostrar resultado en chat.
+
+TAREA 3: Verificar carpeta local PCBOT
+- Listar: dir %USERPROFILE%\Desktop\ROXYMASTER\PCBOT\scripts\*.py
+- Mostrar resultado.
+
+TAREA 4: Resumen final
+- Crear archivo RESUMEN_PRUEBA.txt en escritorio con:
+  * Hora de inicio y fin
+  * Resultado de cada tarea
+  * Archivos encontrados

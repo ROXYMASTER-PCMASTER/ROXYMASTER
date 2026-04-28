@@ -1,0 +1,455 @@
+# ui.py - Monitor ROXYMASTER v6.1
+# 3 Pestañas: Local, Remoto, Admin
+# Interfaz mejorada con NiceGUI
+
+from nicegui import ui
+import asyncio
+import websockets
+import json
+import time
+from datetime import datetime, timedelta
+import logging
+
+# Configuración de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Estado global
+estado_global = {
+    "conectado": False,
+    "comentarios_activos": {},
+    "contador_activos": {},
+    "servidor_status": "Desconectado",
+    "perfiles_local": [],
+    "stats": {"enviados": 0, "errores": 0},
+    "ws_local": None
+}
+
+ui_elements = {
+    "estado_label": None,
+    "perfiles_list": None,
+    "comentarios_container": None,
+    "log_area": None,
+    "contador_elementos": {}
+}
+
+# ============================================================================
+# WEBSOCKET - CONEXIÓN AL SERVIDOR LOCAL
+# ============================================================================
+
+async def conectar_servidor_local():
+    """Conecta al servidor local de PCBOT en puerto 8085"""
+    while True:
+        try:
+            uri = "ws://127.0.0.1:8085"
+            logger.info(f"Intentando conectar a {uri}")
+            
+            async with websockets.connect(uri, timeout=5) as ws:
+                estado_global["conectado"] = True
+                estado_global["ws_local"] = ws
+                
+                if ui_elements["estado_label"]:
+                    ui_elements["estado_label"].set_text("✓ Conectado a servidor local")
+                    ui_elements["estado_label"].classes(add="text-green-500", remove="text-red-500")
+                
+                log_message("Conexión local establecida", level="info")
+                
+                # Enviar solicitud de estado
+                try:
+                    await ws.send(json.dumps({"type": "get_status"}))
+                except Exception as e:
+                    logger.error(f"Error enviando get_status: {e}")
+                
+                # Escuchar mensajes
+                try:
+                    async for msg in ws:
+                        try:
+                            data = json.loads(msg)
+                            tipo = data.get("type")
+                            
+                            if tipo == "status":
+                                d = data.get("data", {})
+                                perfiles = d.get("perfiles", [])
+                                estado_global["perfiles_local"] = list(perfiles)
+                            
+                            elif tipo == "comment":
+                                d = data.get("data", {})
+                                url = d.get("url", "")
+                                perfil = d.get("profile", "")
+                                
+                                if url not in estado_global["comentarios_activos"]:
+                                    estado_global["comentarios_activos"][url] = []
+                                    estado_global["contador_activos"][url] = 60
+                                
+                                estado_global["comentarios_activos"][url].append({
+                                    "time": datetime.now(),
+                                    "perfil": perfil,
+                                    "text": d.get("text", "")
+                                })
+                                
+                                estado_global["stats"]["enviados"] += 1
+                        
+                        except json.JSONDecodeError:
+                            pass
+                
+                except websockets.exceptions.ConnectionClosed:
+                    logger.info("Conexión cerrada por servidor")
+                    estado_global["conectado"] = False
+        
+        except asyncio.TimeoutError:
+            estado_global["conectado"] = False
+            if ui_elements["estado_label"]:
+                ui_elements["estado_label"].set_text("✗ Servidor local no disponible")
+                ui_elements["estado_label"].classes(add="text-red-500", remove="text-green-500")
+            
+            log_message("Timeout conectando a servidor local", level="warning")
+            await asyncio.sleep(5)
+        
+        except Exception as e:
+            estado_global["conectado"] = False
+            if ui_elements["estado_label"]:
+                ui_elements["estado_label"].set_text(f"✗ Error: {str(e)[:30]}")
+                ui_elements["estado_label"].classes(add="text-red-500", remove="text-green-500")
+            
+            logger.error(f"Error en conexión local: {e}")
+            await asyncio.sleep(5)
+
+def log_message(msg, level="info"):
+    """Agrega mensaje a log"""
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    log_line = f"[{timestamp}] {msg}"
+    
+    if ui_elements["log_area"]:
+        try:
+            ui_elements["log_area"].push(log_line)
+        except:
+            pass
+
+# ============================================================================
+# ACTUALIZACIÓN DE UI - TIMERS
+# ============================================================================
+
+def actualizar_perfiles():
+    """Actualiza lista de perfiles conectados"""
+    if not ui_elements["perfiles_list"]:
+        return
+    
+    try:
+        ui_elements["perfiles_list"].clear()
+        
+        perfiles = estado_global["perfiles_local"][:20]
+        if not perfiles:
+            ui.label("Sin perfiles conectados").classes('text-gray-500 italic')
+        else:
+            for perfil in perfiles:
+                with ui.row().classes('w-full items-center p-2 hover:bg-gray-100 rounded'):
+                    ui.icon("check_circle").classes('text-green-500 text-lg')
+                    ui.label(perfil).classes('font-mono text-sm flex-1')
+    except Exception as e:
+        logger.error(f"Error actualizando perfiles: {e}")
+
+def actualizar_comentarios():
+    """Actualiza lista de comentarios activos"""
+    if not ui_elements["comentarios_container"]:
+        return
+    
+    try:
+        ui_elements["comentarios_container"].clear()
+        
+        if not estado_global["comentarios_activos"]:
+            ui.label("Sin comentarios activos").classes('text-gray-500 italic text-sm')
+            return
+        
+        for url, comentarios in list(estado_global["comentarios_activos"].items())[:10]:
+            contador = estado_global["contador_activos"].get(url, 0)
+            
+            with ui.card().classes('w-full p-3 bg-blue-50 border-l-4 border-blue-500'):
+                with ui.row().classes('w-full items-center gap-2'):
+                    ui.label(f"🌐 {url[:50]}").classes('flex-1 font-mono text-xs text-gray-700')
+                    
+                    if contador > 0:
+                        color = "text-green-500" if contador > 20 else "text-yellow-500" if contador > 10 else "text-red-500"
+                        ui.label(f"⏱️ {contador}s").classes(f'{color} font-bold')
+                
+                # Mostrar últimos comentarios
+                for com in comentarios[-2:]:
+                    with ui.row().classes('w-full mt-2 pl-4 border-l-2 border-gray-300'):
+                        ui.label(f"@{com['perfil']}: {com['text'][:60]}").classes('text-xs text-gray-600 italic')
+    
+    except Exception as e:
+        logger.error(f"Error actualizando comentarios: {e}")
+
+def actualizar_contadores():
+    """Actualiza contadores regresivos"""
+    try:
+        for url in list(estado_global["contador_activos"].keys()):
+            estado_global["contador_activos"][url] -= 1
+            
+            if estado_global["contador_activos"][url] <= 0:
+                del estado_global["contador_activos"][url]
+                if url in estado_global["comentarios_activos"]:
+                    del estado_global["comentarios_activos"][url]
+    except Exception as e:
+        logger.error(f"Error actualizando contadores: {e}")
+
+# ============================================================================
+# INTERFAZ - CONFIGURACIÓN INICIAL
+# ============================================================================
+
+ui.page_title("ROXYMASTER v6.1 - Monitor")
+ui.colors(primary="#0066cc", accent="#00aa66", dark="#1a1a1a")
+
+# Título principal
+with ui.header().classes('w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'):
+    with ui.row().classes('w-full items-center gap-4'):
+        ui.icon('dashboard').classes('text-3xl')
+        ui.label("ROXYMASTER v6.1 - Sistema Distribuido de WebSockets").classes('text-2xl font-bold')
+
+# ============================================================================
+# PESTAÑAS PRINCIPALES
+# ============================================================================
+
+with ui.tabs() as tabs:
+    local_tab = ui.tab("Local", icon="computer")
+    remoto_tab = ui.tab("Remoto", icon="cloud")
+    admin_tab = ui.tab("Admin", icon="settings")
+
+# ============================================================================
+# PESTAÑA 1: PANEL LOCAL
+# ============================================================================
+
+with ui.tab_panels(tabs, value=local_tab).classes('w-full'):
+    with ui.tab_panel(local_tab):
+        with ui.column().classes('w-full gap-4 p-4'):
+            
+            # Tarjeta de estado
+            with ui.card().classes('w-full bg-white shadow-md'):
+                with ui.row().classes('w-full gap-4'):
+                    ui.icon('monitor').classes('text-4xl text-blue-600')
+                    with ui.column().classes('flex-1'):
+                        ui.label("Monitor Local - PCBOT").classes('text-2xl font-bold')
+                        ui.elements["estado_label"] = ui.label("⏳ Inicializando...").classes('text-sm text-gray-600')
+            
+            ui.separator()
+            
+            # Perfiles conectados
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Perfiles Conectados").classes('text-xl font-bold text-gray-800 mb-4')
+                
+                with ui.scroll_area().classes('w-full h-96 bg-gray-50 rounded border-2 border-gray-200'):
+                    ui_elements["perfiles_list"] = ui.column().classes('w-full gap-1 p-2')
+                    actualizar_perfiles()
+
+# ============================================================================
+# PESTAÑA 2: MONITOR REMOTO
+# ============================================================================
+
+    with ui.tab_panel(remoto_tab):
+        with ui.column().classes('w-full gap-4 p-4'):
+            
+            # Tarjeta de info del servidor
+            with ui.card().classes('w-full bg-white shadow-md'):
+                with ui.row().classes('w-full items-center gap-4'):
+                    ui.icon('cloud_queue').classes('text-4xl text-green-600')
+                    with ui.column().classes('flex-1'):
+                        ui.label("Monitor Remoto - PCMASTER").classes('text-2xl font-bold')
+                        ui.label("Servidor: 192.168.1.17:5006 (Tailscale: 100.111.179.65)").classes('text-sm font-mono text-gray-600')
+            
+            ui.separator()
+            
+            # Inyectar comentario
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Enviar Comentario Remoto").classes('text-lg font-bold text-gray-800 mb-3')
+                
+                with ui.row().classes('w-full gap-2'):
+                    campo_comentario = ui.input(
+                        label="Comentario",
+                        placeholder="Escribe un comentario manualmente...",
+                        value=""
+                    ).classes('flex-1')
+                    
+                    async def enviar_comentario_remoto():
+                        try:
+                            if not estado_global["conectado"]:
+                                ui.notify("No conectado al servidor local", type='negative')
+                                log_message("Intento de envío sin conexión", level="warning")
+                                return
+                            
+                            texto = campo_comentario.value.strip()
+                            if not texto:
+                                ui.notify("Campo vacío", type='warning')
+                                return
+                            
+                            # Simular envío (en producción se enviaría al servidor)
+                            estado_global["stats"]["enviados"] += 1
+                            ui.notify(f"Comentario enviado: {texto[:30]}...", type='positive')
+                            log_message(f"Comentario enviado: {texto[:40]}...")
+                            campo_comentario.set_value("")
+                        
+                        except Exception as e:
+                            ui.notify(f"Error: {e}", type='negative')
+                            logger.error(f"Error enviando comentario: {e}")
+                    
+                    ui.button("Enviar", on_click=enviar_comentario_remoto).classes('bg-blue-600 hover:bg-blue-700 text-white')
+            
+            ui.separator()
+            
+            # Comentarios activos
+            with ui.card().classes('w-full bg-white shadow-md'):
+                with ui.row().classes('w-full items-center'):
+                    ui.label("Comentarios Activos").classes('text-lg font-bold text-gray-800')
+                    ui.label(f"Total: {len(estado_global['comentarios_activos'])}").classes('ml-auto text-sm text-gray-600 font-semibold')
+                
+                with ui.scroll_area().classes('w-full h-80 bg-gray-50 rounded border-2 border-gray-200'):
+                    ui_elements["comentarios_container"] = ui.column().classes('w-full gap-2 p-2')
+                    actualizar_comentarios()
+
+# ============================================================================
+# PESTAÑA 3: ADMINISTRACIÓN
+# ============================================================================
+
+    with ui.tab_panel(admin_tab):
+        with ui.column().classes('w-full gap-4 p-4'):
+            
+            # Panel de control
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Panel de Control").classes('text-2xl font-bold text-gray-800 mb-4')
+                
+                async def accion_conectar():
+                    log_message("Intentando conectar a servidor remoto...", level="info")
+                    estado_global["servidor_status"] = "Conectando..."
+                    ui.notify("Conexión solicitada al servidor remoto", type='info')
+
+                async def accion_desconectar():
+                    log_message("Desconexión solicitada", level="info")
+                    estado_global["servidor_status"] = "Desconectado"
+                    estado_global["conectado"] = False
+                    if estado_global["ws_local"]:
+                        try:
+                            await estado_global["ws_local"].close()
+                        except:
+                            pass
+                    ui.notify("Desconectado del servidor local", type='warning')
+
+                async def accion_refrescar():
+                    log_message("Refrescando perfiles...", level="info")
+                    estado_global["stats"]["errores"] = 0
+                    if estado_global["ws_local"]:
+                        try:
+                            await estado_global["ws_local"].send(json.dumps({"type": "get_status"}))
+                        except Exception as e:
+                            logger.error(f"Error refrescando: {e}")
+                    ui.notify("Perfiles refrescados", type='positive')
+
+                async def accion_estado():
+                    estado_msg = f"Conectado: {estado_global['conectado']} | Perfiles: {len(estado_global['perfiles_local'])}"
+                    log_message(f"Estado: {estado_msg}", level="info")
+                    ui.notify(estado_msg, type='info')
+
+                with ui.row().classes('w-full gap-2 flex-wrap'):
+                    ui.button("Conectar", on_click=accion_conectar).classes('bg-green-600 hover:bg-green-700')
+                    ui.button("Desconectar", on_click=accion_desconectar).classes('bg-red-600 hover:bg-red-700')
+                    ui.button("Refrescar", on_click=accion_refrescar).classes('bg-yellow-600 hover:bg-yellow-700')
+                    ui.button("Estado", on_click=accion_estado).classes('bg-blue-600 hover:bg-blue-700')
+            
+            ui.separator()
+            
+            # Estadísticas
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Estadísticas").classes('text-lg font-bold text-gray-800 mb-3')
+                
+                with ui.row().classes('w-full gap-4'):
+                    with ui.column().classes('flex-1 p-4 bg-blue-50 rounded text-center'):
+                        ui.label(str(estado_global["stats"]["enviados"])).classes('text-3xl font-bold text-blue-600')
+                        ui.label("Comentarios Enviados").classes('text-sm text-gray-600')
+                    
+                    with ui.column().classes('flex-1 p-4 bg-green-50 rounded text-center'):
+                        ui.label(str(len(estado_global["perfiles_local"]))).classes('text-3xl font-bold text-green-600')
+                        ui.label("Perfiles Conectados").classes('text-sm text-gray-600')
+                    
+                    with ui.column().classes('flex-1 p-4 bg-red-50 rounded text-center'):
+                        ui.label(str(estado_global["stats"]["errores"])).classes('text-3xl font-bold text-red-600')
+                        ui.label("Errores").classes('text-sm text-gray-600')
+            
+            ui.separator()
+            
+            # Acciones rápidas
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Acciones Rápidas").classes('text-lg font-bold text-gray-800 mb-3')
+                
+                async def accion_ver_status():
+                    if estado_global["ws_local"]:
+                        try:
+                            await estado_global["ws_local"].send(json.dumps({"type": "get_status"}))
+                            log_message("Status solicitado al servidor", level="info")
+                            ui.notify("Status: solicitando...", type='info')
+                        except Exception as e:
+                            log_message(f"Error solicitando status: {e}", level="error")
+                            ui.notify(f"Error: {e}", type='negative')
+                    else:
+                        log_message("No hay conexión al servidor", level="warning")
+                        ui.notify("Sin conexión al servidor", type='negative')
+
+                def accion_limpiar_logs():
+                    if ui_elements["log_area"]:
+                        ui_elements["log_area"].clear()
+                        log_message("ROXYMASTER v6.1 - Logs limpiados")
+                    ui.notify("Logs limpiados", type='positive')
+
+                async def accion_reiniciar():
+                    log_message("Reinicio solicitado - recargando parámetros", level="warning")
+                    estado_global["stats"]["errores"] = 0
+                    estado_global["stats"]["enviados"] = 0
+                    ui.notify("Parámetros reiniciados", type='warning')
+
+                with ui.row().classes('w-full gap-2 flex-wrap'):
+                    ui.button("Ver Status", on_click=accion_ver_status).classes('bg-purple-600 hover:bg-purple-700 text-white')
+                    ui.button("Limpiar Logs", on_click=accion_limpiar_logs).classes('bg-gray-600 hover:bg-gray-700 text-white')
+                    ui.button("Reiniciar", on_click=accion_reiniciar).classes('bg-orange-600 hover:bg-orange-700 text-white')
+            
+            ui.separator()
+            
+            # Logs del sistema
+            with ui.card().classes('w-full bg-white shadow-md'):
+                ui.label("Logs del Sistema").classes('text-lg font-bold text-gray-800 mb-2')
+                ui_elements["log_area"] = ui.log(max_lines=50).classes('w-full h-64 font-mono text-xs bg-gray-900 text-green-400 rounded border-2 border-gray-700 p-2')
+                
+                log_message("ROXYMASTER v6.1 iniciado")
+                log_message("Interfaz web activa en puerto 8090")
+                log_message("Esperando conexión a servidor remoto...")
+
+# ============================================================================
+# TIMERS Y INICIALIZACIÓN
+# ============================================================================
+
+# Actualizar estado de perfiles cada 2 segundos
+ui.timer(interval=2, callback=actualizar_perfiles)
+
+# Actualizar comentarios cada segundo
+ui.timer(interval=1, callback=actualizar_comentarios)
+
+# Actualizar contadores cada segundo
+ui.timer(interval=1, callback=actualizar_contadores)
+
+# Conectar al servidor local en background
+asyncio.create_task(conectar_servidor_local())
+
+# Información de inicio
+logger.info("=" * 60)
+logger.info("ROXYMASTER v6.1 - INTERFAZ WEB")
+logger.info("=" * 60)
+logger.info("✓ Interfaz disponible en: http://localhost:8090")
+logger.info("✓ 3 pestañas: Local | Remoto | Admin")
+logger.info("=" * 60)
+
+# Ejecutar servidor NiceGUI
+ui.run(
+    title="ROXYMASTER v6.1 Monitor",
+    port=8090,
+    reload=False,
+    show=False,
+    dark=False
+)

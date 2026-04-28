@@ -1,0 +1,373 @@
+================================================================================
+ROXYMASTER v6.1 - SISTEMA DISTRIBUIDO DE WEBSOCKETS
+Guía de Instalación y Uso
+================================================================================
+
+CONTENIDO DEL PAQUETE
+================================================================================
+
+INSTALADORES PowerShell:
+  - INSTALAR_PCMASTER.ps1    : Configura servidor central
+  - INSTALAR_PCBOT.ps1       : Configura cliente bot
+
+CÓDIGO FUENTE:
+  - PCMASTER/scripts/server.py  : Servidor WebSocket principal
+  - PCBOT/scripts/pcbot.py      : Cliente WebSocket con reconexión
+  - PCBOT/scripts/ui.py         : Interfaz web con 3 pestañas (NiceGUI)
+
+ARCHIVOS DE DOCUMENTACIÓN:
+  - LEEME.txt                : Este archivo
+  - AUDITORIA_TECNICA.txt    : Análisis completo del código
+  - BITACORA.txt             : Registro de ejecución
+
+================================================================================
+REQUISITOS PREVIOS
+================================================================================
+
+HARDWARE MÍNIMO:
+✓ CPU: Intel/AMD dual-core 2.0 GHz
+✓ RAM: 2 GB mínimo
+✓ Disco: 500 MB disponibles
+✓ Red: Conexión Tailscale activa
+
+SOFTWARE REQUERIDO:
+✓ Windows 10/11 (64-bit)
+✓ Python 3.9 o superior (https://www.python.org)
+✓ Tailscale configurado (para conexiones remotas)
+
+VERIFICAR INSTALACIÓN DE PYTHON:
+Abra PowerShell y ejecute:
+  python --version
+  pip --version
+
+Si no aparecen, descargue Python desde: https://www.python.org/downloads
+Durante la instalación, MARQUE: "Add Python to PATH"
+
+================================================================================
+INSTALACIÓN PASO A PASO
+================================================================================
+
+PASO 1: INSTALAR PCMASTER (SERVIDOR)
+================================================================================
+
+En la máquina del SERVIDOR:
+
+1. Abra PowerShell como Administrador (clic derecho > Ejecutar como administrador)
+
+2. Navegue a la carpeta donde está el instalador:
+   cd C:\Users\CYBER\Desktop\ROXYMASTER
+
+3. Ejecute el instalador:
+   powershell -ExecutionPolicy Bypass -File INSTALAR_PCMASTER.ps1
+
+4. El script creará automáticamente:
+   ✓ Estructura de carpetas en Desktop\ROXYMASTER\PCMASTER
+   ✓ Archivo de configuración config.json
+   ✓ Módulos Python necesarios
+   ✓ Script de inicio INICIAR.bat
+   ✓ Acceso directo en el escritorio
+
+5. IMPORTANTE: Anote la IP de Tailscale de la máquina servidor
+   Comando: ipconfig
+   Busque: "Tailscale" - anote la IPv4
+
+PASO 2: INSTALAR PCBOT (CLIENTE)
+================================================================================
+
+En cada máquina cliente (pueden ser múltiples):
+
+1. Abra PowerShell como Administrador
+
+2. Navegue a la carpeta del instalador:
+   cd C:\Users\CYBER\Desktop\ROXYMASTER
+
+3. Ejecute el instalador:
+   powershell -ExecutionPolicy Bypass -File INSTALAR_PCBOT.ps1
+   
+   Parámetros opcionales:
+   -IP_PCMASTER "100.111.179.65"  (reemplazar con IP real de servidor)
+   -PUERTO_PCMASTER 5006           (cambiar si es necesario)
+
+4. El script instalará automáticamente:
+   ✓ Dependencias Python (websockets, playwright, nicegui)
+   ✓ Navegadores de Playwright
+   ✓ Estructura de carpetas
+   ✓ Scripts de inicio
+
+================================================================================
+INICIAR EL SISTEMA
+================================================================================
+
+INICIAR SERVIDOR PCMASTER:
+================================================================================
+
+Opción A: Usando el acceso directo
+  - En el escritorio, haga doble clic en "PCMASTER_v6.1.lnk"
+
+Opción B: Manual desde PowerShell
+  cd C:\Users\CYBER\Desktop\ROXYMASTER\PCMASTER
+  python scripts\server.py
+
+Opción C: Usando el archivo batch
+  C:\Users\CYBER\Desktop\ROXYMASTER\PCMASTER\INICIAR.bat
+
+El servidor debería mostrar:
+  ========================================
+  ROXYMASTER v6.1 - SERVIDOR MEJORADO
+  ========================================
+  Escuchando en 0.0.0.0:5006
+  Servidor WebSocket iniciado
+
+INICIAR CLIENTE PCBOT:
+================================================================================
+
+En cada máquina cliente:
+
+Opción A: Haga doble clic en "PCBOT_v6.1.lnk" en el escritorio
+
+Opción B: Manual desde PowerShell
+  cd C:\Users\CYBER\Desktop\ROXYMASTER\PCBOT
+  python scripts\pcbot.py
+
+Opción C: Usando el archivo batch
+  C:\Users\CYBER\Desktop\ROXYMASTER\PCBOT\INICIAR.bat
+
+El cliente debería mostrar:
+  ============================================================
+  ROXYMASTER v6.1 - PCBOT CLIENTE
+  ============================================================
+  [INFO] PCBOT inicializado: NOMBRECOMPUTADORA
+  [INFO] Conectando a API en http://127.0.0.1:50000
+  [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+  [PCBOT] Conectado a PCMASTER
+
+INICIAR INTERFAZ WEB (OPCIONAL):
+================================================================================
+
+En cualquier máquina cliente:
+
+Opción A: Haga doble clic en "ROXYMASTER_UI_v6.1.lnk" en el escritorio
+
+Opción B: Manual desde PowerShell
+  cd C:\Users\CYBER\Desktop\ROXYMASTER\PCBOT
+  python scripts\ui.py
+
+La interfaz estará disponible en:
+  http://localhost:8090
+
+Tres pestañas disponibles:
+  1. Local    : Ver perfiles conectados localmente
+  2. Remoto   : Enviar comentarios, monitorear actividad
+  3. Admin    : Panel de control, logs, estadísticas
+
+================================================================================
+VERIFICAR QUE TODO FUNCIONA
+================================================================================
+
+1. REVISAR LOGS DEL SERVIDOR:
+   Get-Content "C:\Users\CYBER\Desktop\ROXYMASTER\PCMASTER\logs\server.log" -Tail 50
+
+2. REVISAR LOGS DEL CLIENTE:
+   Get-Content "C:\Users\CYBER\Desktop\ROXYMASTER\PCBOT\logs\pcbot.log" -Tail 50
+
+3. VERIFICAR CONEXIÓN WEBSOCKET:
+   En PowerShell (servidor):
+   Get-Process python | Where-Object {$_.ProcessName -eq "python"}
+
+4. PRUEBA DE CONECTIVIDAD:
+   Desde PowerShell de cliente:
+   Test-NetConnection -ComputerName 100.111.179.65 -Port 5006
+
+5. VER ESTADÍSTICAS EN TIEMPO REAL:
+   PowerShell (en directorio de cliente):
+   Get-Content "logs\pcbot.log" -Tail 100 -Wait
+
+================================================================================
+ESTRUCTURA DE CARPETAS
+================================================================================
+
+C:\Users\USUARIO\Desktop\ROXYMASTER\
+├── PCMASTER/
+│   ├── scripts/
+│   │   ├── server.py              (Servidor principal)
+│   │   └── variables_globales.py  (Configuración)
+│   ├── logs/
+│   │   └── server.log             (Logs de ejecución)
+│   ├── prompts/
+│   │   └── maestro.txt            (Prompts para IA)
+│   ├── config.json                (Configuración)
+│   └── INICIAR.bat                (Inicio rápido)
+│
+├── PCBOT/
+│   ├── scripts/
+│   │   ├── pcbot.py               (Cliente principal)
+│   │   ├── ui.py                  (Interfaz web)
+│   │   ├── pcbot.py.bak           (Backup)
+│   │   └── ui.py.bak              (Backup)
+│   ├── logs/
+│   │   └── pcbot.log              (Logs de ejecución)
+│   ├── data/
+│   │   └── cache.json             (Datos temporales)
+│   ├── config.json                (Configuración)
+│   ├── INICIAR.bat                (Inicio PCBOT)
+│   └── INICIAR_UI.bat             (Inicio Interfaz)
+│
+├── INSTALAR_PCMASTER.ps1          (Instalador servidor)
+├── INSTALAR_PCBOT.ps1             (Instalador cliente)
+└── LEEME.txt                       (Este archivo)
+
+================================================================================
+CONFIGURACIÓN AVANZADA
+================================================================================
+
+CAMBIAR IP O PUERTO DE CONEXIÓN:
+
+Editar: C:\Users\USUARIO\Desktop\ROXYMASTER\PCBOT\config.json
+
+Buscar:
+  "pcmaster_ip": "100.111.179.65"
+  "pcmaster_port": 5006
+
+Cambiar valores según necesidad.
+
+CAMBIAR TOKEN DE ROXY API:
+
+En el mismo config.json:
+  "roxy_api": {
+    "url": "http://127.0.0.1:50000",
+    "token": "tu_token_aqui"
+  }
+
+HABILITAR LOGGING DETALLADO:
+
+En server.py, línea 19:
+  level=logging.DEBUG  (cambiar INFO por DEBUG)
+
+En pcbot.py, línea 17:
+  level=logging.DEBUG
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: "No se puede conectar a servidor"
+SOLUCIÓN:
+  1. Verificar que servidor PCMASTER está ejecutándose
+  2. Comprobar firewall: netstat -ano | findstr :5006
+  3. Verificar IP de Tailscale: ipconfig
+  4. Revisar logs en: logs\pcbot.log
+
+PROBLEMA: "Python no encontrado"
+SOLUCIÓN:
+  1. Instalar Python 3.9+
+  2. Marcar "Add Python to PATH" durante instalación
+  3. Reiniciar PowerShell después de instalar
+
+PROBLEMA: "Playwright timeout"
+SOLUCIÓN:
+  1. Instalar navegadores: python -m playwright install chromium
+  2. Aumentar timeout en config.json
+  3. Verificar recursos disponibles (RAM, CPU)
+
+PROBLEMA: "Puerto ya en uso"
+SOLUCIÓN:
+  1. Encontrar proceso: netstat -ano | findstr :5006
+  2. Matar proceso: taskkill /PID <PID> /F
+  3. O cambiar puerto en config.json
+
+PROBLEMA: "Errores de autenticación"
+SOLUCIÓN:
+  1. Verificar token en config.json
+  2. Verificar que ROXY API esté disponible
+  3. Revisar credenciales de Roxy
+
+================================================================================
+SEGURIDAD
+================================================================================
+
+RECOMENDACIONES:
+
+1. FIREWALLS:
+   ✓ Abrir puerto 5006 TCP para comunicación cliente-servidor
+   ✓ Usar VPN/Tailscale para acceso remoto
+   ✓ NO exponer puertos a internet público
+
+2. TOKENS:
+   ✓ Cambiar tokens por defecto en instalación
+   ✓ Usar tokens con expiración (30 minutos por defecto)
+   ✓ Regenerar tokens regularmente
+
+3. LOGS:
+   ✓ Revisar logs regularmente
+   ✓ Respaldar logs importantes
+   ✓ Configurar rotación de logs
+
+4. ACTUALIZACIONES:
+   ✓ Mantener Python actualizado
+   ✓ Actualizar dependencias: pip install --upgrade -r requirements.txt
+   ✓ Revisar auditoría en: AUDITORIA_TECNICA.txt
+
+================================================================================
+MÉTRICAS Y MONITOREO
+================================================================================
+
+INFORMACIÓN ÚTIL A MONITOREAR:
+
+1. SERVIDOR (server.py):
+   ✓ Conexiones activas de PCBOT
+   ✓ Tokens autenticados
+   ✓ Grupos de perfiles activos
+   ✓ Comentarios generados
+
+2. CLIENTE (pcbot.py):
+   ✓ Perfiles detectados
+   ✓ Conexión a PCMASTER
+   ✓ Intentos de reconexión
+   ✓ Páginas abiertas
+
+3. INTERFAZ (ui.py):
+   ✓ Comentarios activos
+   ✓ Perfiles en línea
+   ✓ Estadísticas de envío
+
+VER ESTADÍSTICAS EN TIEMPO REAL:
+
+En PowerShell:
+  Get-Content "C:\Users\USUARIO\Desktop\ROXYMASTER\PCBOT\logs\pcbot.log" -Tail 100 -Wait
+
+================================================================================
+NOTAS FINALES
+================================================================================
+
+VERSIÓN: 6.1
+ACTUALIZADO: 28 de abril de 2026
+SOPORTE: Revisar AUDITORIA_TECNICA.txt para detalles técnicos
+
+CAMBIOS EN ESTA VERSIÓN:
+✓ Logging estructurado completo
+✓ Validación de entrada con JSON Schema
+✓ Manejo de excepciones específicas (no genéricas)
+✓ Reconexión exponencial (2-32 segundos)
+✓ Rate limiting con token bucket
+✓ Interfaz mejorada con 3 pestañas
+✓ Backups automáticos (.bak)
+✓ Documentación en español
+
+MEJORAS IMPLEMENTADAS:
+✓ asyncio.Lock en lugar de threading.Lock
+✓ Timeout en todas las operaciones
+✓ Sanitización de entrada
+✓ Heartbeat robusto
+✓ Limpieza de recursos
+✓ Manejo de conexiones cerradas
+
+================================================================================
+
+Para más información, consulte:
+- AUDITORIA_TECNICA.txt : Análisis detallado del código
+- Logs en: logs\*.log
+- Configuración en: config.json
+
+¡Gracias por usar ROXYMASTER v6.1!
+
+================================================================================
