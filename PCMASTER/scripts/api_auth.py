@@ -20,10 +20,10 @@ async def api_register(request: Request):
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
     codigo_referido = data.get("codigo_referido", "pcmaster")
-    resultado = registrar_usuario(email, password, email.split("@")[0] if "@" in email else email, codigo_referido)
-    if not resultado["ok"]:
-        return {"ok": False, "error": resultado.get("error")}
-    uid = resultado["uid"]
+    resultado = registrar_usuario(email, password, codigo_referido)
+    if not resultado:
+        return {"ok": False, "error": "registro fallido"}
+    uid = resultado[0] if isinstance(resultado, (list, tuple)) else resultado.get("uid", 0)
     token = generar_token(uid, email.split("@")[0] if "@" in email else email, "usuario")
     return {"ok": True, "token": token, "uid": uid, "username": email.split("@")[0] if "@" in email else email, "rol": "usuario"}
 

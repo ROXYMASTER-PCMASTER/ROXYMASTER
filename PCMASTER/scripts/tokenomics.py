@@ -1,4 +1,4 @@
-﻿import sqlite3, os, time, json
+import sqlite3, os, time, json
 from config import DATA_DIR
 DB_PATH = os.path.join(DATA_DIR, "roxymaster.db")
 
@@ -100,7 +100,7 @@ def acreditar_tokens(uid, cantidad, concepto="acreditacion_manual"):
     nuevo_saldo = saldo + cantidad
     conn.execute("update wallets set saldo_tokens = ?, ultima_actividad = datetime('now','localtime') where usuario_id = ?",
                  (nuevo_saldo, uid))
-    conn.execute("insert into transacciones (wallet_destino, cantidad, tipo, concepto) values (?,?,?,?)",
+    conn.execute("insert into transacciones (wallet_destino, monto, tipo, concepto) values (?,?,?,?)",
                  (wallet_id, cantidad, "credito", concepto))
     conn.commit()
     conn.close()
@@ -120,7 +120,7 @@ def debitar_tokens(uid, cantidad, concepto="debito_manual"):
     nuevo_saldo = saldo - cantidad
     conn.execute("update wallets set saldo_tokens = ?, ultima_actividad = datetime('now','localtime') where usuario_id = ?",
                  (nuevo_saldo, uid))
-    conn.execute("insert into transacciones (wallet_origen, cantidad, tipo, concepto) values (?,?,?,?)",
+    conn.execute("insert into transacciones (wallet_origen, monto, tipo, concepto) values (?,?,?,?)",
                  (wallet_id, cantidad, "debito", concepto))
     conn.commit()
     conn.close()
@@ -210,7 +210,7 @@ def ejecutar_quema_inactividad():
     for row in rows:
         quema = max(1, row["saldo_tokens"] * 0.01)
         conn.execute("update wallets set saldo_tokens = saldo_tokens - ? where wallet = ?", (quema, row["wallet"]))
-        conn.execute("insert into transacciones (wallet_origen, cantidad, tipo, concepto) values (?,?,?,?)",
+        conn.execute("insert into transacciones (wallet_origen, monto, tipo, concepto) values (?,?,?,?)",
                      (row["wallet"], quema, "quema", "quema_por_inactividad"))
         total_quemado += quema
     conn.commit()

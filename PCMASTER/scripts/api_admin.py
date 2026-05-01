@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from auth import verificar_token, listar_usuarios, cambiar_rol
 from tokenomics import acreditar_tokens, debitar_tokens, ejecutar_quema_inactividad
 from shs import obtener_eventos_seguridad
-from variables_globales import obtener_variables, actualizar_variable, restablecer_variables
+from variables_globales import obtener_variables, actualizar_variable, restablecer_variables_predeterminadas as restablecer_variables
 router = APIRouter()
 
 async def verificar_admin(request: Request):
