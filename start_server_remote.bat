@@ -1,1 +1,0 @@
-start /b C:\Users\PCMASTER\AppData\Local\Programs\Python\Python310\python.exe C:\users\pcmaster\desktop\roxymaster\pcmaster\scripts\server.py > C:\users\pcmaster\desktop\roxymaster\server.log 2>&1
