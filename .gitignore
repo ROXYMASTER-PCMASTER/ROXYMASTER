@@ -1,0 +1,11 @@
+﻿# Archivos sensibles y logs (nunca versionar)
+*.log
+*.db
+*_ssh_key*
+*test*.json
+*prueba*.json
+*tokens*.json
+*secret*
+*.pem
+.env
+*.bak

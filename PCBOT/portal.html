@@ -1,1173 +1,277 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROXYMASTER v6.3 — Portal</title>
+<title>pcbot - panel de usuario</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-  background:linear-gradient(135deg,#0a0f1e 0%,#1a1f2e 50%,#0d1117 100%);
-  color:#c9d1d9;
-  min-height:100vh;
-  overflow-x:hidden;
-}
-/* ========== LOGIN SCREEN ========== */
-#login-screen{
-  display:flex;align-items:center;justify-content:center;
-  min-height:100vh;padding:20px;
-}
-.login-box{
-  background:#161b22;
-  border:1px solid #30363d;
-  border-radius:12px;
-  padding:40px;
-  width:100%;max-width:420px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);
-}
-.login-box h1{
-  text-align:center;font-size:2em;margin-bottom:8px;
-  background:linear-gradient(90deg,#58a6ff,#bc8cff);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.login-box .sub{text-align:center;color:#8b949e;margin-bottom:30px;font-size:0.9em}
-.form-group{margin-bottom:16px}
-.form-group label{display:block;margin-bottom:6px;color:#8b949e;font-size:0.85em}
-.form-group .input-wrap{position:relative}
-.form-group input, .form-group select{
-  width:100%;padding:10px 42px 10px 14px;
-  background:#0d1117;border:1px solid #30363d;border-radius:6px;
-  color:#c9d1d9;font-size:1em;outline:none;transition:border-color .2s;
-}
-.form-group select{cursor:pointer}
-.form-group input:focus, .form-group select:focus{border-color:#58a6ff}
-.pwd-toggle{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  background:none;border:none;color:#8b949e;cursor:pointer;font-size:1.2em;
-  padding:0;line-height:1;
-}
-.pwd-toggle:hover{color:#58a6ff}
-.btn{
-  padding:12px 20px;
-  border:none;border-radius:6px;
-  font-size:1em;font-weight:600;cursor:pointer;
-  transition:all .2s;
-}
-.btn-block{width:100%}
-.btn-primary{background:#238636;color:#fff}
-.btn-primary:hover{background:#2ea043}
-.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;margin-top:10px}
-.btn-secondary:hover{background:#30363d}
-.btn-danger{background:#da3633;color:#fff}
-.btn-danger:hover{background:#f85149}
-.btn-warn{background:#d2991d;color:#0d1117}
-.btn-warn:hover{background:#e2a83e}
-.btn-sm{padding:6px 12px;font-size:0.8em}
-.error-msg{color:#f85149;text-align:center;margin-top:10px;font-size:0.85em;display:none}
-.success-msg{color:#7ee787;text-align:center;margin-top:10px;font-size:0.85em;display:none}
-.toggle-link{text-align:center;margin-top:16px;font-size:0.85em;color:#8b949e}
-.toggle-link a{color:#58a6ff;cursor:pointer;text-decoration:none}
-.toggle-link a:hover{text-decoration:underline}
-
-/* ========== DASHBOARD ========== */
-#dashboard-screen{display:none;padding:20px}
-.dash-header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:16px 24px;background:#161b22;border-bottom:1px solid #30363d;
-  flex-wrap:wrap;gap:12px;
-}
-.dash-header h1{
-  font-size:1.4em;
-  background:linear-gradient(90deg,#58a6ff,#bc8cff);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.dash-header .user-info{color:#8b949e;font-size:0.9em}
-.dash-header .user-info span{color:#58a6ff}
-.dash-header button{padding:8px 16px;background:#da3633;color:#fff;border:none;border-radius:6px;cursor:pointer}
-
-.dash-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:16px;padding:20px 24px;
-}
-.card{
-  background:#161b22;border:1px solid #30363d;
-  border-radius:10px;padding:20px;
-}
-.card h3{color:#58a6ff;margin-bottom:12px;font-size:1em;text-transform:uppercase;letter-spacing:1px}
-.card .stat{font-size:2em;font-weight:700;color:#c9d1d9}
-.card .stat-label{font-size:0.8em;color:#8b949e;margin-top:4px}
-.stat-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
-.stat-row .val{color:#7ee787;font-weight:600}
-.stat-row .val.warn{color:#d2991d}
-.stat-row .val.danger{color:#f85149}
-
-/* Switch */
-.switch-container{display:flex;align-items:center;gap:12px;margin:12px 0}
-.switch{
-  position:relative;width:52px;height:28px;
-}
-.switch input{opacity:0;width:0;height:0}
-.slider{
-  position:absolute;cursor:pointer;
-  top:0;left:0;right:0;bottom:0;
-  background:#30363d;border-radius:28px;
-  transition:.3s;
-}
-.slider:before{
-  content:"";position:absolute;
-  height:22px;width:22px;left:3px;bottom:3px;
-  background:#c9d1d9;border-radius:50%;
-  transition:.3s;
-}
-input:checked + .slider{background:#238636}
-input:checked + .slider:before{transform:translateX(24px)}
-
-/* Modo badge */
-.mode-badge{
-  display:inline-block;padding:4px 12px;
-  border-radius:20px;font-size:0.8em;font-weight:600;
-}
-.mode-badge.connected{background:#23863633;color:#7ee787;border:1px solid #238636}
-.mode-badge.solo{background:#d2991d33;color:#d2991d;border:1px solid #d2991d}
-
-/* Forms inline */
-.form-inline{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}
-.form-inline .form-group{margin-bottom:0;flex:1;min-width:120px}
-.form-inline .form-group input, .form-inline .form-group select{width:100%;padding:8px 10px}
-
-/* Tabla */
-.table-wrap{overflow-x:auto;padding:0 24px 20px}
-table{width:100%;border-collapse:collapse;font-size:0.85em}
-th{text-align:left;padding:10px 12px;color:#8b949e;border-bottom:1px solid #30363d;font-weight:500}
-td{padding:10px 12px;border-bottom:1px solid #21262d}
-tr:hover{background:#1c2128}
-.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-.status-dot.active{background:#7ee787}
-.status-dot.inactive{background:#f85149}
-.status-dot.hung{background:#d2991d}
-
-/* Timer 62min */
-.timer-bar{
-  height:6px;background:#21262d;border-radius:3px;margin-top:4px;overflow:hidden;
-}
-.timer-fill{
-  height:100%;background:linear-gradient(90deg,#58a6ff,#238636);
-  border-radius:3px;transition:width 1s linear;
-}
-
-/* Sections visibility */
-.section-box{padding:20px 24px}
-.section-box h2{color:#58a6ff;margin-bottom:16px;font-size:1.1em;text-transform:uppercase;letter-spacing:1px}
-
-/* Toast notification */
-.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.toast{
-  padding:12px 20px;border-radius:8px;color:#fff;font-size:0.9em;
-  animation:slideIn 0.3s ease;max-width:380px;box-shadow:0 4px 16px rgba(0,0,0,0.4);
-}
-.toast.success{background:#238636}
-.toast.error{background:#da3633}
-.toast.warn{background:#d2991d}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* Tabs */
-.tab-nav{display:flex;gap:0;border-bottom:2px solid #30363d;margin-bottom:16px}
-.tab-btn{
-  padding:10px 20px;background:none;border:none;color:#8b949e;
-  cursor:pointer;font-size:0.9em;font-weight:500;transition:.2s;
-  border-bottom:2px solid transparent;margin-bottom:-2px;
-}
-.tab-btn:hover{color:#c9d1d9}
-.tab-btn.active{color:#58a6ff;border-bottom-color:#58a6ff}
-.tab-panel{display:none}
-.tab-panel.active{display:block}
-
-/* Badge for missing items */
-.requisito-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.7em;font-weight:600}
-.requisito-badge.ok{background:#23863633;color:#7ee787}
-.requisito-badge.falta{background:#da363333;color:#f85149}
-.requisito-badge.pendiente{background:#d2991d33;color:#d2991d}
-
-@media(max-width:768px){
-  .dash-grid{grid-template-columns:1fr;padding:12px}
-  .dash-header{flex-direction:column;align-items:flex-start}
-  .section-box{padding:12px}
-  .form-inline{flex-direction:column}
-}
+  .card { background: #1a1a2e; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
+  .btn { border-radius: 6px; padding: 10px 18px; font-weight: bold; cursor: pointer; border: none; }
+  .btn-primary { background: #4c51bf; color: white; }
+  .btn-danger { background: #c53030; color: white; }
+  .input { background: #2d3748; border: 1px solid #4a5568; color: white; padding: 8px 12px; border-radius: 5px; width: 100%; }
+  .tab { padding: 10px 20px; background: #2d3748; cursor: pointer; border-radius: 8px 8px 0 0; }
+  .tab.active { background: #1a1a2e; color: #7f9cf5; }
+  .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+  .badge-success { background: #38a169; color: white; }
+  .badge-warning { background: #d69e2e; color: white; }
+  .badge-danger { background: #e53e3e; color: white; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 12px 8px; border-bottom: 1px solid #4a5568; color: #a0aec0; }
+  td { padding: 10px 8px; border-bottom: 1px solid #2d3748; }
+  tr:hover { background: #2d3748; }
 </style>
 </head>
-<body>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
-
-<!-- ========== LOGIN SCREEN ========== -->
-<div id="login-screen">
-  <div class="login-box">
-    <h1>ROXYMASTER</h1>
-    <div class="sub">v6.3 — Portal de Control</div>
-
-    <div id="login-form">
-      <div class="form-group">
-        <label>Usuario / Email</label>
-        <input type="text" id="login-email" placeholder="PCMASTER" autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label>Contraseña</label>
-        <div class="input-wrap">
-          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="off">
-          <button class="pwd-toggle" onclick="togglePwd('login-pass', this)" title="Ver contraseña">👁</button>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-block" onclick="doLogin()">Iniciar Sesión</button>
-      <div class="error-msg" id="login-error"></div>
-      <div class="toggle-link">
-        ¿No tienes cuenta? <a onclick="showRegister()">Registrarse</a>
-      </div>
-    </div>
-
-    <div id="register-form" style="display:none">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="text" id="reg-email" placeholder="tu@email.com">
-      </div>
-      <div class="form-group">
-        <label>Contraseña</label>
-        <div class="input-wrap">
-          <input type="password" id="reg-pass" placeholder="••••••••">
-          <button class="pwd-toggle" onclick="togglePwd('reg-pass', this)" title="Ver contraseña">👁</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Repetir Contraseña</label>
-        <div class="input-wrap">
-          <input type="password" id="reg-pass2" placeholder="••••••••">
-          <button class="pwd-toggle" onclick="togglePwd('reg-pass2', this)" title="Ver contraseña">👁</button>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-block" onclick="doRegister()">Crear Cuenta</button>
-      <div class="error-msg" id="reg-error"></div>
-      <div class="success-msg" id="reg-success"></div>
-      <div class="toggle-link">
-        ¿Ya tienes cuenta? <a onclick="showLogin()">Iniciar Sesión</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ========== DASHBOARD SCREEN ========== -->
-<div id="dashboard-screen">
-  <div class="dash-header">
-    <h1>ROXYMASTER v6.3</h1>
-    <div class="user-info">
-      Sesión: <span id="dash-user"></span> | 
-      Rol: <span id="dash-rol"></span>
-    </div>
-    <button onclick="doLogout()">Cerrar Sesión</button>
-  </div>
-
-  <!-- KPIs -->
-  <div class="dash-grid" id="kpi-grid"></div>
-
-  <!-- Switch SOLO MÍ / CONECTADO (solo usuario) -->
-  <div id="switch-section" class="section-box" style="display:none">
-    <div class="card" style="display:inline-block">
-      <h3>Modo de Operación</h3>
-      <div class="switch-container">
-        <span style="color:#f85149">SOLO MÍ</span>
-        <label class="switch">
-          <input type="checkbox" id="mode-switch" onchange="toggleMode()" checked>
-          <span class="slider"></span>
-        </label>
-        <span style="color:#7ee787">CONECTADO</span>
-      </div>
-      <div style="margin-top:8px">
-        Modo actual: <span class="mode-badge connected" id="mode-badge">CONECTADO</span>
-      </div>
-      <div style="margin-top:12px;color:#8b949e;font-size:0.8em">
-        CONECTADO: Tus perfiles trabajan para PCMASTER. Ganas tokens.<br>
-        SOLO MÍ: Usas tus perfiles personalmente. No ganas tokens.
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== ORQUESTACIÓN VISUAL (admin) ========== -->
-  <div id="orquestacion-section" class="section-box" style="display:none">
-    <h2>🎯 Orquestación</h2>
+<body class="bg-gray-900 text-white font-sans">
+<div class="container mx-auto p-4">
+  <!-- Login / Register -->
+  <div id="auth-screen" class="max-w-md mx-auto mt-20">
     <div class="card">
-      <!-- Tabs -->
-      <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('tab-asignar', this)">Asignar URL</button>
-        <button class="tab-btn" onclick="switchTab('tab-comentarios', this)">Comentarios JARVIS</button>
-        <button class="tab-btn" onclick="switchTab('tab-detener', this)">Detener / Gestionar</button>
-      </div>
-
-      <!-- TAB: Asignar URL -->
-      <div class="tab-panel active" id="tab-asignar">
-        <div class="form-inline">
-          <div class="form-group">
-            <label>N° Perfiles</label>
-            <input type="number" id="cmd-cant" value="2" min="1" max="100" style="width:80px">
-          </div>
-          <div class="form-group" style="flex:3">
-            <label>URL</label>
-            <input type="text" id="cmd-url" placeholder="https://kick.com/streamer">
-          </div>
-          <div class="form-group">
-            <label>Duración (min)</label>
-            <input type="number" id="cmd-dur" value="20" min="1" max="1440" style="width:80px">
-          </div>
-          <button class="btn btn-primary" onclick="cmdAsignar()">▶ ASIGNAR</button>
+      <h2 class="text-2xl font-bold mb-5 text-center">wafabot pcbot</h2>
+      <div id="login-form">
+        <input type="email" id="login-email" placeholder="email" class="input mb-3" value="test@roxymaster.com">
+        <div class="relative mb-3">
+          <input type="password" id="login-password" placeholder="contraseña" class="input">
+          <button onclick="togglePassword('login-password')" class="absolute right-2 top-2 text-gray-400">👁</button>
         </div>
+        <button onclick="login()" class="btn btn-primary w-full mb-2">iniciar sesión</button>
+        <p class="text-center text-sm"><a href="#" onclick="showRegister()" class="text-blue-400">¿no tienes cuenta? regístrate</a></p>
+        <p id="login-error" class="text-red-500 text-sm mt-2 hidden">error</p>
       </div>
-
-      <!-- TAB: Comentarios JARVIS -->
-      <div class="tab-panel" id="tab-comentarios">
-        <div class="form-inline">
-          <div class="form-group" style="flex:3">
-            <label>URL</label>
-            <input type="text" id="cmd-com-url" placeholder="https://kick.com/streamer">
-          </div>
-          <div class="form-group">
-            <label>Nivel</label>
-            <select id="cmd-com-nivel">
-              <option value="bajo">Bajo</option>
-              <option value="medio" selected>Medio</option>
-              <option value="alto">Alto</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" onclick="cmdComentariosActivar()">▶ ACTIVAR</button>
-          <button class="btn btn-danger" onclick="cmdComentariosDesactivar()">■ DESACTIVAR</button>
+      <div id="register-form" class="hidden">
+        <input type="email" id="reg-email" placeholder="email" class="input mb-3">
+        <div class="relative mb-3">
+          <input type="password" id="reg-password" placeholder="contraseña" class="input">
+          <button onclick="togglePassword('reg-password')" class="absolute right-2 top-2 text-gray-400">👁</button>
         </div>
-      </div>
-
-      <!-- TAB: Detener -->
-      <div class="tab-panel" id="tab-detener">
-        <div class="form-inline">
-          <div class="form-group" style="flex:3">
-            <label>URL a Detener</label>
-            <input type="text" id="cmd-det-url" placeholder="https://kick.com/streamer">
-          </div>
-          <button class="btn btn-danger" onclick="cmdDetener()">■ DETENER</button>
-        </div>
-        <div style="margin-top:8px">
-          <button class="btn btn-warn btn-sm" onclick="cmdReiniciar()">🔄 Reiniciar PCBOT</button>
-        </div>
-      </div>
-
-      <div id="cmd-result" style="margin-top:10px;font-family:Consolas,monospace;font-size:0.85em;white-space:pre-wrap;min-height:20px"></div>
-    </div>
-  </div>
-
-  <!-- ========== REGISTRAR MIS PERFILES (usuario) ========== -->
-  <div id="registrar-section" class="section-box" style="display:none">
-    <h2>🔍 Mis Perfiles en RoxyBrowser</h2>
-    <div class="card">
-      <div id="perfiles-detectados-container">
-        <p style="color:#8b949e">Escaneando perfiles locales...</p>
-      </div>
-      <button class="btn btn-primary" id="btn-registrar-perfiles" onclick="registrarMisPerfiles()" style="margin-top:12px;display:none">
-        📤 Registrar Perfiles en PCMASTER
-      </button>
-      <div id="registrar-result" style="margin-top:8px;font-size:0.85em"></div>
-    </div>
-    <div style="font-size:0.75em;color:#8b949e;margin-top:8px">
-      ⚠️ Asegúrate de tener RoxyBrowser abierto con perfiles iniciados antes de registrar.
-    </div>
-  </div>
-
-  <!-- ========== MARKETPLACE P2P ========== -->
-  <div id="marketplace-section" class="section-box">
-    <h2>💱 Marketplace P2P</h2>
-
-    <!-- Mi Billetera -->
-    <div class="card" style="margin-bottom:16px">
-      <h3>💰 Mi Billetera</h3>
-      <div class="stat-row"><span>Total KBT:</span><span class="val" id="wallet-total">0</span></div>
-      <div class="stat-row"><span>🔥 Quemables (ganados):</span><span class="val warn" id="wallet-quemables">0</span></div>
-      <div class="stat-row"><span>💎 Comprados (no queman):</span><span class="val" id="wallet-comprados">0</span></div>
-    </div>
-
-    <!-- Tabs Marketplace -->
-    <div class="card">
-      <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('mp-ofertas', this)">🏷️ Ofertas de Venta</button>
-        <button class="tab-btn" onclick="switchTab('mp-vender', this)">💰 Poner en Venta</button>
-        <button class="tab-btn" onclick="switchTab('mp-historial', this)">📜 Mi Historial</button>
-      </div>
-
-      <!-- Ofertas -->
-      <div class="tab-panel active" id="mp-ofertas">
-        <div class="table-wrap" style="padding:0">
-          <table><thead><tr>
-            <th>Vendedor</th><th>Cantidad KBT</th><th>Precio c/u</th><th>Total</th><th>Acción</th>
-          </tr></thead>
-          <tbody id="mp-ofertas-tbody">
-            <tr><td colspan="5" style="color:#8b949e;text-align:center">Cargando ofertas...</td></tr>
-          </tbody></table>
-        </div>
-      </div>
-
-      <!-- Poner en Venta -->
-      <div class="tab-panel" id="mp-vender">
-        <div class="form-inline">
-          <div class="form-group">
-            <label>Tokens KBT a vender</label>
-            <input type="number" id="mp-venta-tokens" value="100" min="1" style="width:120px">
-          </div>
-          <div class="form-group">
-            <label>Precio por KBT (S/)</label>
-            <input type="number" id="mp-venta-precio" value="1.00" min="0.01" step="0.01" style="width:120px">
-          </div>
-          <button class="btn btn-primary" onclick="crearOferta()">▶ PUBLICAR OFERTA</button>
-        </div>
-        <div style="margin-top:8px;font-size:0.75em;color:#8b949e">
-          💡 Comisión del 5% para PCMASTER al concretarse la venta.
-        </div>
-        <div id="mp-venta-result" style="margin-top:8px;font-size:0.85em"></div>
-      </div>
-
-      <!-- Historial -->
-      <div class="tab-panel" id="mp-historial">
-        <div class="table-wrap" style="padding:0">
-          <table><thead><tr>
-            <th>Fecha</th><th>Tipo</th><th>Monto</th><th>Contraparte</th><th>Estado</th>
-          </tr></thead>
-          <tbody id="mp-historial-tbody">
-            <tr><td colspan="5" style="color:#8b949e;text-align:center">Cargando historial...</td></tr>
-          </tbody></table>
-        </div>
+        <button onclick="register()" class="btn btn-primary w-full mb-2">registrarse</button>
+        <p class="text-center text-sm"><a href="#" onclick="showLogin()" class="text-blue-400">¿ya tienes cuenta? inicia sesión</a></p>
+        <p id="reg-error" class="text-red-500 text-sm mt-2 hidden">error</p>
       </div>
     </div>
   </div>
 
-  <!-- ========== ESTADO DE GRANJEROS (admin) ========== -->
-  <div id="granjeros-section" class="section-box" style="display:none">
-    <h2>👥 Estado de Granjeros</h2>
-    <div class="card">
-      <div class="table-wrap" style="padding:0">
-        <table><thead><tr>
-          <th>Usuario</th><th>PC Conectada</th><th>RoxyBrowser</th><th>Perfiles Registrados</th>
-          <th>Última Conexión</th><th>Faltante</th><th>Acción</th>
-        </tr></thead>
-        <tbody id="granjeros-tbody">
-          <tr><td colspan="7" style="color:#8b949e;text-align:center">Cargando...</td></tr>
-        </tbody></table>
+  <!-- Dashboard -->
+  <div id="dashboard-screen" class="hidden">
+    <div class="flex justify-between items-center mb-5">
+      <h1 class="text-3xl font-bold">mi panel</h1>
+      <button onclick="logout()" class="btn btn-danger">cerrar sesión</button>
+    </div>
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="kpi-container"></div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-700 mb-5">
+      <div class="tab active" onclick="switchTab('tab-orquestar', this)">orquestar</div>
+      <div class="tab" onclick="switchTab('tab-marketplace', this)">marketplace</div>
+      <div class="tab" onclick="switchTab('tab-referidos', this)">referidos</div>
+      <div class="tab" onclick="switchTab('tab-mispcs', this)">mis pcs</div>
+      <div class="tab" onclick="switchTab('tab-guia', this)">guía</div>
+    </div>
+
+    <!-- Tab: Orquestar (propio) -->
+    <div id="tab-orquestar" class="tab-content">
+      <div class="card">
+        <h3 class="text-xl mb-3">enviar orden</h3>
+        <input id="orq-url" placeholder="url del stream" class="input mb-3">
+        <div class="grid grid-cols-2 gap-4 mb-3">
+          <input type="number" id="orq-cantidad" placeholder="perfiles" class="input" value="1">
+          <input type="number" id="orq-duracion" placeholder="minutos" class="input" value="10">
+        </div>
+        <button onclick="enviarMiOrden()" class="btn btn-primary">ejecutar (gastas tus kbt)</button>
+        <p id="orq-result" class="mt-2 text-sm"></p>
       </div>
     </div>
-  </div>
 
-  <!-- Tabla de perfiles -->
-  <div class="section-box">
-    <h2>📋 Perfiles</h2>
-  </div>
-  <div class="table-wrap" id="profiles-table-wrap">
-    <table id="profiles-table">
-      <thead><tr>
-        <th>Estado</th><th>Nombre</th><th>URL Actual</th>
-        <th>Tiempo Conectado</th><th>Timer 62min</th>
-        <th>Tokens Hoy</th><th>PCBOT</th>
-      </tr></thead>
-      <tbody id="profiles-tbody"></tbody>
-    </table>
-  </div>
+    <!-- Tab: Marketplace -->
+    <div id="tab-marketplace" class="tab-content hidden">
+      <div class="card">
+        <h3 class="text-xl mb-3">mis tokens</h3>
+        <p>total: <span id="mp-total" class="font-bold text-green-400">0</span> kbt</p>
+        <p>quemables: <span id="mp-quemables" class="text-yellow-400">0</span> | comprados: <span id="mp-comprados">0</span></p>
+      </div>
+      <div class="card">
+        <h3 class="text-xl mb-3">ofertas de venta</h3>
+        <table><thead><tr><th>vendedor</th><th>kbt</th><th>precio/u</th><th>total</th><th></th></tr></thead>
+        <tbody id="mp-ofertas-tbody"></tbody></table>
+      </div>
+      <div class="card">
+        <h3 class="text-xl mb-3">poner en venta</h3>
+        <div class="flex gap-3 mb-2">
+          <input type="number" id="mp-venta-tokens" placeholder="kbt" class="input" value="100">
+          <input type="number" id="mp-venta-precio" placeholder="precio unitario (s/)" class="input" value="1.00">
+        </div>
+        <button onclick="crearOferta()" class="btn btn-primary">publicar oferta</button>
+        <p id="mp-venta-result" class="mt-2 text-sm"></p>
+      </div>
+    </div>
 
-  <!-- Tabla de PCBOTs (admin) -->
-  <div id="pcbots-section" class="section-box" style="display:none">
-    <h2>💻 PCBOTS Conectados</h2>
-  </div>
-  <div class="table-wrap" id="pcbots-table-wrap" style="display:none">
-    <table id="pcbots-table">
-      <thead><tr>
-        <th>ID</th><th>IP Local</th><th>IP Tailscale</th><th>Perfiles</th><th>Uptime</th>
-      </tr></thead>
-      <tbody id="pcbots-tbody"></tbody>
-    </table>
-  </div>
+    <!-- Tab: Referidos -->
+    <div id="tab-referidos" class="tab-content hidden">
+      <div class="card">
+        <h3 class="text-xl mb-3">tu red de referidos</h3>
+        <p>fuiste referido por: <span id="ref-referidor" class="font-bold">pcmaster</span></p>
+        <p>tu código: <span id="ref-codigo" class="font-bold"></span></p>
+        <div id="ref-arbol" class="mt-4"></div>
+        <div class="mt-4">
+          <h4 class="font-bold mb-2">cambiar referidor (solo una vez)</h4>
+          <input id="ref-nuevo" placeholder="email del referidor" class="input mb-2">
+          <button onclick="cambiarReferidor()" class="btn btn-primary">cambiar</button>
+          <p id="ref-cambio-msg" class="text-sm mt-1"></p>
+        </div>
+      </div>
+    </div>
 
-  <!-- URLs Activas (admin) -->
-  <div id="urls-section" class="section-box" style="display:none">
-    <h2>🌐 URLs Activas</h2>
-  </div>
-  <div class="table-wrap" id="urls-table-wrap" style="display:none">
-    <table id="urls-table">
-      <thead><tr>
-        <th>URL</th><th>Perfiles</th><th>Tiempo Restante</th><th>Comentarios</th><th>Inicio</th>
-      </tr></thead>
-      <tbody id="urls-tbody"></tbody>
-    </table>
+    <!-- Tab: Mis PCs -->
+    <div id="tab-mispcs" class="tab-content hidden">
+      <div class="card">
+        <h3 class="text-xl mb-3">computadoras registradas</h3>
+        <table><thead><tr><th>nombre pc</th><th>ip</th><th>perfiles</th><th>estado</th></tr></thead>
+        <tbody id="mispcs-tbody"></tbody></table>
+        <p class="mt-4 text-sm">para registrar una nueva pc, ejecuta el instalador en esa computadora.</p>
+      </div>
+    </div>
+
+    <!-- Tab: Guía -->
+    <div id="tab-guia" class="tab-content hidden">
+      <div class="card">
+        <h3 class="text-xl mb-3">guía rápida</h3>
+        <ol class="list-decimal pl-5 space-y-2">
+          <li>abre roxybrowser y activa la api en configuración → api status: on (puerto 50000).</li>
+          <li>copia el api key que aparece.</li>
+          <li>en la carpeta del pcbot, edita config.json y pega el api key en "roxy_api" → "token".</li>
+          <li>crea tus perfiles manualmente dentro de roxybrowser (huella digital única, proxy).</li>
+          <li>inicia los perfiles que quieras usar.</li>
+          <li>ejecuta iniciar_pcbot.bat para conectar con el servidor.</li>
+        </ol>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ============================================================================
-// CONFIGURACION
-// ============================================================================
-const PCMASTER_URLS = [
-  'http://100.111.179.65:8086',   // Tailscale
-  'http://192.168.1.17:8086',     // IP Local
-  'http://127.0.0.1:8086'         // Localhost
-];
-let API_BASE = PCMASTER_URLS[0];
-let authToken = localStorage.getItem('roxymaster_token') || '';
-let currentUser = null;
-let currentRol = '';
-let refreshInterval = null;
+const API = 'http://192.168.1.17:8086/api';
+let token = localStorage.getItem('token') || '';
+let userEmail = localStorage.getItem('email') || '';
 
-// ============================================================================
-// INICIALIZACION
-// ============================================================================
-document.addEventListener('DOMContentLoaded', () => {
-  if (authToken) verifyToken();
-  document.getElementById('login-pass').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
-  document.getElementById('reg-pass2').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doRegister();
-  });
-  const params = new URLSearchParams(location.search);
-  const perfil = params.get('perfil');
-  if (perfil) document.getElementById('login-email').value = perfil;
-});
-
-// ============================================================================
-// UTILIDADES
-// ============================================================================
-function togglePwd(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-  else { inp.type = 'password'; btn.textContent = '👁'; }
-}
-
-async function fetchApi(path, options = {}) {
-  let lastError = null;
-  for (const baseUrl of PCMASTER_URLS) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 4000);
-      const resp = await fetch(`${baseUrl}${path}`, { ...options, signal: ctrl.signal });
-      clearTimeout(timer);
-      if (resp.ok || resp.status < 500) {
-        API_BASE = baseUrl;
-        return resp;
-      }
-    } catch (e) { lastError = e; }
-  }
-  throw lastError || new Error('PCMASTER inaccesible');
-}
-
-function showToast(msg, type = 'success') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = msg;
-  container.appendChild(toast);
-  setTimeout(() => { toast.remove(); }, 4000);
-}
-
-function switchTab(tabId, btn) {
-  const panel = document.getElementById(tabId);
-  if (!panel) return;
-  const parent = panel.parentElement;
-  parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  panel.classList.add('active');
+function togglePassword(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+function showRegister() { document.getElementById('login-form').classList.add('hidden'); document.getElementById('register-form').classList.remove('hidden'); }
+function showLogin() { document.getElementById('register-form').classList.add('hidden'); document.getElementById('login-form').classList.remove('hidden'); }
+function show(el) { document.getElementById(el).classList.remove('hidden'); }
+function hide(el) { document.getElementById(el).classList.add('hidden'); }
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
 }
 
-// ============================================================================
-// AUTENTICACION
-// ============================================================================
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  const errEl = document.getElementById('login-error');
-  
-  if (!email || !pass) {
-    errEl.textContent = 'Completa todos los campos';
-    errEl.style.display = 'block';
-    return;
-  }
-  errEl.style.display = 'none';
-  
-  try {
-    const resp = await fetchApi('/api/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, password: pass})
-    });
-    const data = await resp.json();
-    if (resp.ok && data.token) {
-      authToken = data.token;
-      localStorage.setItem('roxymaster_token', authToken);
-      currentUser = data.usuario || email;
-      currentRol = data.rol || 'usuario';
-      showDashboard();
-    } else {
-      errEl.textContent = data.error || 'Credenciales inválidas';
-      errEl.style.display = 'block';
-    }
-  } catch(e) {
-    errEl.textContent = 'Error de conexión: ' + e.message;
-    errEl.style.display = 'block';
-  }
+async function apiCall(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  return r.json();
 }
 
-async function doRegister() {
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  const errEl = document.getElementById('reg-error');
-  const sucEl = document.getElementById('reg-success');
-  errEl.style.display = 'none';
-  sucEl.style.display = 'none';
-  
-  if (!email || !pass) {
-    errEl.textContent = 'Completa todos los campos';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (pass !== pass2) {
-    errEl.textContent = 'Las contraseñas no coinciden';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (pass.length < 4) {
-    errEl.textContent = 'Contraseña muy corta (mínimo 4 caracteres)';
-    errEl.style.display = 'block';
-    return;
-  }
-  
-  try {
-    const resp = await fetchApi('/api/register', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, password: pass})
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      sucEl.textContent = '¡Cuenta creada! Ya puedes iniciar sesión.';
-      sucEl.style.display = 'block';
-      setTimeout(() => showLogin(), 1500);
-    } else {
-      errEl.textContent = data.error || 'Error al registrar';
-      errEl.style.display = 'block';
-    }
-  } catch(e) {
-    errEl.textContent = 'Error de conexión: ' + e.message;
-    errEl.style.display = 'block';
-  }
-}
-
-async function verifyToken() {
-  try {
-    const resp = await fetchApi('/api/verify', {
-      headers: {'Authorization': `Bearer ${authToken}`}
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      currentUser = data.usuario;
-      currentRol = data.rol;
-      showDashboard();
-    } else {
-      localStorage.removeItem('roxymaster_token');
-      authToken = '';
-    }
-  } catch(e) { /* servidor no disponible */ }
-}
-
-function doLogout() {
-  localStorage.removeItem('roxymaster_token');
-  authToken = '';
-  currentUser = null;
-  currentRol = '';
-  if (refreshInterval) clearInterval(refreshInterval);
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('dashboard-screen').style.display = 'none';
-}
-
-function showLogin() {
-  document.getElementById('login-form').style.display = 'block';
-  document.getElementById('register-form').style.display = 'none';
-  document.getElementById('reg-error').style.display = 'none';
-  document.getElementById('reg-success').style.display = 'none';
-}
-
-function showRegister() {
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('register-form').style.display = 'block';
-  document.getElementById('login-error').style.display = 'none';
-}
-
-// ============================================================================
-// DASHBOARD
-// ============================================================================
-function showDashboard() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('dashboard-screen').style.display = 'block';
-  document.getElementById('dash-user').textContent = currentUser;
-  document.getElementById('dash-rol').textContent = currentRol === 'admin' ? 'SUPER ADMIN' : 'Usuario';
-  
-  const isAdmin = currentRol === 'admin';
-  document.getElementById('switch-section').style.display = isAdmin ? 'none' : 'block';
-  document.getElementById('orquestacion-section').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('registrar-section').style.display = isAdmin ? 'none' : 'block';
-  document.getElementById('granjeros-section').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('marketplace-section').style.display = 'block'; // todos ven marketplace
-  document.getElementById('pcbots-section').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('pcbots-table-wrap').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('urls-section').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('urls-table-wrap').style.display = isAdmin ? 'block' : 'none';
-  
-  refreshDashboard();
-  if (!isAdmin) detectarPerfilesLocales();
-  cargarMarketplace();
-  if (isAdmin) cargarEstadoGranjeros();
-  refreshInterval = setInterval(() => {
-    refreshDashboard();
-    cargarMarketplace();
-    if (isAdmin) cargarEstadoGranjeros();
-  }, 10000);
-}
-
-async function refreshDashboard() {
-  try {
-    const endpoint = currentRol === 'admin' ? '/api/dashboard' : '/api/mi_estado';
-    const headers = {'Authorization': `Bearer ${authToken}`};
-    const resp = await fetchApi(endpoint, {headers});
-    if (!resp.ok) { if (resp.status === 401) { doLogout(); return; } return; }
-    const data = await resp.json();
-    updateUI(data);
-  } catch(e) { /* silencioso */ }
-}
-
-function updateUI(data) {
-  const isAdmin = currentRol === 'admin';
-  const kpiGrid = document.getElementById('kpi-grid');
-  
-  if (isAdmin) {
-    kpiGrid.innerHTML = `
-      <div class="card"><h3>PCBOTs Conectados</h3><div class="stat">${data.pcbots_conectados || 0}</div><div class="stat-label">dispositivos activos</div></div>
-      <div class="card"><h3>Perfiles Totales</h3><div class="stat">${data.perfiles_totales || 0}</div>
-        <div class="stat-row"><span>Activos</span><span class="val">${data.perfiles_activos || 0}</span></div>
-        <div class="stat-row"><span>Inactivos</span><span class="val danger">${data.perfiles_inactivos || 0}</span></div>
-        <div class="stat-row"><span>Colgados</span><span class="val warn">${data.perfiles_colgados || 0}</span></div></div>
-      <div class="card"><h3>JARVIS</h3><div class="stat">${data.jarvis_comentarios || 0}</div><div class="stat-label">comentarios generados</div>
-        <div class="stat-row"><span>Contextos</span><span class="val">${data.jarvis_contextos || 0}</span></div></div>
-      <div class="card"><h3>💰 KBT Tokenomics</h3><div class="stat">${(data.kbt_total || 0).toFixed(2)}</div><div class="stat-label">KBT en Circulación</div>
-        <div class="stat-row"><span>Granjeros</span><span class="val">${data.kbt_granjeros || 0}</span></div>
-        <div class="stat-row"><span>Reserva</span><span class="val">${(data.kbt_reserva || 0).toFixed(2)}</span></div>
-        <div class="stat-row"><span>Precio base</span><span class="val">S/${(data.kbt_precio || 1).toFixed(2)}</span></div></div>
-      <div class="card"><h3>Servidor</h3>
-        <div class="stat-row"><span>IP</span><span class="val">${data.ip_servidor || '?'}</span></div>
-        <div class="stat-row"><span>WS Puerto</span><span class="val">5006</span></div>
-        <div class="stat-row"><span>HTTP Puerto</span><span class="val">8086</span></div></div>
-    `;
+async function login() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const res = await apiCall('POST', '/login', { email, password });
+  if (res.token) {
+    token = res.token; userEmail = email;
+    localStorage.setItem('token', token); localStorage.setItem('email', email);
+    hide('auth-screen'); show('dashboard-screen');
+    loadDashboard();
   } else {
-    const modo = data.modo || 'conectado';
-    const modoClass = modo === 'conectado' ? 'connected' : 'solo';
-    const modoText = modo === 'conectado' ? 'CONECTADO' : 'SOLO MÍ';
-    kpiGrid.innerHTML = `
-      <div class="card"><h3>Tokens</h3><div class="stat">${data.tokens_acumulados || 0}</div><div class="stat-label">acumulados</div>
-        <div class="stat-row"><span>🔥 Quemables</span><span class="val warn">${data.tokens_quemables || 0}</span></div>
-        <div class="stat-row"><span>💎 Comprados</span><span class="val">${data.tokens_comprados || 0}</span></div>
-        <div class="stat-row"><span>Hoy</span><span class="val">+${data.tokens_hoy || 0}</span></div></div>
-      <div class="card"><h3>Modo</h3><span class="mode-badge ${modoClass}">${modoText}</span>
-        <div class="stat-label" style="margin-top:8px">${modo === 'conectado' ? 'Ganando tokens automáticamente' : 'Uso personal - sin ganar tokens'}</div></div>
-      <div class="card"><h3>Mis Perfiles</h3><div class="stat">${data.total_perfiles || 0}</div>
-        <div class="stat-row"><span>Activos</span><span class="val">${data.perfiles_activos || 0}</span></div>
-        <div class="stat-row"><span>Inactivos</span><span class="val danger">${data.perfiles_inactivos || 0}</span></div></div>
-      <div class="card"><h3>Conexión</h3>
-        <div class="stat-row"><span>PCBOT</span><span class="val">${data.pc_name || '?'}</span></div>
-        <div class="stat-row"><span>IP Local</span><span class="val">${data.ip_local || '?'}</span></div>
-        <div class="stat-row"><span>Tailscale</span><span class="val">${data.ip_tailscale || '?'}</span></div>
-        <div class="stat-row"><span>PCMASTER</span><span class="val" style="color:${data.conectado_pcmaster ? '#7ee787' : '#f85149'}">${data.conectado_pcmaster ? 'Conectado' : 'Desconectado'}</span></div></div>
-    `;
-    const switchEl = document.getElementById('mode-switch');
-    if (switchEl) switchEl.checked = modo === 'conectado';
-    const badge = document.getElementById('mode-badge');
-    if (badge) { badge.textContent = modoText; badge.className = 'mode-badge ' + modoClass; }
-    
-    // Actualizar wallet en marketplace
-    document.getElementById('wallet-total').textContent = (data.tokens_acumulados || 0) + ' KBT';
-    document.getElementById('wallet-quemables').textContent = (data.tokens_quemables || 0) + ' KBT';
-    document.getElementById('wallet-comprados').textContent = (data.tokens_comprados || 0) + ' KBT';
-  }
-  
-  // Tabla de perfiles
-  const perfiles = data.perfiles || [];
-  const tbody = document.getElementById('profiles-tbody');
-  tbody.innerHTML = perfiles.map(p => {
-    const estadoClass = p.activo ? 'active' : (p.colgado ? 'hung' : 'inactive');
-    const tiempoSeg = p.tiempo_conectado || 0;
-    const minutos = Math.floor(tiempoSeg / 60);
-    const segundos = Math.floor(tiempoSeg % 60);
-    const tiempoStr = `${minutos}m ${segundos}s`;
-    const progreso62 = Math.min(100, (tiempoSeg / (62*60)) * 100);
-    const tokensGanados = p.tokens_ganados || 0;
-    const pcbot = p.pcbot || 'local';
-    const completado = progreso62 >= 100 ? ' ✅' : '';
-    return `<tr>
-      <td><span class="status-dot ${estadoClass}"></span>${p.estado || 'inactivo'}</td>
-      <td>${esc(p.nombre)}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.url_actual || 'Ninguna')}</td>
-      <td>${tiempoStr}${completado}</td>
-      <td><div style="font-size:0.75em;color:#8b949e">${Math.round(progreso62)}%</div><div class="timer-bar"><div class="timer-fill" style="width:${progreso62}%"></div></div></td>
-      <td>+${tokensGanados}</td>
-      <td style="font-size:0.8em;color:#8b949e">${esc(pcbot)}</td>
-    </tr>`;
-  }).join('');
-  
-  // Verificar 62min cumplidos
-  perfiles.forEach(p => {
-    if ((p.tiempo_conectado || 0) >= 62*60 && !p.notificado_62) {
-      showToast(`🎉 ¡Perfil ${p.nombre} completó 62 minutos! +Tokens acreditados.`, 'success');
-    }
-  });
-  
-  // Tabla de PCBOTs (admin)
-  if (isAdmin) {
-    const pcbots = data.pcbots || [];
-    document.getElementById('pcbots-tbody').innerHTML = pcbots.map(b => `
-      <tr><td>${esc(b.id)}</td><td>${esc(b.ip_local)}</td><td>${esc(b.ip_tailscale)}</td><td>${b.perfiles}</td><td>${esc(b.uptime)}</td></tr>
-    `).join('');
-    const urls = data.urls_activas || [];
-    document.getElementById('urls-tbody').innerHTML = urls.map(u => `
-      <tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.url)}</td><td>${u.perfiles_asignados}</td><td>${u.tiempo_restante} min</td><td>${u.comentarios_activos ? '✅' : '❌'}</td><td>${esc(u.inicio)}</td></tr>
-    `).join('');
+    document.getElementById('login-error').textContent = res.detail || 'error';
+    show('login-error');
   }
 }
 
-// ============================================================================
-// MODO SWITCH (usuario PCBOT)
-// ============================================================================
-async function toggleMode() {
-  const checked = document.getElementById('mode-switch').checked;
-  const modo = checked ? 'conectado' : 'solo_mi';
-  try {
-    const resp = await fetchApi('/api/switch', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({modo})
-    });
-    if (resp.ok) refreshDashboard();
-  } catch(e) { console.error('Error cambiando modo:', e); }
-}
-
-// ============================================================================
-// ORQUESTACIÓN VISUAL (admin)
-// ============================================================================
-async function cmdAsignar() {
-  const cant = document.getElementById('cmd-cant').value;
-  const url = document.getElementById('cmd-url').value.trim();
-  const dur = document.getElementById('cmd-dur').value;
-  const resultEl = document.getElementById('cmd-result');
-  if (!url) { resultEl.textContent = '⚠️ Ingresa una URL'; return; }
-  resultEl.textContent = 'Enviando...';
-  try {
-    const resp = await fetchApi('/api/comando', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({comando: `asignar ${cant} url ${url} duracion ${dur}`})
-    });
-    const data = await resp.json();
-    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
-    refreshDashboard();
-  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
-}
-
-async function cmdComentariosActivar() {
-  const url = document.getElementById('cmd-com-url').value.trim();
-  const nivel = document.getElementById('cmd-com-nivel').value;
-  const resultEl = document.getElementById('cmd-result');
-  if (!url) { resultEl.textContent = '⚠️ Ingresa una URL'; return; }
-  resultEl.textContent = 'Enviando...';
-  try {
-    const resp = await fetchApi('/api/comando', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({comando: `comentarios_activar url ${url} nivel ${nivel}`})
-    });
-    const data = await resp.json();
-    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
-    refreshDashboard();
-  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
-}
-
-async function cmdComentariosDesactivar() {
-  const url = document.getElementById('cmd-com-url').value.trim();
-  const resultEl = document.getElementById('cmd-result');
-  if (!url) { resultEl.textContent = '⚠️ Ingresa una URL'; return; }
-  resultEl.textContent = 'Enviando...';
-  try {
-    const resp = await fetchApi('/api/comando', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({comando: `comentarios_desactivar url ${url}`})
-    });
-    const data = await resp.json();
-    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
-    refreshDashboard();
-  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
-}
-
-async function cmdDetener() {
-  const url = document.getElementById('cmd-det-url').value.trim();
-  const resultEl = document.getElementById('cmd-result');
-  if (!url) { resultEl.textContent = '⚠️ Ingresa una URL'; return; }
-  resultEl.textContent = 'Enviando...';
-  try {
-    const resp = await fetchApi('/api/comando', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({comando: `detener url ${url}`})
-    });
-    const data = await resp.json();
-    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
-    refreshDashboard();
-  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
-}
-
-async function cmdReiniciar() {
-  const resultEl = document.getElementById('cmd-result');
-  resultEl.textContent = 'Enviando...';
-  try {
-    const resp = await fetchApi('/api/comando', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({comando: `reiniciar_pcbot ${currentUser}`})
-    });
-    const data = await resp.json();
-    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
-  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
-}
-
-// ============================================================================
-// REGISTRAR PERFILES (usuario PCBOT)
-// ============================================================================
-async function detectarPerfilesLocales() {
-  const container = document.getElementById('perfiles-detectados-container');
-  const btnRegistrar = document.getElementById('btn-registrar-perfiles');
-  try {
-    const resp = await fetchApi('/api/detectar_perfiles_locales', {
-      headers: {'Authorization': `Bearer ${authToken}`}
-    });
-    if (!resp.ok) { container.innerHTML = '<p style="color:#8b949e">No se pudieron detectar perfiles locales.</p>'; return; }
-    const data = await resp.json();
-    const perfiles = data.perfiles || [];
-    if (perfiles.length === 0) {
-      container.innerHTML = '<p style="color:#d2991d">⚠️ No se detectaron perfiles. Asegúrate de tener RoxyBrowser abierto con perfiles iniciados.</p>';
-      btnRegistrar.style.display = 'none';
-    } else {
-      container.innerHTML = `<p style="color:#7ee787">✅ ${perfiles.length} perfiles detectados:</p>` +
-        perfiles.map(p => `<div style="padding:4px 0;font-size:0.9em">📁 ${esc(p.nombre)} <span style="color:#8b949e">(CDP: ${p.puerto_cdp || '?'})</span></div>`).join('');
-      btnRegistrar.style.display = 'inline-block';
-    }
-  } catch(e) {
-    container.innerHTML = '<p style="color:#f85149">Error al detectar perfiles: ' + e.message + '</p>';
+async function register() {
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  const res = await apiCall('POST', '/register', { email, password });
+  if (res.token) {
+    token = res.token; userEmail = email;
+    localStorage.setItem('token', token); localStorage.setItem('email', email);
+    hide('auth-screen'); show('dashboard-screen');
+    loadDashboard();
+  } else {
+    document.getElementById('reg-error').textContent = res.detail || 'error';
+    show('reg-error');
   }
 }
 
-async function registrarMisPerfiles() {
-  const resultEl = document.getElementById('registrar-result');
-  resultEl.textContent = 'Registrando perfiles...';
-  try {
-    const resp = await fetchApi('/api/registrar_perfiles', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({})
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      resultEl.innerHTML = `<span style="color:#7ee787">✅ ${data.registrados || 0} perfiles registrados con PCMASTER</span>`;
-      showToast(`¡${data.registrados || 0} perfiles registrados exitosamente!`, 'success');
-      refreshDashboard();
-    } else {
-      resultEl.innerHTML = `<span style="color:#f85149">❌ ${data.error || 'Error al registrar'}</span>`;
-    }
-  } catch(e) {
-    resultEl.innerHTML = `<span style="color:#f85149">Error: ${e.message}</span>`;
-  }
+function logout() { localStorage.clear(); token=''; userEmail=''; hide('dashboard-screen'); show('auth-screen'); }
+
+async function loadDashboard() {
+  const d = await apiCall('GET', '/mi_estado');
+  const kpi = document.getElementById('kpi-container');
+  kpi.innerHTML = <div class="card"><h3>tokens</h3><div class="text-3xl font-bold"></div></div>
+    <div class="card"><h3>perfiles</h3><div class="text-3xl font-bold"></div></div>
+    <div class="card"><h3>modo</h3><div class="text-lg"></div></div>
+    <div class="card"><h3>kbt hoy</h3><div class="text-3xl font-bold text-green-400">+</div></div>;
+  document.getElementById('mp-total').textContent = d.tokens_acumulados||0;
+  document.getElementById('mp-quemables').textContent = d.tokens_quemables||0;
+  document.getElementById('mp-comprados').textContent = d.tokens_comprados||0;
+  document.getElementById('ref-codigo').textContent = userEmail;
+  const ref = await apiCall('GET', '/referidos/arbol');
+  document.getElementById('ref-arbol').innerHTML = renderTree(ref, 0);
+  renderMisPCs(); renderOffers();
 }
 
-// ============================================================================
-// MARKETPLACE P2P
-// ============================================================================
-async function cargarMarketplace() {
-  try {
-    const resp = await fetchApi('/api/kbt/ofertas', {
-      headers: {'Authorization': `Bearer ${authToken}`}
-    });
-    if (!resp.ok) return;
-    const data = await resp.json();
-    const ofertas = data.ofertas || [];
-    const tbody = document.getElementById('mp-ofertas-tbody');
-    if (ofertas.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:#8b949e;text-align:center">No hay ofertas activas</td></tr>';
-    } else {
-      tbody.innerHTML = ofertas.map(o => `
-        <tr>
-          <td>${esc(o.vendedor)}</td>
-          <td>${o.cantidad} KBT</td>
-          <td>S/${o.precio_unitario.toFixed(2)}</td>
-          <td>S/${(o.cantidad * o.precio_unitario).toFixed(2)}</td>
-          <td>${o.vendedor === currentUser 
-            ? `<button class="btn btn-danger btn-sm" onclick="cancelarOferta('${o.id}')">Cancelar</button>`
-            : `<button class="btn btn-primary btn-sm" onclick="comprarOferta('${o.id}')">COMPRAR</button>`
-          }</td>
-        </tr>
-      `).join('');
-    }
-    
-    // Historial
-    const histResp = await fetchApi('/api/kbt/mis_transacciones', {
-      headers: {'Authorization': `Bearer ${authToken}`}
-    });
-    if (histResp.ok) {
-      const histData = await histResp.json();
-      const trans = histData.transacciones || [];
-      const histTbody = document.getElementById('mp-historial-tbody');
-      if (trans.length === 0) {
-        histTbody.innerHTML = '<tr><td colspan="5" style="color:#8b949e;text-align:center">Sin transacciones aún</td></tr>';
-      } else {
-        histTbody.innerHTML = trans.map(t => `
-          <tr>
-            <td>${esc(t.fecha)}</td>
-            <td>${t.tipo}</td>
-            <td style="color:${t.monto > 0 ? '#7ee787' : '#f85149'}">${t.monto > 0 ? '+' : ''}${t.monto} KBT</td>
-            <td>${esc(t.contraparte || '-')}</td>
-            <td>${t.estado === 'completado' ? '✅' : '⏳'}</td>
-          </tr>
-        `).join('');
-      }
-    }
-  } catch(e) { /* silencioso */ }
+function renderTree(node, level) {
+  if (!node) return '';
+  let html = <div style="margin-left:px">└  ( kbt)</div>;
+  if (node.hijos) node.hijos.forEach(h => html += renderTree(h, level+1));
+  return html;
+}
+
+async function renderMisPCs() {
+  const res = await apiCall('GET', '/mis_pcs');
+  const tbody = document.getElementById('mispcs-tbody');
+  tbody.innerHTML = (res.pcs||[]).map(p => <tr><td></td><td></td><td></td><td></td></tr>).join('');
+}
+
+async function renderOffers() {
+  const res = await apiCall('GET', '/kbt/ofertas');
+  const tbody = document.getElementById('mp-ofertas-tbody');
+  tbody.innerHTML = (res||[]).map(o => <tr><td></td><td></td><td>s/</td><td>s/</td>
+    <td><button class="btn btn-primary" onclick="comprarOferta('')">comprar</button></td></tr>).join('');
+}
+
+async function enviarMiOrden() {
+  const url = document.getElementById('orq-url').value;
+  const cant = document.getElementById('orq-cantidad').value;
+  const dur = document.getElementById('orq-duracion').value;
+  const res = await apiCall('POST', '/mi_comando', { comando: signar  url  duracion  });
+  document.getElementById('orq-result').textContent = res.resultado || res.detail || 'comando enviado';
 }
 
 async function crearOferta() {
-  const tokens = parseInt(document.getElementById('mp-venta-tokens').value) || 0;
-  const precio = parseFloat(document.getElementById('mp-venta-precio').value) || 0;
-  const resultEl = document.getElementById('mp-venta-result');
-  if (tokens <= 0 || precio <= 0) {
-    resultEl.innerHTML = '<span style="color:#f85149">Ingresa valores válidos</span>';
-    return;
-  }
-  resultEl.textContent = 'Publicando oferta...';
-  try {
-    const resp = await fetchApi('/api/kbt/crear_oferta', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({tokens, precio_unitario: precio})
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      resultEl.innerHTML = '<span style="color:#7ee787">✅ Oferta publicada exitosamente</span>';
-      showToast('Oferta publicada en el marketplace', 'success');
-      cargarMarketplace();
-      refreshDashboard();
-    } else {
-      resultEl.innerHTML = `<span style="color:#f85149">❌ ${data.error || 'Error al publicar'}</span>`;
-    }
-  } catch(e) {
-    resultEl.innerHTML = `<span style="color:#f85149">Error: ${e.message}</span>`;
-  }
+  const tokens = document.getElementById('mp-venta-tokens').value;
+  const precio = document.getElementById('mp-venta-precio').value;
+  const res = await apiCall('POST', '/kbt/crear_oferta', { tokens: parseInt(tokens), precio_soles: parseFloat(precio) });
+  document.getElementById('mp-venta-result').textContent = res.ok ? 'oferta creada' : (res.detail||'error');
+  renderOffers();
 }
 
-async function comprarOferta(ofertaId) {
-  if (!confirm('¿Confirmas la compra de esta oferta? Se aplicará 5% de comisión para PCMASTER.')) return;
-  try {
-    const resp = await fetchApi('/api/kbt/comprar_oferta', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({oferta_id: ofertaId})
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      showToast('✅ Compra realizada! Comisión del 5% aplicada.', 'success');
-      cargarMarketplace();
-      refreshDashboard();
-    } else {
-      showToast('❌ ' + (data.error || 'Error al comprar'), 'error');
-    }
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+async function comprarOferta(id) {
+  const res = await apiCall('POST', '/kbt/comprar_oferta', { oferta_id: id });
+  if (res.ok) { loadDashboard(); renderOffers(); } else alert(res.detail||'error');
 }
 
-async function cancelarOferta(ofertaId) {
-  if (!confirm('¿Cancelar esta oferta?')) return;
-  try {
-    const resp = await fetchApi('/api/kbt/cancelar_oferta', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({oferta_id: ofertaId})
-    });
-    if (resp.ok) {
-      showToast('Oferta cancelada', 'warn');
-      cargarMarketplace();
-    }
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+async function cambiarReferidor() {
+  const nuevo = document.getElementById('ref-nuevo').value;
+  const res = await apiCall('POST', '/cambiar_referidor', { referidor: nuevo });
+  document.getElementById('ref-cambio-msg').textContent = res.ok ? 'cambiado exitosamente' : (res.detail||'error');
+  if (res.ok) loadDashboard();
 }
 
-// ============================================================================
-// ESTADO DE GRANJEROS (admin)
-// ============================================================================
-async function cargarEstadoGranjeros() {
-  try {
-    const resp = await fetchApi('/api/admin/estado_usuarios', {
-      headers: {'Authorization': `Bearer ${authToken}`}
-    });
-    if (!resp.ok) return;
-    const data = await resp.json();
-    const usuarios = data.usuarios || [];
-    const tbody = document.getElementById('granjeros-tbody');
-    tbody.innerHTML = usuarios.map(u => {
-      const pcBadge = u.tiene_pc ? '<span class="requisito-badge ok">✅</span>' : '<span class="requisito-badge falta">❌</span>';
-      const roxyBadge = u.tiene_roxy ? '<span class="requisito-badge ok">✅ Sí</span>' : '<span class="requisito-badge falta">❌ No</span>';
-      const perfilesBadge = u.perfiles_registrados > 0 ? `<span class="requisito-badge ok">✅ ${u.perfiles_registrados}</span>` : '<span class="requisito-badge falta">❌ 0</span>';
-      const faltante = [];
-      if (!u.tiene_pc) faltante.push('PC no conectada');
-      if (!u.tiene_roxy) faltante.push('RoxyBrowser');
-      if (u.perfiles_registrados === 0) faltante.push('Perfiles');
-      const faltanteText = faltante.length > 0 ? faltante.join(', ') : '✅ Completo';
-      const faltanteClass = faltante.length > 0 ? 'pendiente' : 'ok';
-      return `<tr>
-        <td>${esc(u.email)}</td>
-        <td>${pcBadge}</td>
-        <td>${roxyBadge}</td>
-        <td>${perfilesBadge}</td>
-        <td style="font-size:0.85em">${esc(u.ultima_conexion || 'Nunca')}</td>
-        <td><span class="requisito-badge ${faltanteClass}">${faltanteText}</span></td>
-        <td>${faltante.length > 0 ? `<button class="btn btn-warn btn-sm" onclick="enviarRecordatorio('${u.email}')">📩 Recordatorio</button>` : '—'}</td>
-      </tr>`;
-    }).join('');
-  } catch(e) { /* silencioso */ }
-}
-
-async function enviarRecordatorio(email) {
-  try {
-    const resp = await fetchApi('/api/admin/enviar_recordatorio', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
-      body: JSON.stringify({email})
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      showToast(`📩 Recordatorio enviado a ${email}`, 'success');
-    } else {
-      showToast('❌ ' + (data.error || 'Error'), 'error');
-    }
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
-}
-
-// ============================================================================
-// UTILS
-// ============================================================================
-function esc(str) {
-  if (!str) return '';
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+if (token) { hide('auth-screen'); show('dashboard-screen'); loadDashboard(); }
 </script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROXYMASTER v6.2 — PCMASTER Portal</title>
+<title>ROXYMASTER v6.2 â€” PCMASTER Portal</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -118,17 +118,17 @@ tr:hover{background:#1c2128}
 <div id="login-screen">
   <div class="login-box">
     <h1>ROXYMASTER</h1>
-    <div class="sub">v6.2 — PCMASTER Super Admin</div>
+    <div class="sub">v6.2 â€” PCMASTER Super Admin</div>
     <div id="login-form">
       <div class="form-group">
         <label>Usuario / Email</label>
         <input type="text" id="login-email" value="PCMASTER" autocomplete="off">
       </div>
       <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="off">
+        <label>ContraseÃ±a</label>
+        <input type="password" id="login-pass" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="off">
       </div>
-      <button class="btn btn-primary" onclick="doLogin()">Iniciar Sesión</button>
+      <button class="btn btn-primary" onclick="doLogin()">Iniciar SesiÃ³n</button>
       <div class="error-msg" id="login-error"></div>
     </div>
   </div>
@@ -136,9 +136,9 @@ tr:hover{background:#1c2128}
 
 <div id="dashboard-screen">
   <div class="dash-header">
-    <h1>ROXYMASTER v6.2 — PCMASTER</h1>
-    <div class="user-info">Sesión: <span id="dash-user"></span> | Rol: <span id="dash-rol"></span></div>
-    <button onclick="doLogout()">Cerrar Sesión</button>
+    <h1>ROXYMASTER v6.2 â€” PCMASTER</h1>
+    <div class="user-info">SesiÃ³n: <span id="dash-user"></span> | Rol: <span id="dash-rol"></span></div>
+    <button onclick="doLogout()">Cerrar SesiÃ³n</button>
   </div>
   <div class="dash-grid" id="kpi-grid"></div>
 
@@ -192,8 +192,8 @@ async function doLogin() {
       authToken = data.token; localStorage.setItem('roxymaster_token', authToken);
       currentUser = data.usuario || email; currentRol = data.rol || 'usuario';
       showDashboard();
-    } else { errEl.textContent = data.error || 'Credenciales inválidas'; errEl.style.display = 'block'; }
-  } catch(e) { errEl.textContent = 'Error de conexión: ' + e.message; errEl.style.display = 'block'; }
+    } else { errEl.textContent = data.error || 'Credenciales invÃ¡lidas'; errEl.style.display = 'block'; }
+  } catch(e) { errEl.textContent = 'Error de conexiÃ³n: ' + e.message; errEl.style.display = 'block'; }
 }
 
 async function verifyToken() {
@@ -266,7 +266,7 @@ function updateUI(data) {
   document.getElementById('urls-tbody').innerHTML = urls.map(u => `
     <tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.url)}</td>
     <td>${u.perfiles_asignados}</td><td>${u.tiempo_restante} min</td>
-    <td>${u.comentarios_activos ? '✅' : '❌'}</td><td>${esc(u.inicio)}</td></tr>`).join('');
+    <td>${u.comentarios_activos ? 'âœ…' : 'âŒ'}</td><td>${esc(u.inicio)}</td></tr>`).join('');
 }
 
 async function sendCommand() {
