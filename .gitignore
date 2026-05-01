@@ -13,3 +13,12 @@
 # Datos de configuración privados
 pcbot/config.json
 pcmaster/config.json
+
+# Archivos con información personal
+pcbot_ssh_key.txt
+LEEME1ERRAR.txt
+
+# Carpetas obsoletas
+backup/
+obsoletos/
+innecesarios/
