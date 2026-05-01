@@ -1,264 +1,327 @@
-import sqlite3, os, time, json
+# tokenomics.py - motor economico kbt completo roxymaster v8.3
+import sqlite3, os, time, math, json, hashlib
+from datetime import datetime
 from config import DATA_DIR
 DB_PATH = os.path.join(DATA_DIR, "roxymaster.db")
 
-# ==================== funciones wrapper para server.py v8.3 ====================
-
-def init_tokenomics_db():
-    """inicializa las tablas de tokenomics."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript('''
-        create table if not exists wallets (
-            id integer primary key autoincrement,
-            wallet text unique not null,
-            usuario_id integer not null,
-            saldo_tokens real default 0,
-            tokens_minados real default 0,
-            tokens_retirados real default 0,
-            fecha_creacion text default (datetime('now','localtime')),
-            ultima_actividad text default (datetime('now','localtime')),
-            foreign key (usuario_id) references usuarios(id)
-        );
-        create table if not exists transacciones (
-            id integer primary key autoincrement,
-            wallet_origen text,
-            wallet_destino text,
-            cantidad real not null,
-            tipo text not null,
-            concepto text,
-            fecha text default (datetime('now','localtime')),
-            orden_id integer,
-            foreign key (orden_id) references ordenes_marketplace(id)
-        );
-        create table if not exists transacciones_kbt (
-            id integer primary key autoincrement,
-            wallet text not null,
-            cantidad real not null,
-            tipo text not null,
-            concepto text,
-            fecha text default (datetime('now','localtime'))
-        );
-        create table if not exists retiros (
-            id integer primary key autoincrement,
-            wallet text not null,
-            cantidad real not null,
-            estado text default 'pendiente',
-            fecha_solicitud text default (datetime('now','localtime')),
-            fecha_procesado text,
-            metodo text,
-            datos_pago text
-        );
-        create table if not exists fondo_recoleccion (
-            id integer primary key autoincrement,
-            wallet text not null,
-            cantidad real not null,
-            fecha text default (datetime('now','localtime')),
-            concepto text
-        );
-    ''')
-    conn.commit()
-    conn.close()
-
-def obtener_balance(uid):
-    """obtiene el balance de tokens de un usuario por su id."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    row = conn.execute(
-        "select coalesce(w.saldo_tokens, 0) as saldo from usuarios u left join wallets w on w.usuario_id = u.id where u.id = ?",
-        (uid,)
-    ).fetchone()
-    conn.close()
-    return row["saldo"] if row else 0
-
-def obtener_wallet_por_usuario(uid):
-    """obtiene el wallet del usuario por su id."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    row = conn.execute("select * from wallets where usuario_id = ?", (uid,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def obtener_wallet_por_email(email):
-    """obtiene el wallet del usuario por su email."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    row = conn.execute(
-        "select w.* from wallets w join usuarios u on w.usuario_id = u.id where lower(u.email) = lower(?)",
-        (email.strip(),)
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def acreditar_tokens(uid, cantidad, concepto="acreditacion_manual"):
-    """acredita tokens al wallet del usuario."""
-    conn = sqlite3.connect(DB_PATH)
-    wallet = conn.execute("select wallet, saldo_tokens from wallets where usuario_id = ?", (uid,)).fetchone()
-    if not wallet:
-        conn.close()
-        return {"ok": False, "error": "wallet no encontrada"}
-    wallet_id, saldo = wallet
-    nuevo_saldo = saldo + cantidad
-    conn.execute("update wallets set saldo_tokens = ?, ultima_actividad = datetime('now','localtime') where usuario_id = ?",
-                 (nuevo_saldo, uid))
-    conn.execute("insert into transacciones (wallet_destino, monto, tipo, concepto) values (?,?,?,?)",
-                 (wallet_id, cantidad, "credito", concepto))
-    conn.commit()
-    conn.close()
-    return {"ok": True, "saldo": nuevo_saldo, "cantidad": cantidad}
-
-def debitar_tokens(uid, cantidad, concepto="debito_manual"):
-    """debita tokens del wallet del usuario."""
-    conn = sqlite3.connect(DB_PATH)
-    wallet = conn.execute("select wallet, saldo_tokens from wallets where usuario_id = ?", (uid,)).fetchone()
-    if not wallet:
-        conn.close()
-        return {"ok": False, "error": "wallet no encontrada"}
-    wallet_id, saldo = wallet
-    if saldo < cantidad:
-        conn.close()
-        return {"ok": False, "error": "saldo insuficiente"}
-    nuevo_saldo = saldo - cantidad
-    conn.execute("update wallets set saldo_tokens = ?, ultima_actividad = datetime('now','localtime') where usuario_id = ?",
-                 (nuevo_saldo, uid))
-    conn.execute("insert into transacciones (wallet_origen, monto, tipo, concepto) values (?,?,?,?)",
-                 (wallet_id, cantidad, "debito", concepto))
-    conn.commit()
-    conn.close()
-    return {"ok": True, "saldo": nuevo_saldo, "cantidad": cantidad}
-
-def crear_wallet(uid, wallet_id=None):
-    """crea un wallet para un usuario."""
-    if not wallet_id:
-        import secrets
-        wallet_id = f"wallet_{uid}_{secrets.token_hex(4)}"
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        conn.execute("insert or ignore into wallets (wallet, usuario_id, saldo_tokens) values (?,?,0)",
-                     (wallet_id, uid))
-        conn.commit()
-        conn.execute("update usuarios set wallet = ? where id = ?", (wallet_id, uid))
-        conn.commit()
-        conn.close()
-        return {"ok": True, "wallet": wallet_id}
-    except Exception as e:
-        conn.close()
-        return {"ok": False, "error": str(e)}
-
-def registrar_mineria(uid, tokens, horas, nivel_uptime="bronce"):
-    """registra mineria de tokens."""
-    wallet = obtener_wallet_por_usuario(uid)
-    if not wallet:
-        return {"ok": False, "error": "wallet no encontrada"}
-    acreditar_tokens(uid, tokens, f"mineria_{horas}h_{nivel_uptime}")
-    return {"ok": True, "tokens": tokens, "horas": horas, "nivel": nivel_uptime}
-
-def obtener_historial_token(uid, limite=50):
-    """obtiene el historial de transacciones de un usuario."""
-    wallet = obtener_wallet_por_usuario(uid)
-    if not wallet:
-        return []
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        "select * from transacciones where wallet_origen = ? or wallet_destino = ? order by fecha desc limit ?",
-        (wallet["wallet"], wallet["wallet"], limite)
-    ).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_estadisticas_kbt():
-    """obtiene estadisticas globales del token kbt."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    total_emitido = conn.execute("select coalesce(sum(cantidad),0) from transacciones where tipo='credito'").fetchone()[0]
-    total_quemado = conn.execute("select coalesce(sum(cantidad),0) from transacciones where tipo='debito'").fetchone()[0]
-    total_usuarios = conn.execute("select count(*) from usuarios where activo=1").fetchone()[0]
-    total_wallets = conn.execute("select count(*) from wallets where saldo_tokens > 0").fetchone()[0]
-    total_retiros = conn.execute("select coalesce(sum(cantidad),0) from retiros where estado='completado'").fetchone()[0]
-    conn.close()
-    return {
-        "total_emitido": total_emitido,
-        "total_quemado": total_quemado,
-        "total_usuarios": total_usuarios,
-        "total_wallets_activos": total_wallets,
-        "total_retirado": total_retiros,
-        "circulacion_efectiva": max(0, total_emitido - total_quemado - (total_retiros or 0)),
-    }
-
-def calcular_recompensa_mineria(uid, horas, nivel_uptime="bronce", es_happy_hour=False):
-    """calcula y acredita recompensa de mineria."""
-    multiplicadores = {"bronce": 1.0, "plata": 1.2, "oro": 1.5, "diamante": 2.0}
-    mult = multiplicadores.get(nivel_uptime.lower(), 1.0)
-    if es_happy_hour:
-        mult *= 2
-    tokens = horas * 10 * mult
-    resultado = acreditar_tokens(uid, tokens, f"mineria_{horas}h_{nivel_uptime}{'_hh' if es_happy_hour else ''}")
-    resultado["horas"] = horas
-    resultado["nivel"] = nivel_uptime
-    resultado["happy_hour"] = es_happy_hour
-    return resultado
-
-def ejecutar_quema_inactividad():
-    """ejecuta quema de tokens por inactividad."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    # quemar 1% de saldo a wallets inactivas por mas de 7 dias
-    rows = conn.execute(
-        "select w.usuario_id, w.wallet, w.saldo_tokens from wallets w where w.ultima_actividad < datetime('now','localtime','-7 days') and w.saldo_tokens > 0"
-    ).fetchall()
-    total_quemado = 0
-    for row in rows:
-        quema = max(1, row["saldo_tokens"] * 0.01)
-        conn.execute("update wallets set saldo_tokens = saldo_tokens - ? where wallet = ?", (quema, row["wallet"]))
-        conn.execute("insert into transacciones (wallet_origen, monto, tipo, concepto) values (?,?,?,?)",
-                     (row["wallet"], quema, "quema", "quema_por_inactividad"))
-        total_quemado += quema
-    conn.commit()
-    conn.close()
-    return {"ok": True, "quemado": total_quemado, "wallets_afectadas": len(rows)}
-
-def procesar_retiro(uid, cantidad):
-    """procesa una solicitud de retiro."""
-    wallet = obtener_wallet_por_usuario(uid)
-    if not wallet:
-        return {"ok": False, "error": "wallet no encontrada"}
-    if wallet["saldo_tokens"] < cantidad:
-        return {"ok": False, "error": "saldo insuficiente"}
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("insert into retiros (wallet, cantidad, estado) values (?,?,?)",
-                 (wallet["wallet"], cantidad, "pendiente"))
-    conn.commit()
-    conn.close()
-    return {"ok": True, "mensaje": f"retiro de {cantidad} kbt solicitado"}
-
-# ==================== clase TokenomicsManager para api_endpoints.py ====================
-
-class TokenomicsManager:
+class Tokenomics:
     def __init__(self):
-        init_tokenomics_db()
+        self.conn = sqlite3.connect(DB_PATH)
+        self.conn.row_factory = sqlite3.Row
+        self.params = {
+            "K": 20.0, "FX": 3.70, "P_token": 1.00, "H": 720, "E": 0.005,
+            "beta": 0.0, "G": 9.0, "HH_mult": 2.0, "alfa_nuevo": 0.5, "gamma": 0.5,
+            "comision_retiro_0_30": 0.33, "comision_retiro_31_60": 0.25,
+            "comision_retiro_61_90": 0.15, "comision_retiro_90_plus": 0.0,
+            "comision_marketplace": 0.15, "comision_referido": 0.10,
+            "tasa_recoleccion_mensual": 5.0,
+            "niveles_streamer": {"0": 9.0, "1": 10.0, "2": 11.0, "3": 12.0, "4": 14.0, "5": 16.0},
+            "w_bronce": 1.1, "w_plata": 1.2, "w_oro": 1.3,
+            "uptime_bronce": 0.90, "uptime_plata": 0.95, "uptime_oro": 0.99,
+            "happy_hour_activo": False,
+            "dias_penalizacion_inactividad": 11,
+            "ventana_penalizacion_dias": 7,
+            "minutos_validacion": 62,
+            "limite_retiro_mensual_usd": 999.0,
+            "fecha_inicio_sistema": datetime.now().isoformat()
+        }
+        self._cargar_params()
 
-    def obtener_balance(self, email):
-        wallet = obtener_wallet_por_email(email)
-        if wallet:
-            return wallet["saldo_tokens"]
-        return 0
+    def _cargar_params(self):
+        """carga parametros desde la base de datos."""
+        try:
+            rows = self.conn.execute("select clave, valor from variables_globales").fetchall()
+            for row in rows:
+                try:
+                    self.params[row["clave"]] = json.loads(row["valor"])
+                except (json.JSONDecodeError, TypeError):
+                    self.params[row["clave"]] = row["valor"]
+        except:
+            pass
 
-    def recargar(self, email, cantidad, concepto="recarga_manual"):
-        wallet = obtener_wallet_por_email(email)
-        if not wallet:
-            conn = sqlite3.connect(DB_PATH)
-            conn.row_factory = sqlite3.Row
-            user = conn.execute("select id from usuarios where lower(email)=lower(?)", (email,)).fetchone()
-            conn.close()
-            if user:
-                crear_wallet(user["id"])
-                wallet = obtener_wallet_por_email(email)
-            else:
-                return {"ok": False, "error": "usuario no encontrado"}
-        return acreditar_tokens(wallet["usuario_id"], cantidad, concepto)
+    def _guardar_params(self):
+        """guarda parametros en la base de datos."""
+        for k, v in self.params.items():
+            val = json.dumps(v) if not isinstance(v, str) else v
+            self.conn.execute("insert or replace into variables_globales (clave, valor) values (?,?)", (k, val))
+        self.conn.commit()
 
-    def estadisticas(self):
-        return obtener_estadisticas_kbt()
+    # ========== FUNCIONES DE BALANCE Y WALLET ==========
+    def obtener_balance(self, uid):
+        """retorna el balance kbt de un usuario."""
+        row = self.conn.execute("select balance from wallets where uid=?", (uid,)).fetchone()
+        return row["balance"] if row else 0
 
-    def kbt_stats(self):
-        return obtener_estadisticas_kbt()
+    def get_saldo(self, email_or_uid):
+        """alias de obtener_balance que acepta email o uid."""
+        if isinstance(email_or_uid, str) and "@" in email_or_uid:
+            row = self.conn.execute("select uid from usuarios where lower(email)=lower(?)", (email_or_uid,)).fetchone()
+            if row:
+                return self.obtener_balance(row["uid"])
+            return 0
+        return self.obtener_balance(email_or_uid)
+
+    def acreditar_tokens(self, uid, cantidad, concepto="emision"):
+        """acredita tokens a un usuario."""
+        self.conn.execute("update wallets set balance = balance + ?, minado_total = minado_total + ? where uid=?",
+                          (cantidad, cantidad, uid))
+        self.conn.execute("insert into transacciones (uid_destino, tipo, monto, concepto) values (?,?,?,?)",
+                          (uid, "acreditado", cantidad, concepto))
+        self.conn.commit()
+
+    def debitar_tokens(self, uid, cantidad, concepto="debito"):
+        """debita tokens de un usuario."""
+        balance = self.obtener_balance(uid)
+        if balance < cantidad:
+            return {"ok": False, "error": "saldo insuficiente"}
+        self.conn.execute("update wallets set balance = balance - ? where uid=?", (cantidad, uid))
+        self.conn.execute("insert into transacciones (uid_origen, tipo, monto, concepto) values (?,?,?,?)",
+                          (uid, "debitado", -cantidad, concepto))
+        self.conn.commit()
+        return {"ok": True, "balance": self.obtener_balance(uid)}
+
+    # ========== RECOLECCION (en lugar de quema) ==========
+    def recolectar_tokens(self, uid, cantidad, motivo="recoleccion_inactividad"):
+        """mueve tokens del usuario al fondo de reserva."""
+        balance = self.obtener_balance(uid)
+        if balance < cantidad:
+            return {"ok": False, "error": "saldo insuficiente"}
+        self.conn.execute("update wallets set balance = balance - ?, recolectado_total = recolectado_total + ? where uid=?",
+                          (cantidad, cantidad, uid))
+        self.conn.execute("update reserva set tokens = tokens + ? where id=1", (cantidad,))
+        self.conn.execute("insert into transacciones (uid_origen, tipo, monto, concepto) values (?,?,?,?)",
+                          (uid, "recolectado", -cantidad, motivo))
+        self.conn.commit()
+        return {"ok": True, "recolectado": cantidad}
+
+    def reutilizar_tokens_reserva(self, cantidad, motivo="reinyeccion_sistema"):
+        """toma tokens de la reserva y los acredita al admin para redistribuir."""
+        reserva = self.conn.execute("select tokens from reserva where id=1").fetchone()
+        if not reserva or reserva["tokens"] < cantidad:
+            return {"ok": False, "error": "reserva insuficiente"}
+        self.conn.execute("update reserva set tokens = tokens - ? where id=1", (cantidad,))
+        admin = self.conn.execute("select uid from usuarios where email='pcmaster'").fetchone()
+        if admin:
+            self.acreditar_tokens(admin["uid"], cantidad, motivo)
+        self.conn.commit()
+        return {"ok": True, "reutilizados": cantidad}
+
+    def ejecutar_recoleccion_inactividad(self):
+        """ejecuta recoleccion mensual por inactividad en lugar de quema."""
+        total_recolectado = 0
+        rows = self.conn.execute("select uid, balance from wallets where balance > 0").fetchall()
+        for row in rows:
+            cantidad = row["balance"] * (self.params["tasa_recoleccion_mensual"] / 100)
+            if cantidad > 0:
+                result = self.recolectar_tokens(row["uid"], cantidad)
+                if result["ok"]:
+                    total_recolectado += cantidad
+        return {"ok": True, "total_recolectado": round(total_recolectado, 4)}
+
+    ejecutar_quema_inactividad = ejecutar_recoleccion_inactividad
+
+    # ========== WALLET ==========
+    def obtener_wallet_por_usuario(self, uid):
+        """retorna la wallet de un usuario."""
+        row = self.conn.execute("select id, balance from wallets where uid=?", (uid,)).fetchone()
+        return {"id": row["id"], "balance": row["balance"]} if row else None
+
+    def crear_wallet(self, uid):
+        """crea una wallet para un usuario nuevo."""
+        self.conn.execute("insert or ignore into wallets (uid, balance) values (?, 0)", (uid,))
+        self.conn.commit()
+
+    # ========== HISTORIAL Y ESTADISTICAS ==========
+    def obtener_historial_token(self, uid, limite=50):
+        """retorna el historial de transacciones de un usuario."""
+        rows = self.conn.execute(
+            "select * from transacciones where uid_origen=? or uid_destino=? order by fecha desc limit ?",
+            (uid, uid, limite)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def obtener_estadisticas_kbt(self):
+        """retorna estadisticas globales del ecosistema kbt."""
+        total_circulante = self.conn.execute("select coalesce(sum(balance),0) from wallets").fetchone()[0]
+        total_minado = self.conn.execute("select coalesce(sum(minado_total),0) from wallets").fetchone()[0]
+        reserva = self.conn.execute("select tokens, soles from reserva where id=1").fetchone()
+        total_usuarios = self.conn.execute("select count(*) from usuarios where rol!='admin'").fetchone()[0]
+        return {
+            "tokens_en_circulacion": round(total_circulante, 4),
+            "total_minado": round(total_minado, 4),
+            "reserva_tokens": round(reserva["tokens"], 4) if reserva else 0,
+            "reserva_soles": round(reserva["soles"], 2) if reserva else 0,
+            "total_usuarios": total_usuarios,
+            "precio_ancla": self.params["P_token"],
+            "g_actual": self.params["G"],
+            "happy_hour_activo": self.params.get("happy_hour_activo", False),
+            "sistema_iniciado": self.params.get("fecha_inicio_sistema", ""),
+        }
+
+    # ========== MINERIA ==========
+    def calcular_recompensa_mineria(self, uid, horas, nivel_uptime="bronce", es_happy_hour=False):
+        """calcula la recompensa por mineria."""
+        w_map = {"bronce": self.params["w_bronce"], "plata": self.params["w_plata"], "oro": self.params["w_oro"]}
+        w = w_map.get(nivel_uptime, 1.1)
+        hh_mult = self.params["HH_mult"] if es_happy_hour and self.params.get("happy_hour_activo") else 1.0
+        recompensa = horas * w * hh_mult * (self.params["G"] * self.params["FX"] / 1000)
+        self.acreditar_tokens(uid, recompensa, f"mineria_{nivel_uptime}")
+        return {"ok": True, "recompensa": round(recompensa, 4), "horas": horas, "nivel": nivel_uptime}
+
+    def registrar_mineria(self, uid, horas, recompensa):
+        """registra un evento de mineria."""
+        self.conn.execute(
+            "update wallets set minado_total = minado_total + ? where uid=?", (recompensa, uid))
+        self.conn.execute(
+            "insert into transacciones (uid_destino, tipo, monto, concepto) values (?,?,?,?)",
+            (uid, "mineria", recompensa, f"mineria_{horas}h"))
+        self.conn.commit()
+
+    # ========== REFERIDOS ==========
+    def procesar_comision_referido(self, uid_referido, cantidad_minada):
+        """calcula y acredita comision al referidor."""
+        row = self.conn.execute(
+            "select u.referido_por from usuarios u where u.uid=?", (uid_referido,)
+        ).fetchone()
+        if not row or not row["referido_por"]:
+            return
+        referidor_email = row["referido_por"]
+        referidor = self.conn.execute(
+            "select uid from usuarios where email=? or codigo_referido=?",
+            (referidor_email, referidor_email)
+        ).fetchone()
+        if referidor:
+            comision = cantidad_minada * self.params["comision_referido"]
+            self.acreditar_tokens(referidor["uid"], comision, f"comision_referido_{uid_referido}")
+
+    def obtener_referidos(self, uid):
+        """retorna los referidos directos de un usuario."""
+        rows = self.conn.execute(
+            "select u.uid, u.email, w.balance from usuarios u left join wallets w on u.uid=w.uid where u.referido_por in (select codigo_referido from usuarios where uid=?) or u.referido_por in (select email from usuarios where uid=?)",
+            (uid, uid)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def arbol_referidos(self, email_or_uid):
+        """retorna el arbol de referidos de un usuario."""
+        if isinstance(email_or_uid, str) and "@" in email_or_uid:
+            user = self.conn.execute("select uid from usuarios where lower(email)=lower(?)", (email_or_uid,)).fetchone()
+            uid = user["uid"] if user else None
+        else:
+            uid = email_or_uid
+        if not uid:
+            return {"id": email_or_uid, "saldo_tokens": 0, "referidos_directos": 0, "hijos": []}
+        saldo = self.obtener_balance(uid)
+        directos = self.conn.execute(
+            "select u.uid, u.email, coalesce(w.balance,0) as saldo from usuarios u left join wallets w on u.uid=w.uid where u.referido_por = (select codigo_referido from usuarios where uid=?)",
+            (uid,)
+        ).fetchall()
+        hijos = [{"id": d["email"], "saldo_tokens": d["saldo"], "referidos_directos": 0, "hijos": []} for d in directos]
+        return {"id": uid, "saldo_tokens": saldo, "referidos_directos": len(hijos), "hijos": hijos}
+
+    def cambiar_referidor(self, uid, nuevo_referidor_email):
+        """cambia el referidor una unica vez."""
+        user = self.conn.execute("select referido_cambiado from usuarios where uid=?", (uid,)).fetchone()
+        if not user:
+            return {"ok": False, "error": "usuario no encontrado"}
+        if user["referido_cambiado"]:
+            return {"ok": False, "error": "el referido ya fue cambiado anteriormente"}
+        self.conn.execute("update usuarios set referido_por=?, referido_cambiado=1 where uid=?",
+                          (nuevo_referidor_email, uid))
+        self.conn.commit()
+        return {"ok": True, "mensaje": "referidor cambiado exitosamente"}
+
+    # ========== RETIROS ==========
+    def procesar_retiro(self, uid, cantidad_kbt):
+        """procesa un retiro de tokens a fiat."""
+        balance = self.obtener_balance(uid)
+        if balance < cantidad_kbt:
+            return {"ok": False, "error": "saldo insuficiente"}
+        antiguedad_dias = self._calcular_antiguedad_tokens(uid)
+        if antiguedad_dias <= 30:
+            comision_pct = self.params["comision_retiro_0_30"]
+        elif antiguedad_dias <= 60:
+            comision_pct = self.params["comision_retiro_31_60"]
+        elif antiguedad_dias <= 90:
+            comision_pct = self.params["comision_retiro_61_90"]
+        else:
+            comision_pct = self.params["comision_retiro_90_plus"]
+        comision = cantidad_kbt * comision_pct
+        cantidad_neta = cantidad_kbt - comision
+        cantidad_pen = cantidad_neta * self.params["P_token"]
+        self.conn.execute("update wallets set balance = balance - ?, retirado_total = retirado_total + ? where uid=?",
+                          (cantidad_kbt, cantidad_kbt, uid))
+        self.conn.execute("update reserva set tokens = tokens + ? where id=1", (comision,))
+        self.conn.execute("insert into retiros (uid, cantidad_kbt, cantidad_pen, comision, estado) values (?,?,?,?,?)",
+                          (uid, cantidad_kbt, cantidad_pen, comision, "completado"))
+        self.conn.execute("insert into transacciones (uid_origen, tipo, monto, concepto) values (?,?,?,?)",
+                          (uid, "retiro", -cantidad_neta, f"retiro_fiat_{cantidad_pen}pen"))
+        self.conn.commit()
+        return {
+            "ok": True, "cantidad_kbt": cantidad_kbt, "comision": comision,
+            "cantidad_neta": cantidad_neta, "cantidad_pen": cantidad_pen, "estado": "completado"
+        }
+
+    def _calcular_antiguedad_tokens(self, uid):
+        """calcula la antiguedad promedio de los tokens de un usuario."""
+        row = self.conn.execute(
+            "select julianday('now') - julianday(min(fecha)) as dias from transacciones where uid_destino=? and tipo='mineria'",
+            (uid,)
+        ).fetchone()
+        return row["dias"] if row and row["dias"] else 0
+
+    # ========== CRONOGRAMA DE G ==========
+    def actualizar_g_segun_cronograma(self):
+        """actualiza G segun el cronograma temporal."""
+        fecha_inicio = datetime.fromisoformat(self.params.get("fecha_inicio_sistema", datetime.now().isoformat()))
+        meses_transcurridos = (datetime.now() - fecha_inicio).days // 30
+        if meses_transcurridos <= 3:
+            self.params["G"] = 9.0
+        elif meses_transcurridos <= 6:
+            self.params["G"] = 7.5
+        else:
+            self.params["G"] = 6.0
+        self._guardar_params()
+
+    # ========== HAPPY HOUR ==========
+    def activar_happy_hour(self, multiplicador=2.0, duracion_horas=1):
+        """activa happy hour."""
+        ahora = datetime.now()
+        fin = ahora.replace(hour=ahora.hour + duracion_horas)
+        self.params["happy_hour_activo"] = True
+        self.params["HH_mult"] = multiplicador
+        self.conn.execute("insert into happy_hour (multiplicador, fecha_inicio, fecha_fin) values (?,?,?)",
+                          (multiplicador, ahora.isoformat(), fin.isoformat()))
+        self.conn.commit()
+        self._guardar_params()
+        return {"ok": True, "multiplicador": multiplicador, "fin": fin.isoformat()}
+
+    def desactivar_happy_hour(self):
+        """desactiva happy hour."""
+        self.params["happy_hour_activo"] = False
+        self._guardar_params()
+        return {"ok": True}
+
+    # ========== LISTAR ==========
+    def listar_granjeros(self):
+        """lista todos los granjeros."""
+        rows = self.conn.execute(
+            "select u.uid, u.email, u.username, u.nivel_fiabilidad, w.balance, u.creado from usuarios u left join wallets w on u.uid=w.uid where u.rol='usuario'"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_stats(self):
+        """alias de obtener_estadisticas_kbt."""
+        return self.obtener_estadisticas_kbt()
+
+    def get_referido(self, email):
+        """retorna el referidor de un usuario."""
+        row = self.conn.execute("select referido_por from usuarios where lower(email)=lower(?)", (email,)).fetchone()
+        return row["referido_por"] if row else "pcmaster"
+
+    # ========== CIERRE DE CONEXION ==========
+    def __del__(self):
+        try:
+            self.conn.close()
+        except:
+            pass
