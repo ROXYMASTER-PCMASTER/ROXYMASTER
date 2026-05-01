@@ -86,18 +86,21 @@ NIVELES_STREAMER = {
     3: {"min": 50000,    "max": 499999,    "p_sys": 12.00},
     4: {"min": 500000,   "max": 999999,    "p_sys": 14.00},
     5: {"min": 1000000,  "max": 999999999, "p_sys": 16.00},
+}
 
 # niveles de fiabilidad (uptime)
 UPTIME_NIVELES = {
     "bronce": {"min": 0.90, "w": 1.1},
     "plata":  {"min": 0.95, "w": 1.2},
     "oro":    {"min": 0.99, "w": 1.3},
+}
 
 # cronograma de g (pago a granjeros en usd segun mes del sistema)
 CRONOGRAMA_G = {
     (1, 3): 9.00,    # mes 1-3: atraccion agresiva
     (4, 6): 7.50,    # mes 4-6: transicion
     (7, 999): 6.00,  # mes 7+: equilibrio
+}
 
 # parametros completos (diccionario para el dashboard de admin)
 parametros_kbt_predeterminados = {
@@ -157,6 +160,7 @@ def cargar_config():
         "http_port": pcmaster_http_port,
         "ollama_url": jarvis_api_url,
         "modelo": jarvis_modelo,
+    }
     if config_path.exists():
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -237,5 +241,4 @@ def ruta_escritorio():
 
 # inicializar base de datos de variables al importar
 init_variables_db()
-
 

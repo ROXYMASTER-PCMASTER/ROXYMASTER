@@ -1,4 +1,4 @@
-﻿# Archivos sensibles y logs (nunca versionar)
+# archivos sensibles y logs (nunca versionar)
 *.log
 *.db
 *_ssh_key*
@@ -10,15 +10,15 @@
 .env
 *.bak
 
-# Datos de configuración privados
+# datos de configuracion privados
 pcbot/config.json
 pcmaster/config.json
 
-# Archivos con información personal
+# archivos con informacion personal
 pcbot_ssh_key.txt
-LEEME1ERRAR.txt
+leeme1errar.txt
 
-# Carpetas obsoletas
+# carpetas obsoletas
 backup/
 obsoletos/
 innecesarios/

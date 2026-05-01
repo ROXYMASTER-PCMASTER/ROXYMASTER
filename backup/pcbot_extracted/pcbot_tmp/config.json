@@ -1,9 +1,0 @@
-{
-    "version": "6.0",
-    "pcmaster_ip": "100.111.179.65",
-    "pcmaster_port": 5006,
-    "roxy_api": {
-        "url": "http://127.0.0.1:50000",
-        "token": "8ce112f7ebbb0fba6e9e290194f8e117"
-    }
-}
