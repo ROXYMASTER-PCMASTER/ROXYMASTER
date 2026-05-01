@@ -1,4 +1,3 @@
-# archivos sensibles y logs (nunca versionar)
 *.log
 *.db
 *_ssh_key*
@@ -23,16 +22,10 @@ extract_cred*.py
 *temp*.txt
 *temp*.json
 server_remoto.py
-
-# datos de configuracion privados
 pcbot/config.json
 pcmaster/config.json
-
-# archivos con informacion personal
 pcbot_ssh_key.txt
 leeme1errar.txt
-
-# carpetas obsoletas
 backup/
 innecesarios/
 obsoletos/
