@@ -8,7 +8,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # variables_globales.py - constantes del sistema roxymaster v8.3
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -17,7 +16,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # todas las variables economicas, ips, puertos, parametros kbt
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -32,7 +30,6 @@ import json
 import sqlite3
 from pathlib import Path
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -41,7 +38,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -50,7 +46,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # rutas dinamicas
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -66,7 +61,6 @@ prompts_dir = base_dir / "prompts"
 config_path = base_dir / "config.json"
 db_path = data_dir / "roxymaster.db"
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -78,7 +72,6 @@ if os.path.exists(_secrets_path):
 data_dir.mkdir(parents=True, exist_ok=True)
 prompts_dir.mkdir(parents=True, exist_ok=True)
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -87,7 +80,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -96,7 +88,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ips y puertos (nombres que espera server.py)
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -110,7 +101,6 @@ WS_PORT = 5006
 HTTP_HOST = "0.0.0.0"
 HTTP_PORT = 8086
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -124,7 +114,6 @@ pcmaster_ip_tailscale = "100.111.179.65"
 pcmaster_ws_port = WS_PORT
 pcmaster_http_port = HTTP_PORT
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -133,7 +122,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -142,7 +130,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # seguridad
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -154,7 +141,6 @@ if os.path.exists(_secrets_path):
 SECRETO_SISTEMA = "r0xym4st3r_s3cr3t0_k3y_v83"
 TOKEN_ADMIN = "admin_root_token_v83_roxymaster"
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -163,7 +149,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -172,7 +157,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # jarvis / ollama
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -186,7 +170,6 @@ jarvis_api_url = "http://localhost:11434"
 contexto_segundos = 30
 prompt_maestro_path = prompts_dir / "maestro.txt"
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -195,7 +178,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -204,7 +186,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # economia kbt - constantes exportadas con los nombres que server.py espera
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -230,7 +211,6 @@ COMISIONES_RETIRO = {
 LIMITE_RETIRO_USD = 999.0       # limite mensual de retiro por cuenta
 COMISION_REFERIDO = 0.10        # 10% de tokens minados del referido
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -248,7 +228,6 @@ NIVELES_STREAMER = {
     5: {"min": 1000000,  "max": 999999999, "p_sys": 16.00},
 }
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -263,7 +242,6 @@ UPTIME_NIVELES = {
     "oro":    {"min": 0.99, "w": 1.3},
 }
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -278,7 +256,6 @@ CRONOGRAMA_G = {
     (7, 999): 6.00,  # mes 7+: equilibrio
 }
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -334,7 +311,6 @@ parametros_kbt_predeterminados = {
     "bloques_por_perfil_mes": 0.72,
 }
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -343,7 +319,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -352,7 +327,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # cargar configuracion desde config.json (si existe)
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -386,7 +360,6 @@ def guardar_config(config):
         json.dump(config, f, indent=2, ensure_ascii=False)
 
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -395,7 +368,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -404,7 +376,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # gestion dinamica de variables (para el dashboard admin)
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -480,7 +451,6 @@ def init_variables_db():
     conn.close()
 
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -489,7 +459,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # ---------------------------------------------------------------------------
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -498,7 +467,6 @@ if os.path.exists(_secrets_path):
     ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # helper: obtener ruta dinamica del usuario
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -517,7 +485,6 @@ def ruta_escritorio():
     return os.path.join(ruta_usuario(), "desktop")
 
 
-# --- Carga automática de secretos externos ---
 import os, json
 _secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
 if os.path.exists(_secrets_path):
@@ -527,3 +494,4 @@ if os.path.exists(_secrets_path):
     ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
 # inicializar base de datos de variables al importar
 init_variables_db()
+

@@ -1,4 +1,4 @@
-﻿# ============================================================================
+# ============================================================================
 # server.py - servidor principal roxymaster v8.3
 # websocket (5006) para pcbot + fastapi (8086) para dashboard y api
 # integra: auth, tokenomics, marketplace, orchestrator, shs

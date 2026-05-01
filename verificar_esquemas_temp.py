@@ -1,12 +1,19 @@
-"""ver esquemas de tablas relevantes"""
+"""consulta los esquemas reales de las tablas en roxymaster.db."""
 import sqlite3
-conn = sqlite3.connect(r"C:\users\pcmaster\desktop\roxymaster\pcmaster\data\roxymaster.db")
-for tabla in ["wallets", "sesiones", "ordenes_marketplace", "perfiles", "referidos", "granjeros"]:
+import os
+
+DB = r"C:\users\pcmaster\desktop\roxymaster\pcmaster\data\roxymaster.db"
+
+conn = sqlite3.connect(DB)
+
+tablas = ["wallets", "ordenes_marketplace", "usuarios", "perfiles", "referidos", "sesiones", "parametros", "reserva"]
+
+for tabla in tablas:
     try:
-        rows = conn.execute(f"pragma table_info({tabla})").fetchall()
-        print(f"\n=== {tabla} ===")
-        for r in rows:
-            print(r)
+        cols = [r[1] for r in conn.execute(f"PRAGMA table_info({tabla})").fetchall()]
+        print(f"{tabla}: {cols}")
     except Exception as e:
-        print(f"\n=== {tabla} === ERROR: {e}")
+        print(f"{tabla}: ERROR - {e}")
+
 conn.close()
+print("\nlisto.")
