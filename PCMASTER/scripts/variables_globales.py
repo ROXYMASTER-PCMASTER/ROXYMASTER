@@ -1,20 +1,25 @@
-﻿# ============================================================================
-# --- Carga automática de secretos externos ---
-import os, json
-_secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
-if os.path.exists(_secrets_path):
-    with open(_secrets_path, "r", encoding="utf-8-sig") as _f:
-        _secrets = json.load(_f)
-    ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
-    ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
-# variables_globales.py - constantes del sistema roxymaster v8.3
+﻿# variables_globales.py - constantes del sistema roxymaster v8.3
 # todas las variables economicas, ips, puertos, parametros kbt
 # ============================================================================
-
 import os
 import json
 import sqlite3
 from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# carga de secretos externos (config sensible)
+# ---------------------------------------------------------------------------
+ROXY_API_TOKEN = ""
+ROXY_WORKSPACE_ID = ""
+_secrets_path = os.path.join(os.environ["USERPROFILE"], "Desktop", "roxymaster_secrets", "config_sensible.json")
+if os.path.exists(_secrets_path):
+    try:
+        with open(_secrets_path, "r", encoding="utf-8-sig") as _f:
+            _secrets = json.load(_f)
+        ROXY_API_TOKEN = _secrets.get("roxy_api_token", ROXY_API_TOKEN)
+        ROXY_WORKSPACE_ID = _secrets.get("roxy_workspace_id", ROXY_WORKSPACE_ID)
+    except (json.JSONDecodeError, IOError):
+        pass
 
 # ---------------------------------------------------------------------------
 # rutas dinamicas
@@ -148,6 +153,7 @@ parametros_kbt_predeterminados = {
     "re_colchon_estabilidad": 0.20,
     "niveles_streamer": NIVELES_STREAMER,
     "bloques_por_perfil_mes": 0.72,
+}
 
 # ---------------------------------------------------------------------------
 # cargar configuracion desde config.json (si existe)
@@ -192,6 +198,7 @@ def obtener_variables() -> dict:
     # fusionar con predeterminados
     resultado = dict(parametros_kbt_predeterminados)
     for k, v in rows.items():
+        try:
             resultado[k] = json.loads(v)
         except (json.JSONDecodeError, TypeError):
             resultado[k] = v
@@ -200,11 +207,15 @@ def obtener_variables() -> dict:
 
 def actualizar_variable(clave: str, valor) -> bool:
     """actualiza una variable global en la base de datos."""
+    try:
+        conn = sqlite3.connect(str(db_path))
+        c = conn.cursor()
         c.execute(
             "insert or replace into variables_globales (clave, valor) values (?, ?)",
             (clave, json.dumps(valor) if not isinstance(valor, str) else valor),
         )
         conn.commit()
+        conn.close()
         return True
     except Exception:
         return False
@@ -212,18 +223,34 @@ def actualizar_variable(clave: str, valor) -> bool:
 
 def restablecer_variables_predeterminadas() -> bool:
     """restablece todas las variables a sus valores predeterminados."""
+    try:
+        conn = sqlite3.connect(str(db_path))
+        c = conn.cursor()
         c.execute("delete from variables_globales")
         for clave, valor in parametros_kbt_predeterminados.items():
+            c.execute(
                 "insert into variables_globales (clave, valor) values (?, ?)",
+                (clave, json.dumps(valor) if not isinstance(valor, str) else valor),
+            )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception:
+        return False
 
 
 def init_variables_db():
     """crea la tabla de variables globales si no existe."""
+    conn = sqlite3.connect(str(db_path))
+    c = conn.cursor()
     c.execute('''
         create table if not exists variables_globales (
             clave text primary key,
             valor text not null
+        )
     ''')
+    conn.commit()
+    conn.close()
 
 
 # ---------------------------------------------------------------------------

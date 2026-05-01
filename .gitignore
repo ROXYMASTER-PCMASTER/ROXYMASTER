@@ -9,6 +9,20 @@
 *.pem
 .env
 *.bak
+*.old
+*_backup.py
+*_corregido.py
+prueba_*.py
+test_*.py
+diagnostic.py
+estado_tcp.py
+check_*.py
+verificar_*.py
+extract_cred*.py
+*temp*.py
+*temp*.txt
+*temp*.json
+server_remoto.py
 
 # datos de configuracion privados
 pcbot/config.json
@@ -20,5 +34,5 @@ leeme1errar.txt
 
 # carpetas obsoletas
 backup/
-obsoletos/
 innecesarios/
+obsoletos/
