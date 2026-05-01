@@ -9,3 +9,7 @@
 *.pem
 .env
 *.bak
+# Respaldo automático
+*_backup/
+*.bak
+*.old
