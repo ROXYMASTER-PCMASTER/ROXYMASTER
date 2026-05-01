@@ -9,7 +9,7 @@
 *.pem
 .env
 *.bak
-# Respaldo automático
-*_backup/
-*.bak
-*.old
+
+# Datos de configuración privados
+pcbot/config.json
+pcmaster/config.json
