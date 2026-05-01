@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from marketplace import listar_ordenes_activas, crear_orden, ejecutar_orden, cancelar_orden, obtener_historial_ordenes
-from tokenomics import obtener_wallet_por_usuario, P_TOKEN
+from tokenomics import obtener_wallet_por_usuario
 from auth import verificar_token
 router = APIRouter()
 
@@ -20,7 +20,7 @@ async def api_crear(request: Request):
     if not auth:
         return {"ok": False}
     data = await request.json()
-    return crear_orden(data.get("tipo","venta"), obtener_wallet_por_usuario(auth[0]), auth[0], data.get("cantidad",0), data.get("precio", P_TOKEN))
+    return crear_orden(data.get("tipo","venta"), obtener_wallet_por_usuario(auth[0]), auth[0], data.get("cantidad",0), data.get("precio", 0.0))
 
 @router.post("/api/marketplace/cancelar")
 async def api_cancelar(request: Request):

@@ -14,6 +14,10 @@ pcbots = {}       # pcbot_id -> datos de conexion
 perfiles_map = {}  # perfil_id -> datos
 ws_server_ref = None
 
+# alias para compatibilidad con modulos api
+_pcbots_conectados = pcbots
+_perfiles_globales = perfiles_map
+
 
 class _WebSocketServerProxy:
     """proxy para acceso al servidor websocket."""
