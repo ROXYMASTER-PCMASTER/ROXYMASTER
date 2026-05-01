@@ -1,0 +1,10 @@
+ROXYMASTER v6.1 --- Resultados de pruebas
+Fecha: 2026-04-28 20:19:17
+============================================================
+  PASS Prueba 1: Respuesta: {"type": "connected", "status": "ok"}
+  PASS Prueba 2: Respuesta: {"type": "connected", "status": "ok"}
+  FAIL Prueba 3: Solo 1/2 respuestas recibidas
+  FAIL Prueba 4: Heartbeat: 0/5 --- sin respuesta
+  PASS Prueba 5: Status recibido: {"type": "connected", "status": "ok"}
+
+3/5 pasadas

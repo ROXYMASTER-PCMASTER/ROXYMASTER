@@ -1,0 +1,20 @@
+# ARQUITECTURA ROXYMASTER v6.0
+
+## CONEXIONES
+- PCMASTER: ssh PCMASTER@192.168.1.17
+- PCBOT = PC DESARROLLO (CYBER). Local. IP Tailscale: 100.85.100.109
+
+## REGLAS INQUEBRANTABLES
+1. PROHIBIDO modificar config.json, maestro.txt o carpeta data\
+2. PROHIBIDO cambiar IPs, puertos (5006, 50000) o tokens de APIs
+3. Leer .clinerules antes de cada tarea
+4. Español siempre
+
+## ESTRUCTURA
+- %USERPROFILE%\Desktop\ROXYMASTER\PCMASTER\
+- %USERPROFILE%\Desktop\ROXYMASTER\PCBOT\
+
+## SEGURIDAD
+- Archivos solo lectura: config.json, maestro.txt, data\*, *.db
+- Antes de modificar, anunciar: "Voy a modificar [archivo]"
+- Si falla 2 veces, detener y crear ERROR_CRITICO.txt en escritorio

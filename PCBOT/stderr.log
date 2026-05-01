@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\CYBER\Desktop\ROXYMASTER\PCBOT\scripts\pcbot.py", line 10, in <module>
+    import http.server
+ModuleNotFoundError: No module named 'http.server'

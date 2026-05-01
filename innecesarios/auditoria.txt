@@ -1,0 +1,84 @@
+AUDITORÍA TÉCNICA — ROXYMASTER v6.1
+=====================================
+Fecha: 29/04/2026 02:40
+Auditor: Cline (asistente automático)
+
+Resumen de la sesión anterior:
+- BITACORA.txt: NO EXISTE en el escritorio local.
+- ERROR.txt:   NO EXISTE en el escritorio local.
+- No hay registro escrito de lo sucedido en la sesión previa.
+- El AUDITORIA.txt anterior (28/04/2026 20:25) reportaba servidor CAÍDO
+  y SSH no disponible. Eso cambió: el servidor ahora SÍ está corriendo.
+
+PRUEBA DE CONECTIVIDAD (29/04/2026 02:32):
+- SSH a PCMASTER@192.168.1.17: OK (roxykey)
+- Puerto 5006 (WebSocket): ABIERTO (servidor responde)
+- Puerto 5007 (TCP Admin):  ABIERTO (comandos perfiles, estado, grupos, asignar)
+- Comando `asignar 2 url kick.com/payasitazing`: PROCESADO (servidor acepta)
+- PCBOTs conectados: 0 → sin bots la orquestación no genera comentarios
+- JARVIS generados: 0 (esperado: no hay bots que reciban comandos)
+
+--------------------------------------------------------------------
+ARCHIVO                          | ESTADO      | OBSERVACIONES
+--------------------------------------------------------------------
+
+1) server.py (local/remoto)      | CORRECTO    | CÓDIGO: Locks asíncronos (lock_perfiles,
+   Desktop\ROXYMASTER\           | y           | lock_grupos, lock_pcbots) presentes.
+   PCMASTER\scripts\server.py    | FUNCIONANDO | Rate limiter TokenBucket (100/s).
+                                  |             | JarvisConciente integrado con caché
+                                  |             | (deque 100, cache_hash set), anti-
+                                  |             | repeticiones, evolución de personalidad.
+                                  |             | TCP Admin en puerto 5007 + Consola local.
+                                  |             | WebSocket en puerto 5006.
+                                  |             | GestorGrupos: asignar, mover, detener.
+                                  |             | Tareas de fondo: comentarios, limpieza.
+                                  |             | 
+                                  |             | RUNTIME: SERVIDOR FUNCIONANDO.
+                                  |             | Puertos 5006 y 5007 responden OK.
+                                  |             | TCP Admin procesa todos los comandos.
+
+2) jarvis_base.py (remoto)       | INCOMPLETO  | jarvis_base.py NO EXISTE en PCMASTER.
+   Desktop\ROXYMASTER\           |             | Existe jarvis_v61.py (6893 bytes) que
+   PCMASTER\scripts\             |             | SÍ tiene caché (deque maxlen=100),
+                                  |             | variabilidad (temp 0.95 con contexto,
+                                  |             | 0.85 sin contexto), 15 frases de
+                                  |             | respaldo, threading.Lock(), timeout
+                                  |             | 15s a Ollama.
+                                  |             | 
+                                  |             | Además, server.py integra JarvisConciente
+                                  |             | como clase interna (líneas 84-239) con
+                                  |             | las mismas capacidades de caché y
+                                  |             | anti-repeticiones.
+
+3) ui.py (local)                 | CORRECTO    | Pestaña LOCAL (líneas ~156-210):
+   Desktop\ROXYMASTER\           |             | estado, perfiles, contadores,
+   PCBOT\scripts\ui.py           |             | barra de progreso.
+                                  |             | Pestaña REMOTO (líneas ~250-308):
+                                  |             | monitor PCMASTER, envío de
+                                  |             | comentarios, lista activos.
+                                  |             | Pestaña ADMIN (líneas ~314-422):
+                                  |             | Conectar/Desconectar/Refrescar/
+                                  |             | Estado, estadísticas, logs.
+                                  |             | Timers de actualización cada 1-2s.
+                                  |             | Puerto 8090.
+
+4) pcbot.py (local)              | CORRECTO    | Reconexión automática con backoff
+   Desktop\ROXYMASTER\           |             | exponencial: min=2s, max=32s,
+   PCBOT\scripts\pcbot.py        |             | reintentos infinitos (while True
+                                  |             | sin límite, línea 381).
+                                  |             | Validación de URL (urlparse, esquema,
+                                  |             | longitud máx 2048).
+                                  |             | Sanitización de comentarios (solo
+                                  |             | caracteres imprimibles, máx 60 chars).
+                                  |             | WebSocket local en puerto 8085 para UI.
+                                  |             | Conexión a API Roxy y CDP Playwright.
+
+--------------------------------------------------------------------
+VEREDICTO FINAL:
+- CÓDIGO: 3 de 4 archivos son CORRECTOS. jarvis_base.py NO EXISTE
+  pero su función está cubierta por jarvis_v61.py standalone y por
+  la clase JarvisConciente integrada en server.py.
+- RUNTIME: Servidor FUNCIONANDO en PCMASTER. Puertos 5006/5007 OK.
+  TCP Admin responde todos los comandos. Faltan PCBOTs conectados
+  para que la orquestación genere comentarios reales.
+- CONECTIVIDAD: SSH funcional vía roxykey. Red local OK (ping <1ms).

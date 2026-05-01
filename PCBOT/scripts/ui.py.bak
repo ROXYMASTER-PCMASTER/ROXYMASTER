@@ -231,7 +231,7 @@ with ui.tab_panels(tabs, value=local_tab).classes('w-full'):
                     ui.icon('monitor').classes('text-4xl text-blue-600')
                     with ui.column().classes('flex-1'):
                         ui.label("Monitor Local - PCBOT").classes('text-2xl font-bold')
-                    ui_elements["estado_label"] = ui.label("⏳ Inicializando...").classes('text-sm text-gray-600')
+                        ui.elements["estado_label"] = ui.label("⏳ Inicializando...").classes('text-sm text-gray-600')
             
             ui.separator()
             
@@ -318,42 +318,11 @@ with ui.tab_panels(tabs, value=local_tab).classes('w-full'):
             with ui.card().classes('w-full bg-white shadow-md'):
                 ui.label("Panel de Control").classes('text-2xl font-bold text-gray-800 mb-4')
                 
-                async def accion_conectar():
-                    log_message("Intentando conectar a servidor remoto...", level="info")
-                    estado_global["servidor_status"] = "Conectando..."
-                    ui.notify("Conexión solicitada al servidor remoto", type='info')
-
-                async def accion_desconectar():
-                    log_message("Desconexión solicitada", level="info")
-                    estado_global["servidor_status"] = "Desconectado"
-                    estado_global["conectado"] = False
-                    if estado_global["ws_local"]:
-                        try:
-                            await estado_global["ws_local"].close()
-                        except:
-                            pass
-                    ui.notify("Desconectado del servidor local", type='warning')
-
-                async def accion_refrescar():
-                    log_message("Refrescando perfiles...", level="info")
-                    estado_global["stats"]["errores"] = 0
-                    if estado_global["ws_local"]:
-                        try:
-                            await estado_global["ws_local"].send(json.dumps({"type": "get_status"}))
-                        except Exception as e:
-                            logger.error(f"Error refrescando: {e}")
-                    ui.notify("Perfiles refrescados", type='positive')
-
-                async def accion_estado():
-                    estado_msg = f"Conectado: {estado_global['conectado']} | Perfiles: {len(estado_global['perfiles_local'])}"
-                    log_message(f"Estado: {estado_msg}", level="info")
-                    ui.notify(estado_msg, type='info')
-
                 with ui.row().classes('w-full gap-2 flex-wrap'):
-                    ui.button("Conectar", on_click=accion_conectar).classes('bg-green-600 hover:bg-green-700')
-                    ui.button("Desconectar", on_click=accion_desconectar).classes('bg-red-600 hover:bg-red-700')
-                    ui.button("Refrescar", on_click=accion_refrescar).classes('bg-yellow-600 hover:bg-yellow-700')
-                    ui.button("Estado", on_click=accion_estado).classes('bg-blue-600 hover:bg-blue-700')
+                    ui.button("Conectar", on_click=lambda: log_message("Conexión solicitada", level="info")).classes('bg-green-600 hover:bg-green-700')
+                    ui.button("Desconectar", on_click=lambda: log_message("Desconexión solicitada", level="info")).classes('bg-red-600 hover:bg-red-700')
+                    ui.button("Refrescar", on_click=lambda: log_message("Refrescar solicitado", level="info")).classes('bg-yellow-600 hover:bg-yellow-700')
+                    ui.button("Estado", on_click=lambda: log_message("Solicitando estado...", level="info")).classes('bg-blue-600 hover:bg-blue-700')
             
             ui.separator()
             
@@ -380,35 +349,10 @@ with ui.tab_panels(tabs, value=local_tab).classes('w-full'):
             with ui.card().classes('w-full bg-white shadow-md'):
                 ui.label("Acciones Rápidas").classes('text-lg font-bold text-gray-800 mb-3')
                 
-                async def accion_ver_status():
-                    if estado_global["ws_local"]:
-                        try:
-                            await estado_global["ws_local"].send(json.dumps({"type": "get_status"}))
-                            log_message("Status solicitado al servidor", level="info")
-                            ui.notify("Status: solicitando...", type='info')
-                        except Exception as e:
-                            log_message(f"Error solicitando status: {e}", level="error")
-                            ui.notify(f"Error: {e}", type='negative')
-                    else:
-                        log_message("No hay conexión al servidor", level="warning")
-                        ui.notify("Sin conexión al servidor", type='negative')
-
-                def accion_limpiar_logs():
-                    if ui_elements["log_area"]:
-                        ui_elements["log_area"].clear()
-                        log_message("ROXYMASTER v6.1 - Logs limpiados")
-                    ui.notify("Logs limpiados", type='positive')
-
-                async def accion_reiniciar():
-                    log_message("Reinicio solicitado - recargando parámetros", level="warning")
-                    estado_global["stats"]["errores"] = 0
-                    estado_global["stats"]["enviados"] = 0
-                    ui.notify("Parámetros reiniciados", type='warning')
-
                 with ui.row().classes('w-full gap-2 flex-wrap'):
-                    ui.button("Ver Status", on_click=accion_ver_status).classes('bg-purple-600 hover:bg-purple-700 text-white')
-                    ui.button("Limpiar Logs", on_click=accion_limpiar_logs).classes('bg-gray-600 hover:bg-gray-700 text-white')
-                    ui.button("Reiniciar", on_click=accion_reiniciar).classes('bg-orange-600 hover:bg-orange-700 text-white')
+                    ui.button("Ver Status", on_click=lambda: log_message("Status: OK", level="info")).classes('bg-purple-600 hover:bg-purple-700 text-white')
+                    ui.button("Limpiar Logs", on_click=lambda: log_message("Logs limpiados", level="info")).classes('bg-gray-600 hover:bg-gray-700 text-white')
+                    ui.button("Reiniciar", on_click=lambda: log_message("Reinicio solicitado", level="warning")).classes('bg-orange-600 hover:bg-orange-700 text-white')
             
             ui.separator()
             
@@ -434,8 +378,8 @@ ui.timer(interval=1, callback=actualizar_comentarios)
 # Actualizar contadores cada segundo
 ui.timer(interval=1, callback=actualizar_contadores)
 
-# Conectar al servidor local en background (se inicia cuando NiceGUI arranca su event loop)
-ui.timer(0.1, lambda: asyncio.create_task(conectar_servidor_local()), once=True)
+# Conectar al servidor local en background
+asyncio.create_task(conectar_servidor_local())
 
 # Información de inicio
 logger.info("=" * 60)

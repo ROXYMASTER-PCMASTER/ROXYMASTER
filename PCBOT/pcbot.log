@@ -1,0 +1,144 @@
+python: can't open file 'C:\\Users\\CYBER\\Desktop\\ROXYMASTER\\PCBOT\\scripts\\main.py': [Errno 2] No such file or directory
+2026-04-30 19:53:33,028 [INFO] ============================================================
+2026-04-30 19:53:33,028 [INFO] ROXYMASTER v6.1 - PCBOT CLIENTE
+2026-04-30 19:53:33,028 [INFO] ============================================================
+2026-04-30 19:53:33,037 [INFO] [SHS] Firmador inicializado para PCWILMER
+2026-04-30 19:53:33,112 [INFO] PCBOT inicializado: PCWILMER
+2026-04-30 19:53:33,113 [INFO] Apps detectadas: {"roxybrowser": false, "anty": false, "multilogin": false, "gologin": false, "incogniton": false}
+2026-04-30 19:53:33,113 [INFO] Conectando a API en http://127.0.0.1:50000
+2026-04-30 19:53:33,117 [WARNING] No workspace encontrado
+2026-04-30 19:53:33,119 [INFO] Total de perfiles: 0
+2026-04-30 19:53:33,120 [INFO] Total perfiles disponibles: 0
+2026-04-30 19:53:33,120 [INFO] [PORTAL] Disponible en http://127.0.0.1:8087/portal.html
+2026-04-30 19:53:33,120 [INFO] [DASHBOARD] Disponible en http://127.0.0.1:8086/dashboard
+2026-04-30 19:53:33,121 [INFO] [HTTP] Dashboard en http://127.0.0.1:8086/dashboard
+2026-04-30 19:53:33,121 [INFO] [HTTP] API en http://127.0.0.1:8086/api/estado
+2026-04-30 19:53:33,141 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:33,144 [INFO] [PORTAL] Servidor HTTP en http://127.0.0.1:8087/portal.html
+2026-04-30 19:53:33,144 [INFO] [WATCHDOG] Iniciando monitor de perfiles colgados...
+2026-04-30 19:53:33,144 [INFO] server listening on 127.0.0.1:8085
+2026-04-30 19:53:33,145 [INFO] Servidor UI iniciado en puerto 8085
+2026-04-30 19:53:33,149 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:33,150 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:33,164 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:33,164 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:37,175 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:37,181 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:37,181 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:37,183 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:37,184 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:41,184 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:41,187 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:41,187 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:41,189 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:41,189 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:45,203 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:45,209 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:45,209 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:45,211 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:45,212 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:49,221 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:49,227 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:49,228 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:49,230 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:49,230 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:53,242 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:53,247 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:53,248 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:53,250 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:53,250 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:53:57,252 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:53:57,257 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:53:57,258 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:53:57,260 [INFO] Conexion cerrada por servidor
+2026-04-30 19:53:57,260 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:01,262 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:01,267 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:01,268 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:01,270 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:01,270 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:05,274 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:05,279 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:05,279 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:05,281 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:05,281 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:09,291 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:09,297 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:09,297 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:09,299 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:09,300 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:13,302 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:13,307 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:13,308 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:13,310 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:13,310 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:17,324 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:17,329 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:17,330 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:17,331 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:17,331 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:21,336 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:21,342 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:21,343 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:21,346 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:21,346 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:25,361 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:25,366 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:25,367 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:25,369 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:25,369 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:29,373 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:29,376 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:29,376 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:29,378 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:29,378 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:33,394 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:33,400 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:33,400 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:33,403 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:33,403 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:37,406 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:37,411 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:37,411 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:37,414 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:37,414 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:41,415 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:41,421 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:41,421 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:41,423 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:41,424 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:45,424 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:45,429 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:45,430 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:45,432 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:45,432 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:49,436 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:49,441 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:49,441 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:49,443 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:49,443 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:53,456 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:53,461 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:53,462 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:53,464 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:53,464 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:54:57,467 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:54:57,472 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:54:57,473 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:54:57,475 [INFO] Conexion cerrada por servidor
+2026-04-30 19:54:57,476 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:55:01,482 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:55:01,487 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:55:01,488 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:55:01,490 [INFO] Conexion cerrada por servidor
+2026-04-30 19:55:01,490 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:55:05,503 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:55:05,508 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:55:05,509 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:55:05,511 [INFO] Conexion cerrada por servidor
+2026-04-30 19:55:05,511 [INFO] Reintentando en 4 segundos...
+2026-04-30 19:55:09,522 [INFO] Conectando a PCMASTER en ws://100.111.179.65:5006
+2026-04-30 19:55:09,527 [INFO] [PCBOT] Conectado a PCMASTER
+2026-04-30 19:55:09,528 [INFO] [PCBOT] Identificado como PCWILMER
+2026-04-30 19:55:09,530 [INFO] Conexion cerrada por servidor
+2026-04-30 19:55:09,530 [INFO] Reintentando en 4 segundos...

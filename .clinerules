@@ -1,20 +1,9 @@
-# ARQUITECTURA ROXYMASTER v6.0
-
-## CONEXIONES
-- PCMASTER: ssh PCMASTER@192.168.1.17
-- PCBOT = PC DESARROLLO (CYBER). Local. IP Tailscale: 100.85.100.109
-
-## REGLAS INQUEBRANTABLES
-1. PROHIBIDO modificar config.json, maestro.txt o carpeta data\
-2. PROHIBIDO cambiar IPs, puertos (5006, 50000) o tokens de APIs
-3. Leer .clinerules antes de cada tarea
-4. Español siempre
-
-## ESTRUCTURA
-- %USERPROFILE%\Desktop\ROXYMASTER\PCMASTER\
-- %USERPROFILE%\Desktop\ROXYMASTER\PCBOT\
-
-## SEGURIDAD
-- Archivos solo lectura: config.json, maestro.txt, data\*, *.db
-- Antes de modificar, anunciar: "Voy a modificar [archivo]"
-- Si falla 2 veces, detener y crear ERROR_CRITICO.txt en escritorio
+# .clinerules para ROXYMASTER (minúsculas)
+## Convención de nomenclatura
+- Todas las rutas de archivo, nombres de carpeta, variables, docstrings y comentarios deben usar EXCLUSIVAMENTE minúsculas.
+- Está PROHIBIDO usar las grafías en mayúsculas "ROXYMASTER", "PCMASTER", "PCBOT", "INICIAR", "INSTALAR" y similares.
+- Antes de escribir cualquier archivo, verifica que no contenga esas palabras en mayúsculas. Si las encuentras, reemplázalas por su versión en minúsculas.
+- Las únicas excepciones son las palabras reservadas del lenguaje (ej. True, False, None) y los nombres de variables de entorno del sistema.
+- No uses herramientas de búsqueda sobre el código sin pedir permiso explícito.
+- Solo puedes ejecutar comandos directos de PowerShell o escribir archivos completos con write_to_file.
+- Si una operación falla tres veces consecutivas, detente y pide instrucciones.

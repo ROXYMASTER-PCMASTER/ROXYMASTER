@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROXYMASTER v6.2 — PCMASTER Portal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  background:linear-gradient(135deg,#0a0f1e 0%,#1a1f2e 50%,#0d1117 100%);
+  color:#c9d1d9;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+}
+.login-box{
+  background:#161b22;
+  border:1px solid #30363d;
+  border-radius:12px;
+  padding:40px;
+  width:100%;max-width:420px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.login-box h1{
+  text-align:center;font-size:2em;margin-bottom:8px;
+  background:linear-gradient(90deg,#58a6ff,#bc8cff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.login-box .sub{text-align:center;color:#8b949e;margin-bottom:30px;font-size:0.9em}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;margin-bottom:6px;color:#8b949e;font-size:0.85em}
+.form-group input{
+  width:100%;padding:10px 14px;
+  background:#0d1117;border:1px solid #30363d;border-radius:6px;
+  color:#c9d1d9;font-size:1em;outline:none;transition:border-color .2s;
+}
+.form-group input:focus{border-color:#58a6ff}
+.btn{
+  width:100%;padding:12px;
+  border:none;border-radius:6px;
+  font-size:1em;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.btn-primary{background:#238636;color:#fff}
+.btn-primary:hover{background:#2ea043}
+.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;margin-top:10px}
+.btn-secondary:hover{background:#30363d}
+.error-msg{color:#f85149;text-align:center;margin-top:10px;font-size:0.85em;display:none}
+.success-msg{color:#7ee787;text-align:center;margin-top:10px;font-size:0.85em;display:none}
+.toggle-link{text-align:center;margin-top:16px;font-size:0.85em;color:#8b949e}
+.toggle-link a{color:#58a6ff;cursor:pointer;text-decoration:none}
+.toggle-link a:hover{text-decoration:underline}
+
+#dashboard-screen{display:none;padding:20px}
+.dash-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 24px;background:#161b22;border-bottom:1px solid #30363d;
+  flex-wrap:wrap;gap:12px;
+}
+.dash-header h1{
+  font-size:1.4em;
+  background:linear-gradient(90deg,#58a6ff,#bc8cff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.dash-header .user-info{color:#8b949e;font-size:0.9em}
+.dash-header .user-info span{color:#58a6ff}
+.dash-header button{padding:8px 16px;background:#da3633;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.dash-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;padding:20px 24px;
+}
+.card{
+  background:#161b22;border:1px solid #30363d;
+  border-radius:10px;padding:20px;
+}
+.card h3{color:#58a6ff;margin-bottom:12px;font-size:1em;text-transform:uppercase;letter-spacing:1px}
+.card .stat{font-size:2em;font-weight:700;color:#c9d1d9}
+.card .stat-label{font-size:0.8em;color:#8b949e;margin-top:4px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+.stat-row .val{color:#7ee787;font-weight:600}
+.stat-row .val.warn{color:#d2991d}
+.stat-row .val.danger{color:#f85149}
+
+.switch-container{display:flex;align-items:center;gap:12px;margin:12px 0}
+.switch{position:relative;width:52px;height:28px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#30363d;border-radius:28px;transition:.3s}
+.slider:before{content:"";position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:#c9d1d9;border-radius:50%;transition:.3s}
+input:checked+.slider{background:#238636}
+input:checked+.slider:before{transform:translateX(24px)}
+
+.mode-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.8em;font-weight:600}
+.mode-badge.connected{background:#23863633;color:#7ee787;border:1px solid #238636}
+.mode-badge.solo{background:#d2991d33;color:#d2991d;border:1px solid #d2991d}
+
+.table-wrap{overflow-x:auto;padding:0 24px 20px}
+table{width:100%;border-collapse:collapse;font-size:0.85em}
+th{text-align:left;padding:10px 12px;color:#8b949e;border-bottom:1px solid #30363d;font-weight:500}
+td{padding:10px 12px;border-bottom:1px solid #21262d}
+tr:hover{background:#1c2128}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-dot.active{background:#7ee787}
+.status-dot.inactive{background:#f85149}
+.status-dot.hung{background:#d2991d}
+.timer-bar{height:6px;background:#21262d;border-radius:3px;margin-top:4px;overflow:hidden}
+.timer-fill{height:100%;background:linear-gradient(90deg,#58a6ff,#238636);border-radius:3px;transition:width 1s linear}
+.cmd-section{padding:20px 24px}
+.cmd-section textarea{width:100%;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:0.9em;min-height:80px;resize:vertical;font-family:'Consolas',monospace}
+.cmd-section button{margin-top:8px}
+@media(max-width:768px){.dash-grid{grid-template-columns:1fr;padding:12px}.dash-header{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-box">
+    <h1>ROXYMASTER</h1>
+    <div class="sub">v6.2 — PCMASTER Super Admin</div>
+    <div id="login-form">
+      <div class="form-group">
+        <label>Usuario / Email</label>
+        <input type="text" id="login-email" value="PCMASTER" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Iniciar Sesión</button>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<div id="dashboard-screen">
+  <div class="dash-header">
+    <h1>ROXYMASTER v6.2 — PCMASTER</h1>
+    <div class="user-info">Sesión: <span id="dash-user"></span> | Rol: <span id="dash-rol"></span></div>
+    <button onclick="doLogout()">Cerrar Sesión</button>
+  </div>
+  <div class="dash-grid" id="kpi-grid"></div>
+
+  <div class="cmd-section">
+    <div class="card">
+      <h3>Consola de Comandos</h3>
+      <textarea id="cmd-input" placeholder="asignar 3 url https://kick.com/live duracion 20
+comentarios_activar url https://kick.com/live nivel medio
+estado
+perfiles"></textarea>
+      <button class="btn btn-primary" onclick="sendCommand()" style="width:auto;padding:8px 24px">Enviar Comando</button>
+      <div id="cmd-result" style="margin-top:10px;font-family:Consolas,monospace;font-size:0.85em;white-space:pre-wrap"></div>
+    </div>
+  </div>
+
+  <div style="padding:20px 24px 0"><h3 style="color:#58a6ff">PERFILES GLOBALES</h3></div>
+  <div class="table-wrap"><table id="profiles-table"><thead><tr><th>Estado</th><th>Nombre</th><th>URL Actual</th><th>Tiempo Conectado</th><th>Timer 62min</th><th>Tokens Hoy</th><th>PCBOT</th></tr></thead><tbody id="profiles-tbody"></tbody></table></div>
+
+  <div style="padding:20px 24px 0"><h3 style="color:#58a6ff">PCBOTS CONECTADOS</h3></div>
+  <div class="table-wrap"><table id="pcbots-table"><thead><tr><th>ID</th><th>IP Local</th><th>IP Tailscale</th><th>Perfiles</th><th>Uptime</th></tr></thead><tbody id="pcbots-tbody"></tbody></table></div>
+
+  <div style="padding:20px 24px 0"><h3 style="color:#58a6ff">URLs ACTIVAS</h3></div>
+  <div class="table-wrap"><table id="urls-table"><thead><tr><th>URL</th><th>Perfiles</th><th>Tiempo Restante</th><th>Comentarios</th><th>Inicio</th></tr></thead><tbody id="urls-tbody"></tbody></table></div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+let authToken = localStorage.getItem('roxymaster_token') || '';
+let currentUser = null;
+let currentRol = '';
+let refreshInterval = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (authToken) verifyToken();
+  document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+});
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  if (!email || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  try {
+    const resp = await fetch(`${API_BASE}/api/login`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await resp.json();
+    if (resp.ok && data.token) {
+      authToken = data.token; localStorage.setItem('roxymaster_token', authToken);
+      currentUser = data.usuario || email; currentRol = data.rol || 'usuario';
+      showDashboard();
+    } else { errEl.textContent = data.error || 'Credenciales inválidas'; errEl.style.display = 'block'; }
+  } catch(e) { errEl.textContent = 'Error de conexión: ' + e.message; errEl.style.display = 'block'; }
+}
+
+async function verifyToken() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/verify`, { headers: {'Authorization': `Bearer ${authToken}`} });
+    if (resp.ok) { const data = await resp.json(); currentUser = data.usuario; currentRol = data.rol; showDashboard(); }
+    else { localStorage.removeItem('roxymaster_token'); authToken = ''; }
+  } catch(e) {}
+}
+
+function doLogout() {
+  localStorage.removeItem('roxymaster_token'); authToken = ''; currentUser = null; currentRol = '';
+  if (refreshInterval) clearInterval(refreshInterval);
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard-screen').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard-screen').style.display = 'block';
+  document.getElementById('dash-user').textContent = currentUser;
+  document.getElementById('dash-rol').textContent = currentRol === 'admin' ? 'SUPER ADMIN' : 'Usuario';
+  refreshDashboard();
+  refreshInterval = setInterval(refreshDashboard, 5000);
+}
+
+async function refreshDashboard() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/dashboard`, { headers: {'Authorization': `Bearer ${authToken}`} });
+    if (!resp.ok) { if (resp.status === 401) { doLogout(); return; } return; }
+    const data = await resp.json();
+    updateUI(data);
+  } catch(e) {}
+}
+
+function updateUI(data) {
+  const kpiGrid = document.getElementById('kpi-grid');
+  kpiGrid.innerHTML = `
+    <div class="card"><h3>PCBOTs Conectados</h3><div class="stat">${data.pcbots_conectados || 0}</div><div class="stat-label">dispositivos activos</div></div>
+    <div class="card"><h3>Perfiles Totales</h3><div class="stat">${data.perfiles_totales || 0}</div>
+      <div class="stat-row"><span>Activos</span><span class="val">${data.perfiles_activos || 0}</span></div>
+      <div class="stat-row"><span>Inactivos</span><span class="val danger">${data.perfiles_inactivos || 0}</span></div>
+      <div class="stat-row"><span>Colgados</span><span class="val warn">${data.perfiles_colgados || 0}</span></div></div>
+    <div class="card"><h3>JARVIS</h3><div class="stat">${data.jarvis_comentarios || 0}</div><div class="stat-label">comentarios generados</div>
+      <div class="stat-row"><span>Contextos</span><span class="val">${data.jarvis_contextos || 0}</span></div></div>
+    <div class="card"><h3>Servidor</h3>
+      <div class="stat-row"><span>IP</span><span class="val">${data.ip_servidor || '?'}</span></div>
+      <div class="stat-row"><span>WS Puerto</span><span class="val">5006</span></div>
+      <div class="stat-row"><span>HTTP Puerto</span><span class="val">8086</span></div></div>`;
+
+  const perfiles = data.perfiles || [];
+  document.getElementById('profiles-tbody').innerHTML = perfiles.map(p => {
+    const ec = p.activo ? 'active' : (p.colgado ? 'hung' : 'inactive');
+    const ts = p.tiempo_conectado || 0;
+    const min = Math.floor(ts / 60), seg = Math.floor(ts % 60);
+    const prog = Math.min(100, (ts / (62*60)) * 100);
+    return `<tr><td><span class="status-dot ${ec}"></span>${p.estado || 'inactivo'}</td>
+      <td>${esc(p.nombre)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.url_actual || 'Ninguna')}</td>
+      <td>${min}m ${seg}s</td>
+      <td><div style="font-size:0.75em;color:#8b949e">${Math.round(prog)}%</div><div class="timer-bar"><div class="timer-fill" style="width:${prog}%"></div></div></td>
+      <td>+${p.tokens_ganados || 0}</td><td style="font-size:0.8em;color:#8b949e">${esc(p.pcbot || 'local')}</td></tr>`;
+  }).join('');
+
+  const pcbots = data.pcbots || [];
+  document.getElementById('pcbots-tbody').innerHTML = pcbots.map(b => `
+    <tr><td>${esc(b.id)}</td><td>${esc(b.ip_local)}</td><td>${esc(b.ip_tailscale)}</td><td>${b.perfiles}</td><td>${esc(b.uptime)}</td></tr>`).join('');
+
+  const urls = data.urls_activas || [];
+  document.getElementById('urls-tbody').innerHTML = urls.map(u => `
+    <tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.url)}</td>
+    <td>${u.perfiles_asignados}</td><td>${u.tiempo_restante} min</td>
+    <td>${u.comentarios_activos ? '✅' : '❌'}</td><td>${esc(u.inicio)}</td></tr>`).join('');
+}
+
+async function sendCommand() {
+  const cmd = document.getElementById('cmd-input').value.trim();
+  const resultEl = document.getElementById('cmd-result');
+  if (!cmd) return;
+  resultEl.textContent = 'Enviando...';
+  try {
+    const resp = await fetch(`${API_BASE}/api/comando`, {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
+      body: JSON.stringify({comando: cmd})
+    });
+    const data = await resp.json();
+    resultEl.textContent = data.resultado || data.error || 'Comando ejecutado';
+    refreshDashboard();
+  } catch(e) { resultEl.textContent = 'Error: ' + e.message; }
+}
+
+function esc(str) {
+  if (!str) return '';
+  const div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+}
+</script>
+</body>
+</html>
