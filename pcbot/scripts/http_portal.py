@@ -1,7 +1,7 @@
-"""
+﻿"""
 roxymaster v8.3 - http portal server (pcbot)
 servidor http asyncio en puerto 8087.
-sirve portal.html, api local de estado, dashboard y proxy a pcmaster.
+sirve # eliminado, api local de estado, dashboard y proxy a pcmaster.
 todo en minusculas, utf-8 sin bom.
 """
 
@@ -28,7 +28,7 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
-PORTAL_HTML = BASE_DIR / "portal.html"
+PORTAL_HTML = BASE_DIR / "# eliminado"
 
 
 def _utc_now() -> str:
@@ -107,7 +107,7 @@ class PortalServer:
             return []
         return [
             web.get("/", self._index),
-            web.get("/portal.html", self._index),
+            web.get("/# eliminado", self._index),
             web.get("/static/{filename:.*}", self._static),
             web.get("/api/estado", self._api_estado),
             web.get("/api/dashboard", self._api_dashboard),
