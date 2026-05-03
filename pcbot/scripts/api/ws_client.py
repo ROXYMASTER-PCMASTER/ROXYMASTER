@@ -1,13 +1,17 @@
 """
 roxymaster v8.3 - websocket client (pcbot)
 conexion ws con mensajes firmados via hmac.
-modo offline-first: si no hay conexion, funciona igual.
+modo offline-first: no bloquea el event loop, inicia portal aunque pcmaster no este.
+todo en minusculas, utf-8 sin bom.
 """
+
 import asyncio
 import json
 import logging
+import os
+import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +21,26 @@ except ImportError:
     websockets = None
     logger.error("websockets no instalado. ejecuta: pip install websockets")
 
-import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import shs
+import cargador_secretos
+
+
+def _utc_now() -> str:
+    """devuelve iso 8601 en utc compatible con python 3.10+."""
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class WSClient:
     """cliente websocket hacia pcmaster con modo offline-first."""
 
-    def __init__(self, pcmaster_ip: str, pcmaster_port: int, pcbot_id: str):
+    def __init__(self, pcmaster_ip: str = "", pcmaster_port: int = 0, pcbot_id: str = ""):
+        if not pcmaster_ip:
+            pcmaster_ip = cargador_secretos.obtener_ip_pcmaster()
+        if not pcmaster_port:
+            pcmaster_port = cargador_secretos.obtener_puerto_ws()
         self.uri = f"ws://{pcmaster_ip}:{pcmaster_port}"
-        self.pcbot_id = pcbot_id
+        self.pcbot_id = pcbot_id or os.environ.get("COMPUTERNAME", "unknown")
         self.ws = None
         self.connected = False
         self.running = False
@@ -42,15 +55,14 @@ class WSClient:
         self._uptime_start = time.time()
         self._last_any_response = 0
         self._last_heartbeat_ok = 0
-        self._reconnect_delay = 5
         self._secreto_configurado = False
-        self._intentos_offline = 0
-        self._max_intentos_offline = 5  # max intentos antes de quedar offline
+        self._reconnect_task = None
 
     def configurar_secreto(self, secreto: str):
         """configura el secreto hmac compartido."""
         if secreto:
             shs.set_secreto(secreto)
+            cargador_secretos.guardar_secreto_shs(secreto)
             self._secreto_configurado = True
             logger.info("secreto hmac configurado")
 
@@ -68,14 +80,24 @@ class WSClient:
         logger.info(f"modo cambiado a: {nuevo_modo}")
 
     # --------------------------------------------------------------
-    # conexion no-bloqueante con limite de intentos
+    # conexion no-bloqueante: retorna inmediatamente
     # --------------------------------------------------------------
     async def connect(self):
-        """conecta a pcmaster con timeout y limite de reconexiones."""
+        """inicia conexion ws en background, no bloquea event loop."""
+        if websockets is None:
+            logger.error("websockets no instalado. no se puede conectar.")
+            return
         self.running = True
-        while self.running and self._intentos_offline < self._max_intentos_offline:
+        self._reconnect_task = asyncio.create_task(self._reconnect_loop())
+
+    async def _reconnect_loop(self):
+        """loop de reconexion en tarea separada."""
+        intentos = 0
+        max_intentos = 5
+        delay = 3
+        while self.running and intentos < max_intentos:
             try:
-                logger.info(f"conectando a pcmaster (intento {self._intentos_offline + 1}/{self._max_intentos_offline}): {self.uri}")
+                logger.info(f"conectando a pcmaster (intento {intentos + 1}/{max_intentos}): {self.uri}")
                 ws = await asyncio.wait_for(
                     websockets.connect(
                         self.uri,
@@ -89,36 +111,41 @@ class WSClient:
                 )
                 self.ws = ws
                 self.connected = True
-                self._intentos_offline = 0
-                self._reconnect_delay = 5
+                intentos = 0
+                delay = 3
                 logger.info(f"conectado a pcmaster")
                 await self._send_handshake()
                 await self._single_loop()
             except asyncio.TimeoutError:
-                self._intentos_offline += 1
-                logger.warning(f"timeout conexion ({self._intentos_offline}/{self._max_intentos_offline})")
+                intentos += 1
+                logger.warning(f"timeout conexion ({intentos}/{max_intentos})")
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                self._intentos_offline += 1
+                intentos += 1
                 logger.debug(f"error ws: {type(e).__name__}: {str(e)[:60]}")
             finally:
                 self.connected = False
                 self.ws = None
-            if self.running and self._intentos_offline < self._max_intentos_offline:
-                d = min(self._reconnect_delay, 20)
+
+            if self.running and intentos < max_intentos:
+                d = min(delay, 20)
                 logger.info(f"reintentando en {d}s")
-                self._reconnect_delay = min(self._reconnect_delay * 1.5, 20)
+                delay = min(delay * 1.5, 20)
                 await asyncio.sleep(d)
 
-        # si llegamos aqui, modo offline permanente
-        logger.info(f"modo offline: {self._intentos_offline} intentos fallidos")
+        logger.info(f"modo offline: {intentos} intentos fallidos (max {max_intentos})")
         self.connected = False
         self.running = False
-        # mantener el loop en fondo para no bloquear
 
     async def disconnect(self):
         self.running = False
+        if self._reconnect_task:
+            self._reconnect_task.cancel()
+            try:
+                await self._reconnect_task
+            except (asyncio.CancelledError, Exception):
+                pass
         if self.ws:
             try:
                 await self.ws.close()
@@ -128,16 +155,28 @@ class WSClient:
     # --------------------------------------------------------------
     # envio firmado con hmac
     # --------------------------------------------------------------
+    async def send(self, data: str):
+        """envia mensaje raw."""
+        if not self.ws:
+            return
+        try:
+            await asyncio.wait_for(self.ws.send(data), timeout=5)
+        except asyncio.TimeoutError:
+            logger.debug("timeout enviando mensaje")
+        except Exception:
+            pass
+
     async def _send_firmado(self, payload: dict):
         if not self.ws:
             return
         try:
             msg_firmado = shs.firmar_mensaje(payload)
             await asyncio.wait_for(self.ws.send(msg_firmado), timeout=5)
+            logger.debug(f"enviado {payload.get('tipo', '?')}")
         except asyncio.TimeoutError:
-            logger.debug("timeout enviando mensaje")
-        except Exception:
-            pass
+            logger.debug("timeout enviando mensaje firmado")
+        except Exception as e:
+            logger.debug(f"_send_firmado error: {type(e).__name__}: {str(e)[:100]}")
 
     # --------------------------------------------------------------
     # handshake
@@ -155,7 +194,7 @@ class WSClient:
             "perfiles_vip": hd.get("perfiles_vip", []),
             "navegadores": hd.get("navegadores", []),
             "modo": hd.get("modo", self.modo),
-            "ts": datetime.utcnow().isoformat() + "Z",
+            "ts": _utc_now(),
         }
         await self._send_firmado(payload)
         logger.info(f"handshake firmado enviado a pcmaster (modo: {self.modo})")
@@ -166,12 +205,6 @@ class WSClient:
     async def _single_loop(self):
         while self.running and self.connected and self.ws:
             try:
-                try:
-                    await asyncio.wait_for(self.ws.ping(), timeout=5)
-                except (asyncio.TimeoutError, Exception):
-                    logger.debug("ping fallo, asumiendo desconexion")
-                    break
-
                 now = time.time()
                 if now - self._last_heartbeat_ok >= self.heartbeat_interval:
                     await self._send_heartbeat()
@@ -200,26 +233,34 @@ class WSClient:
         try:
             uptime_sec = int(time.time() - self._uptime_start)
             uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m"
-            tokens_gen = self.token_engine_ref.total() if self.token_engine_ref else 0
+            tokens_gen = (
+                self.token_engine_ref.get_balance()
+                if self.token_engine_ref
+                else 0
+            )
             payload = {
                 "tipo": "heartbeat",
                 "pcbot_id": self.pcbot_id,
                 "perfiles_roxy": [
-                    {"hash": p.get("hash_interno", p.get("hash", "")),
-                     "estado": p.get("estado", "inactive"),
-                     "url_actual": p.get("url_actual", "")}
+                    {
+                        "hash": p.get("hash_interno", p.get("hash", "")),
+                        "estado": p.get("estado", "inactive"),
+                        "url_actual": p.get("url_actual", ""),
+                    }
                     for p in self.perfiles_roxy
                 ],
                 "perfiles_vip": [
-                    {"nombre": p.get("nombre", ""),
-                     "estado": p.get("estado", "inactive"),
-                     "url_actual": p.get("url_actual", "")}
+                    {
+                        "nombre": p.get("nombre", ""),
+                        "estado": p.get("estado", "inactive"),
+                        "url_actual": p.get("url_actual", ""),
+                    }
                     for p in self.perfiles_vip
                 ],
                 "tokens_generados": tokens_gen,
                 "uptime": uptime_str,
                 "modo": self.modo,
-                "ts": datetime.utcnow().isoformat() + "Z",
+                "ts": _utc_now(),
             }
             await self._send_firmado(payload)
         except Exception:
@@ -238,7 +279,7 @@ class WSClient:
             return
         valido, payload = shs.verificar_mensaje(raw)
         if not valido:
-            logger.warning(f"firma invalida en mensaje entrante")
+            logger.warning("firma invalida en mensaje entrante")
             return
         await self._process(payload)
 
@@ -252,11 +293,15 @@ class WSClient:
             if self.on_command:
                 await self.on_command(msg.get("data", {}))
         elif msg_tipo == "error":
-            logger.error(f"error pcmaster: {msg.get('mensaje', msg.get('msg', ''))}")
+            logger.error(
+                f"error pcmaster: {msg.get('mensaje', msg.get('msg', ''))}"
+            )
         elif msg_tipo == "confirmacion_modo":
             logger.info(f"modo confirmado por pcmaster: {msg.get('modo', '')}")
 
-    async def send_result(self, command_id: str, success: bool, details: dict = None):
+    async def send_result(
+        self, command_id: str, success: bool, details: dict = None
+    ):
         if not self.connected or not self.ws:
             return
         try:
@@ -266,7 +311,7 @@ class WSClient:
                 "comando_id": command_id,
                 "exito": success,
                 "detalles": details or {},
-                "ts": datetime.utcnow().isoformat() + "Z",
+                "ts": _utc_now(),
             }
             await self._send_firmado(payload)
         except Exception:
@@ -279,5 +324,9 @@ class WSClient:
             "uri": self.uri,
             "modo": self.modo,
             "uptime": int(time.time() - self._uptime_start),
-            "ultima_respuesta": int(time.time() - self._last_any_response) if self._last_any_response > 0 else -1,
+            "ultima_respuesta": (
+                int(time.time() - self._last_any_response)
+                if self._last_any_response > 0
+                else -1
+            ),
         }

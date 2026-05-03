@@ -109,14 +109,16 @@ class AutoDetect:
         }
         try:
             out = subprocess.run(
-                ["powershell", "-Command", "Get-ComputerInfo | Select-Object CsTotalPhysicalMemory | ConvertTo-Json"],
-                capture_output=True, text=True, timeout=10
+                ["wmic", "ComputerSystem", "get", "TotalPhysicalMemory", "/VALUE"],
+                capture_output=True, text=True, timeout=5
             )
             if out.returncode == 0 and out.stdout.strip():
-                import json
-                mem = json.loads(out.stdout)
-                ram_mb = int(mem.get("CsTotalPhysicalMemory", 0)) // (1024 * 1024)
-                info["ram_mb"] = ram_mb
+                for line in out.stdout.splitlines():
+                    if "TotalPhysicalMemory" in line:
+                        val = line.split("=")[1].strip()
+                        ram_mb = int(val) // (1024 * 1024)
+                        info["ram_mb"] = ram_mb
+                        break
         except Exception:
             info["ram_mb"] = 0
 

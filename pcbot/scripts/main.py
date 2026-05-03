@@ -199,7 +199,10 @@ async def async_main():
 
     # iniciar ws en background
     ws_task = asyncio.create_task(ws.connect())
-    await asyncio.sleep(2)
+    for _ in range(5):
+        await asyncio.sleep(1)
+        if ws.connected:
+            break
 
     print(f"       {'conectado a pcmaster' if ws.connected else 'modo offline'}")
     print()
@@ -211,11 +214,15 @@ async def async_main():
     portal = PortalServer(pm, ws, te, st)
 
     try:
-        portal.start(_actual_portal_port)
+        await portal.start_async(_actual_portal_port)
     except OSError:
         logger.warning(f"puerto {_actual_portal_port} ocupado, intentando 8088")
         _actual_portal_port = 8088
-        portal.start(8088)
+        await portal.start_async(8088)
+    except Exception as e:
+        logger.warning(f"error iniciando portal en puerto alternativo: {e}")
+        _actual_portal_port = 8089
+        await portal.start_async(8089)
     print()
 
     # ---------------------------------------------------------------

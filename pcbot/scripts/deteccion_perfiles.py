@@ -5,6 +5,7 @@ roxybrowser (via escaneo local de directorios), clasificacion,
 navegadores locales, perfiles vip, ip wan.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -12,7 +13,6 @@ import socket
 import subprocess
 import time
 import requests
-import aiohttp
 
 from auto_detect import AutoDetect, BROWSER_PATHS
 from roxybrowser_api import find_workspace_id, RoxyBrowserAPI
@@ -33,68 +33,91 @@ ROXY_DATA_DIR = os.path.join(
     os.environ.get("USERPROFILE", ""), ".roxybrowser"
 )
 
+# solo los puertos mas comunes de debug
+COMMON_DEBUG_PORTS = [9222, 9229, 9999]
 
-def scan_local_profiles() -> list:
-    """escanea directorios locales de roxybrowser para detectar perfiles.
-    cada perfil es un subdirectorio con archivo Preferences dentro."""
+
+async def scan_local_profiles_async(max_profiles=10, timeout_total=8) -> list:
+    """escanea directorios locales de roxybrowser (async, con limite).
+    usa executor para evitar bloqueo de os.listdir."""
     profiles = []
-    if not os.path.isdir(BROWSER_CACHE_DIR):
-        logger.warning(f"browser-cache no encontrado: {BROWSER_CACHE_DIR}")
-        return profiles
+    t0 = time.time()
+
+    def _scan_sync():
+        """escaneo sincrono dentro de executor."""
+        res = []
+        if not os.path.isdir(BROWSER_CACHE_DIR):
+            return res
+        try:
+            workspaces = os.listdir(BROWSER_CACHE_DIR)
+            for ws in workspaces:
+                if time.time() - t0 > timeout_total:
+                    break
+                ws_path = os.path.join(BROWSER_CACHE_DIR, ws)
+                if not os.path.isdir(ws_path):
+                    continue
+                for i, item in enumerate(os.listdir(ws_path)):
+                    if time.time() - t0 > timeout_total or len(res) >= max_profiles:
+                        break
+                    item_path = os.path.join(ws_path, item)
+                    if not os.path.isdir(item_path):
+                        continue
+                    pref_path = os.path.join(item_path, "Preferences")
+                    profile_name = item
+                    port = 0
+                    estado = "inactive"
+                    if os.path.isfile(pref_path):
+                        try:
+                            with open(pref_path, "r", encoding="utf-8", errors="ignore") as f:
+                                pref = json.load(f)
+                            profile_name = pref.get("profile", {}).get("name", item)
+                        except Exception:
+                            pass
+                    res.append({
+                        "hash_interno": ws,
+                        "nombre": profile_name,
+                        "estado": estado,
+                        "port": port,
+                        "ws_endpoint": "",
+                        "tipo": "roxy",
+                        "url_actual": "",
+                        "directorio": item_path,
+                    })
+                if len(res) >= max_profiles:
+                    break
+        except Exception as e:
+            logger.error(f"error en escaneo sincrono: {e}")
+        return res
 
     try:
-        workspaces = os.listdir(BROWSER_CACHE_DIR)
-        for ws in workspaces:
-            ws_path = os.path.join(BROWSER_CACHE_DIR, ws)
-            if not os.path.isdir(ws_path):
-                continue
-            # dentro del workspace, los perfiles estan en subdirectorios
-            for item in os.listdir(ws_path):
-                item_path = os.path.join(ws_path, item)
-                if not os.path.isdir(item_path):
+        loop = asyncio.get_event_loop()
+        raw_profiles = await asyncio.wait_for(
+            loop.run_in_executor(None, _scan_sync),
+            timeout=timeout_total
+        )
+        # luego detectar puertos activos (async, solo 3 puertos)
+        for p in raw_profiles:
+            for dp in COMMON_DEBUG_PORTS:
+                try:
+                    _, writer = await asyncio.wait_for(
+                        asyncio.open_connection("127.0.0.1", dp),
+                        timeout=0.5
+                    )
+                    writer.close()
+                    await writer.wait_closed()
+                    p["port"] = dp
+                    p["estado"] = "active"
+                    p["ws_endpoint"] = f"ws://127.0.0.1:{dp}"
+                    break
+                except Exception:
                     continue
-                # verificar si tiene Preferences
-                pref_path = os.path.join(item_path, "Preferences")
-                profile_name = item
-                port = 0
-                estado = "inactive"
-                if os.path.isfile(pref_path):
-                    try:
-                        with open(pref_path, "r", encoding="utf-8", errors="ignore") as f:
-                            pref = json.load(f)
-                        profile_name = pref.get("profile", {}).get("name", item)
-                    except Exception:
-                        pass
-                # verificar si el perfil esta activo (debugging port abierto)
-                for debug_port in range(9000, 9999):
-                    try:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        s.settimeout(0.3)
-                        result = s.connect_ex(("127.0.0.1", debug_port))
-                        s.close()
-                        if result == 0:
-                            port = debug_port
-                            estado = "active"
-                            break
-                    except Exception:
-                        continue
-
-                profiles.append({
-                    "hash_interno": ws,
-                    "nombre": profile_name,
-                    "estado": estado,
-                    "port": port,
-                    "ws_endpoint": f"ws://127.0.0.1:{port}" if port else "",
-                    "tipo": "roxy",
-                    "url_actual": "",
-                    "directorio": item_path,
-                })
-            if profiles:
-                break  # solo primer workspace con perfiles
+        profiles = raw_profiles
+    except asyncio.TimeoutError:
+        logger.warning(f"scan_local_profiles cancelado por timeout ({timeout_total}s)")
     except Exception as e:
-        logger.error(f"error escaneando perfiles locales: {e}")
+        logger.error(f"error en scan_local_profiles_async: {e}")
 
-    logger.info(f"{len(profiles)} perfiles roxy detectados localmente")
+    logger.info(f"{len(profiles)} perfiles roxy detectados localmente en {time.time()-t0:.1f}s")
     return profiles
 
 
@@ -170,7 +193,7 @@ class DeteccionPerfiles:
                 api_url="http://127.0.0.1:50000",
                 workspace_id=self.roxy_workspace_id
             )
-            api_browsers = await self._roxy_api.get_browsers()
+            api_browsers = self._roxy_api.get_profiles()
             if api_browsers:
                 logger.info(f"roxybrowser api respondio con {len(api_browsers)} browsers")
                 for p in api_browsers:
@@ -186,13 +209,12 @@ class DeteccionPerfiles:
                     })
                 return
 
-        # fallback: escaneo local de directorios
+        # fallback: escaneo local async
         logger.info("usando escaneo local para detectar perfiles roxybrowser")
-        local_profiles = scan_local_profiles()
+        local_profiles = await scan_local_profiles_async()
         self.roxy_profiles = local_profiles
 
         if not self.roxy_workspace_id and local_profiles:
-            # inferir workspace_id del primer perfil
             self.roxy_workspace_id = local_profiles[0].get("hash_interno", "")
             logger.info(f"workspace_id inferido de perfiles locales: {self.roxy_workspace_id}")
 
@@ -228,7 +250,7 @@ class DeteccionPerfiles:
     def _detectar_ip_wan(self):
         """obtiene ip publica via ifconfig.me."""
         try:
-            resp = requests.get(IFCONFIG_ME_URL, timeout=10)
+            resp = requests.get(IFCONFIG_ME_URL, timeout=5)
             if resp.status_code == 200:
                 self.ip_wan = resp.text.strip()
                 logger.info(f"ip wan detectada: {self.ip_wan}")
@@ -242,18 +264,19 @@ class DeteccionPerfiles:
     def _detectar_ips_locales(self):
         """detecta ip local y tailscale."""
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            self.ip_local = s.getsockname()[0]
-            s.close()
+            self.ip_local = socket.gethostbyname(socket.gethostname())
+            if self.ip_local.startswith("127."):
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                self.ip_local = s.getsockname()[0]
+                s.close()
         except Exception:
             self.ip_local = "127.0.0.1"
 
-        # tailscale intent
         try:
             result = subprocess.run(
                 ["tailscale", "ip", "-4"],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=3
             )
             if result.returncode == 0:
                 self.ip_tailscale = result.stdout.strip()
@@ -264,9 +287,7 @@ class DeteccionPerfiles:
     # perfiles vip
     # ------------------------------------------------------------------
     def _crear_perfiles_vip(self):
-        """crea hasta 2 perfiles vip por pc usando navegadores locales.
-        maximo 3 pcs por ip_wan, total 6 perfiles vip.
-        """
+        """crea hasta 2 perfiles vip por pc usando navegadores locales."""
         sesiones_abiertas = self._detectar_sesiones_navegadores()
         vip_count = 0
         vip_list = []
@@ -316,7 +337,7 @@ class DeteccionPerfiles:
         try:
             output = subprocess.run(
                 ["tasklist", "/FO", "CSV", "/NH"],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=3
             )
             if output.returncode == 0:
                 for line in output.stdout.splitlines():

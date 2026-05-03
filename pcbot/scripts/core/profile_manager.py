@@ -1,175 +1,160 @@
 """
-ROXYMASTER v8.0 - PROFILE MANAGER (PCBOT)
-Gestiona perfiles: abrir, reusar, cerrar, detectar estado.
-Se comunica exclusivamente via RoxyBrowserAPI.
+roxymaster v8.3 - profile manager (pcbot)
+gestion de perfiles con estados (active/inactive/hung).
+navegacion via roxybrowser api, health checks.
+todo en minusculas, utf-8 sin bom.
 """
 
+import asyncio
 import logging
-import time
+from enum import Enum, auto
+from dataclasses import dataclass, field
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-class ProfileState:
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    HUNG = "hung"
+
+class ProfileState(Enum):
+    INACTIVE = auto()
+    ACTIVE = auto()
+    HUNG = auto()
 
 
+@dataclass
 class Profile:
-    def __init__(self, profile_id: str, name: str = "", ws_endpoint: str = ""):
-        self.id = profile_id
-        self.name = name
-        self.ws_endpoint = ws_endpoint
-        self.state = ProfileState.INACTIVE
-        self.current_url = ""
-        self.session_start = 0.0
-        self.last_check = 0.0
-        self.fail_count = 0
+    id: str
+    name: str = ""
+    type: str = "local"
+    state: ProfileState = ProfileState.INACTIVE
+    current_url: str = ""
+    duracion_min: int = 60
+    inicio: float = 0.0
+    fail_count: int = 0
+    hash_interno: str = ""
+    metadata: dict = field(default_factory=dict)
 
 
 class ProfileManager:
-    """
-    Gestiona el ciclo de vida de los perfiles en PCBOT.
-    Solo utiliza RoxyBrowserAPI para interactuar con perfiles.
-    """
+    """gestiona perfiles, navegacion y health checks."""
 
-    MAX_FAIL_COUNT = 3
-
-    def __init__(self, roxy_api):
-        self.api = roxy_api
+    def __init__(self, roxy_api=None):
         self.profiles: dict[str, Profile] = {}
+        self.roxy = roxy_api
 
-    # ------------------------------------------------------------------
-    # Registro de perfiles
-    # ------------------------------------------------------------------
-    def register_profiles(self, raw_profiles: list):
-        """
-        Registra perfiles detectados via API de RoxyBrowser.
-        raw_profiles: lista de dicts con {id, name, status, wsEndpoint}
-        """
-        for rp in raw_profiles:
-            pid = str(rp.get("id", ""))
-            if not pid:
-                continue
-            if pid not in self.profiles:
-                self.profiles[pid] = Profile(
-                    profile_id=pid,
-                    name=rp.get("name", f"Profile_{pid}"),
-                    ws_endpoint=rp.get("wsEndpoint", "")
-                )
+    def register_profiles(self, profiles_data: list):
+        """registra perfiles desde datos de roxybrowser o deteccion local."""
+        for pdata in profiles_data:
+            if isinstance(pdata, dict):
+                pid = str(pdata.get("id", pdata.get("hash", "")))
+                if not pid:
+                    continue
+                name = pdata.get("name", pdata.get("nombre", pid))
+                ptype = pdata.get("type", pdata.get("tipo", "local"))
+                if pid not in self.profiles:
+                    self.profiles[pid] = Profile(
+                        id=pid,
+                        name=name,
+                        type=ptype,
+                        hash_interno=pdata.get("hash_interno", ""),
+                        metadata=pdata,
+                    )
+                else:
+                    self.profiles[pid].name = name
+                    self.profiles[pid].metadata = pdata
 
-        for pid in list(self.profiles.keys()):
-            if not any(str(r.get("id", "")) == pid for r in raw_profiles):
-                del self.profiles[pid]
-                logger.info(f"Perfil {pid} removido (ya no existe en RoxyBrowser)")
+    def get_profile(self, profile_id: str) -> Optional[Profile]:
+        return self.profiles.get(profile_id)
 
-        logger.info(f"Perfiles registrados: {len(self.profiles)}")
+    def get_all_states(self) -> dict:
+        counts = {"active": 0, "inactive": 0, "hung": 0}
+        states = {}
+        for pid, p in self.profiles.items():
+            sname = p.state.name.lower()
+            states[pid] = sname
+            if sname in counts:
+                counts[sname] += 1
+        return {"states": states, "counts": counts}
 
-    # ------------------------------------------------------------------
-    # Ejecutar comando en perfiles
-    # ------------------------------------------------------------------
-    async def execute_on_profiles(self, profile_ids: list, url: str, duration_min: float):
-        """
-        Navega los perfiles indicados a la URL y agenda la redireccion al portal
-        tras duration_min minutos.
-        Retorna dict {profile_id: success_bool}
-        """
-        results = {}
-        for pid in profile_ids:
-            results[pid] = await self._navigate_single(pid, url)
-        return results
-
-    async def _navigate_single(self, profile_id: str, url: str) -> bool:
-        profile = self.profiles.get(profile_id)
-        if not profile:
-            logger.warning(f"Perfil {profile_id} no registrado")
+    async def navigate_to(self, profile_id: str, url: str) -> bool:
+        """navega un perfil a la url indicada via roxybrowser api."""
+        if not self.roxy:
+            logger.warning("roxybrowser api no disponible para navegar")
+            return False
+        try:
+            ok = self.roxy.navigate(profile_id, url)
+            if ok:
+                p = self.profiles.get(profile_id)
+                if p:
+                    p.current_url = url
+                    p.state = ProfileState.ACTIVE
+                    logger.info(f"perfil {profile_id} navegando a {url}")
+            return ok
+        except Exception as e:
+            logger.error(f"error navegando perfil {profile_id}: {e}")
             return False
 
-        ok = self.api.navigate(profile_id, url)
-        if ok:
-            profile.state = ProfileState.ACTIVE
-            profile.current_url = url
-            profile.session_start = time.time()
-            profile.fail_count = 0
-            logger.info(f"Perfil {profile_id} navego a {url}")
-        else:
-            profile.fail_count += 1
-            if profile.fail_count >= self.MAX_FAIL_COUNT:
-                profile.state = ProfileState.HUNG
-                logger.warning(f"Perfil {profile_id} marcado como COLGADO tras {self.MAX_FAIL_COUNT} fallos")
-            else:
-                profile.state = ProfileState.INACTIVE
-        return ok
+    async def close_profile(self, profile_id: str) -> bool:
+        """cierra un perfil via roxybrowser api."""
+        if not self.roxy:
+            return False
+        try:
+            ok = self.roxy.close_profile(profile_id)
+            if ok:
+                p = self.profiles.get(profile_id)
+                if p:
+                    p.state = ProfileState.INACTIVE
+                    p.current_url = ""
+                    logger.info(f"perfil {profile_id} cerrado")
+            return ok
+        except Exception as e:
+            logger.error(f"error cerrando perfil {profile_id}: {e}")
+            return False
 
-    # ------------------------------------------------------------------
-    # Redirigir al portal
-    # ------------------------------------------------------------------
-    def redirect_to_portal(self, profile_id: str, portal_url: str) -> bool:
-        """Redirige un perfil hacia el portal de inicio."""
-        return self.api.navigate(profile_id, portal_url)
+    async def redirect_to_portal(self, profile_id: str, portal_url: str) -> bool:
+        """redirige un perfil al portal local."""
+        return await self.navigate_to(profile_id, portal_url)
 
-    # ------------------------------------------------------------------
-    # Verificacion de estado (health check)
-    # ------------------------------------------------------------------
-    def check_profile_health(self, profile_id: str) -> str:
-        """Verifica si un perfil responde. Retorna estado."""
-        profile = self.profiles.get(profile_id)
-        if not profile:
-            return ProfileState.INACTIVE
-
-        current_url = self.api.get_profile_page_url(profile_id)
-        if not current_url:
-            profile.fail_count += 1
-            if profile.fail_count >= self.MAX_FAIL_COUNT:
-                profile.state = ProfileState.HUNG
-            else:
-                profile.state = ProfileState.INACTIVE
-        elif current_url != profile.current_url:
-            profile.current_url = current_url
-            profile.state = ProfileState.ACTIVE
-            profile.fail_count = 0
-
-        profile.last_check = time.time()
-        return profile.state
+    def mark_hung(self, profile_id: str):
+        p = self.profiles.get(profile_id)
+        if p:
+            p.state = ProfileState.HUNG
+            p.fail_count += 1
+            logger.warning(f"perfil {profile_id} marcado como hung")
 
     def check_all_health(self) -> dict:
-        """Verifica salud de todos los perfiles."""
-        states = {ProfileState.ACTIVE: 0, ProfileState.INACTIVE: 0, ProfileState.HUNG: 0}
-        for pid in self.profiles:
-            s = self.check_profile_health(pid)
-            states[s] = states.get(s, 0) + 1
-        return states
-
-    # ------------------------------------------------------------------
-    # Estado de todos los perfiles
-    # ------------------------------------------------------------------
-    def get_all_states(self) -> dict:
-        """Retorna estados de todos los perfiles para heartbeat."""
-        active = []
-        inactive = []
-        hung = []
+        """verifica health de todos los perfiles.
+        marca como hung si fail_count excede 3."""
+        health = {}
         for pid, p in self.profiles.items():
-            entry = {
-                "id": p.id,
-                "name": p.name,
-                "current_url": p.current_url,
-                "session_seconds": round(time.time() - p.session_start) if p.session_start else 0
-            }
-            if p.state == ProfileState.ACTIVE:
-                active.append(entry)
-            elif p.state == ProfileState.HUNG:
-                hung.append(entry)
+            if p.fail_count >= 3:
+                p.state = ProfileState.HUNG
+                health[pid] = "hung"
             else:
-                inactive.append(entry)
+                health[pid] = p.state.name.lower()
+        return health
 
-        return {
-            "active": active,
-            "inactive": inactive,
-            "hung": hung,
-            "counts": {
-                "active": len(active),
-                "inactive": len(inactive),
-                "hung": len(hung),
-                "total": len(self.profiles)
-            }
-        }
+    async def execute_on_profiles(self, pids: list, url: str, duracion: int = 60):
+        """asigna una url a una lista de perfiles."""
+        tasks = []
+        for pid in pids:
+            p = self.profiles.get(pid)
+            if p and p.state != ProfileState.HUNG:
+                p.duracion_min = duracion
+                tasks.append(self.navigate_to(pid, url))
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def stop_all(self):
+        """detiene todos los perfiles activos."""
+        tasks = []
+        for pid, p in self.profiles.items():
+            if p.state == ProfileState.ACTIVE:
+                tasks.append(self.close_profile(pid))
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+    def get_activos(self) -> list:
+        return [p for p in self.profiles.values() if p.state == ProfileState.ACTIVE]
+
+    def get_inactivos(self) -> list:
+        return [p for p in self.profiles.values() if p.state == ProfileState.INACTIVE]
