@@ -1,498 +1,529 @@
 # ============================================================================
-# ROXYMASTER v6.1 - INSTALADOR PCBOT (CLIENTE BOT)
-# Ejecutar en CADA maquina PCBOT
-# Ruta: C:\Users\<USUARIO>\Desktop\ROXYMASTER\PCBOT\INSTALAR_PCBOT.ps1
+# roxymaster v8.3 - instalador pcbot (cliente)
+# ejecutar en cada maquina pcbot
+# ruta: c:\users\<usuario>\desktop\roxymaster\pcbot\instalar_pcbot.ps1
 # ============================================================================
-#Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-$Host.UI.RawUI.WindowTitle = "ROXYMASTER v6.1 - PCBOT CLIENT"
+#requires -version 5.1
+set-strictmode -version latest
+$erroractionpreference = "stop"
+$host.ui.rawui.windowtitle = "roxymaster v8.3 - pcbot client"
 
 # ============================================================================
-# VARIABLES GLOBALES (modificables manualmente)
+# variables globales (modificables manualmente)
 # ============================================================================
-$script:VERSION = "6.1"
-$script:MUTEX_NAME = "Global\ROXYMASTER_PCBOT"
-$script:PCMASTER_WS_PORT = 5006
+$script:version = "8.3"
+$script:mutex_name = "global\roxymaster_pcbot_v83"
+$script:pcmaster_ws_port = 5006
 
 # ============================================================================
-# FUNCION: Escribir logs con timestamp
+# funcion: escribir logs con timestamp
 # ============================================================================
-function Write-Log {
-    param([string]$Message, [string]$Level = "INFO")
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "$timestamp [$Level] $Message"
-    Write-Host $line
+function write-log {
+    param([string]$message, [string]$level = "info")
+    $timestamp = get-date -format "yyyy-mm-dd hh:mm:ss"
+    $line = "$timestamp [$level] $message"
+    write-host $line
     try {
-        Add-Content -Path "$script:LOG_FILE" -Value $line -ErrorAction SilentlyContinue
+        add-content -path "$script:log_file" -value $line -erroraction silentlycontinue
     } catch {}
 }
 
 # ============================================================================
-# FUNCION: Verificar si ya hay una instancia corriendo (MUTEX)
+# funcion: verificar si ya hay una instancia corriendo (mutex)
 # ============================================================================
-function Test-Mutex {
+function test-mutex {
     try {
-        $mutex = New-Object System.Threading.Mutex($false, $script:MUTEX_NAME)
-        if (-not $mutex.WaitOne(0)) {
-            Write-Log "ERROR: PCBOT ya esta corriendo. Cerrando..." "ERROR"
-            Write-Host ""
-            Write-Host "========================================" -ForegroundColor Red
-            Write-Host "  PCBOT YA ESTA EN EJECUCION" -ForegroundColor Red
-            Write-Host "  No se puede abrir una segunda instancia." -ForegroundColor Red
-            Write-Host "========================================" -ForegroundColor Red
+        $mutex = new-object system.threading.mutex($false, $script:mutex_name)
+        if (-not $mutex.waitone(0)) {
+            write-log "error: pcbot ya esta corriendo. cerrando..." "error"
+            write-host ""
+            write-host "========================================" -foregroundcolor red
+            write-host "  pcbot ya esta en ejecucion" -foregroundcolor red
+            write-host "  no se puede abrir una segunda instancia." -foregroundcolor red
+            write-host "========================================" -foregroundcolor red
             exit 1
         }
         return $mutex
     } catch {
-        Write-Log "ADVERTENCIA: No se pudo crear mutex, continuando..." "WARN"
+        write-log "advertencia: no se pudo crear mutex, continuando..." "warn"
         return $null
     }
 }
 
 # ============================================================================
-# FUNCION: Detectar Python y pip
+# funcion: detectar python y pip
 # ============================================================================
-function Test-Python {
+function test-python {
     try {
-        $pyVer = & python --version 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "Python no encontrado" }
-        Write-Log "Python detectado: $pyVer"
-        
-        $pipVer = & pip --version 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "pip no encontrado" }
-        Write-Log "pip detectado: $pipVer"
-        
+        $pyver = & python --version 2>&1
+        if ($lastexitcode -ne 0) { throw "python no encontrado" }
+        write-log "python detectado: $pyver"
+
+        $pipver = & pip --version 2>&1
+        if ($lastexitcode -ne 0) { throw "pip no encontrado" }
+        write-log "pip detectado: $pipver"
+
         return $true
     } catch {
-        Write-Log "ERROR: Python/pip no encontrado. Instale Python 3.10+ desde https://python.org" "ERROR"
+        write-log "error: python/pip no encontrado. instale python 3.10+ desde https://python.org" "error"
         return $false
     }
 }
 
 # ============================================================================
-# FUNCION: Detectar informacion del sistema
+# funcion: detectar informacion del sistema
 # ============================================================================
-function Get-SystemInfo {
-    Write-Log "Recopilando informacion del sistema..."
-    
-    # Nombre PC
-    $script:NOMBRE_PC = $env:COMPUTERNAME
-    Write-Log "Nombre PC: $script:NOMBRE_PC"
-    
-    # Usuario
-    $script:USUARIO = $env:USERNAME
-    Write-Log "Usuario: $script:USUARIO"
-    
-    # IP Local
+function get-systeminfo {
+    write-log "recopilando informacion del sistema..."
+
+    # nombre pc
+    $script:nombre_pc = $env:computername
+    write-log "nombre pc: $($script:nombre_pc)"
+
+    # usuario
+    $script:usuario = $env:username
+    write-log "usuario: $($script:usuario)"
+
+    # ip local
     try {
-        $ipLocal = (Get-NetIPAddress -AddressFamily IPv4 -PrefixOrigin Manual,Dhcp | 
-                    Where-Object { $_.IPAddress -notlike "127.*" } | 
-                    Select-Object -First 1).IPAddress
-        if ($ipLocal) {
-            $script:IP_LOCAL = $ipLocal
+        $iplocal = (get-netipaddress -addressfamily ipv4 -prefixorigin manual,dhcp |
+                    where-object { $_.ipaddress -notlike "127.*" } |
+                    select-object -first 1).ipaddress
+        if ($iplocal) {
+            $script:ip_local = $iplocal
         } else {
-            $script:IP_LOCAL = "127.0.0.1"
+            $script:ip_local = "127.0.0.1"
         }
-        Write-Log "IP Local detectada: $script:IP_LOCAL"
+        write-log "ip local detectada: $($script:ip_local)"
     } catch {
-        $script:IP_LOCAL = "127.0.0.1"
-        Write-Log "IP Local por defecto: $script:IP_LOCAL" "WARN"
+        $script:ip_local = "127.0.0.1"
+        write-log "ip local por defecto: $($script:ip_local)" "warn"
     }
-    
-    # Tailscale IP
+
+    # tailscale ip
     try {
-        $tsIP = & tailscale ip -4 2>&1
-        if ($LASTEXITCODE -eq 0 -and $tsIP -match '\d+\.\d+\.\d+\.\d+') {
-            $script:IP_TAILSCALE = $tsIP.Trim()
-            Write-Log "Tailscale IP detectada: $script:IP_TAILSCALE"
+        $tsip = & tailscale ip -4 2>&1
+        if ($lastexitcode -eq 0 -and $tsip -match '\d+\.\d+\.\d+\.\d+') {
+            $script:ip_tailscale = $tsip.trim()
+            write-log "tailscale ip detectada: $($script:ip_tailscale)"
         } else {
-            $script:IP_TAILSCALE = "NO_DETECTADO"
-            Write-Log "Tailscale no detectado." "WARN"
+            $script:ip_tailscale = "no_detectado"
+            write-log "tailscale no detectado." "warn"
         }
     } catch {
-        $script:IP_TAILSCALE = "NO_DETECTADO"
-        Write-Log "Tailscale no detectado." "WARN"
+        $script:ip_tailscale = "no_detectado"
+        write-log "tailscale no detectado." "warn"
     }
-    
-    # ID unico del PCBOT
-    $script:CLIENT_ID = "$script:NOMBRE_PC-$script:USUARIO"
-    Write-Log "Client ID: $script:CLIENT_ID"
+
+    # id unico del pcbot
+    $script:client_id = "$($script:nombre_pc)-$($script:usuario)"
+    write-log "client id: $($script:client_id)"
 }
 
 # ============================================================================
-# FUNCION: Detectar aplicaciones de perfiles (RoxyBrowser, Multilogin, etc.)
+# funcion: detectar aplicaciones de gestion de perfiles
 # ============================================================================
-function Get-ProfileApps {
-    Write-Log "Detectando aplicaciones de gestion de perfiles..."
-    
+function get-profileapps {
+    write-log "detectando aplicaciones de gestion de perfiles..."
+
     $apps = @{}
-    
-    # Rutas comunes de RoxyBrowser
-    $roxyPaths = @(
-        "$env:ProgramFiles\RoxyBrowser\roxybrowser.exe",
-        "${env:ProgramFiles(x86)}\RoxyBrowser\roxybrowser.exe",
-        "$env:LOCALAPPDATA\RoxyBrowser\roxybrowser.exe",
-        "$env:USERPROFILE\AppData\Local\RoxyBrowser\roxybrowser.exe"
+
+    # rutas comunes de roxybrowser (nuevas para v8.3)
+    $roxypaths = @(
+        "$env:programfiles\roxybrowser\roxybrowser.exe",
+        "${env:programfiles(x86)}\roxybrowser\roxybrowser.exe",
+        "$env:localappdata\roxybrowser\roxybrowser.exe",
+        "$env:userprofile\appdata\local\roxybrowser\roxybrowser.exe",
+        "c:\roxybrowser\roxybrowser.exe"
     )
-    foreach ($p in $roxyPaths) {
-        if (Test-Path $p) { $apps["RoxyBrowser"] = $p; break }
+    foreach ($p in $roxypaths) {
+        if (test-path $p) { $apps["roxybrowser"] = $p; break }
     }
-    
-    # Multilogin
-    $mlPaths = @(
-        "$env:ProgramFiles\Multilogin\multilogin.exe",
-        "${env:ProgramFiles(x86)}\Multilogin\multilogin.exe"
+
+    # multilogin
+    $mlpaths = @(
+        "$env:programfiles\multilogin\multilogin.exe",
+        "${env:programfiles(x86)}\multilogin\multilogin.exe"
     )
-    foreach ($p in $mlPaths) {
-        if (Test-Path $p) { $apps["Multilogin"] = $p; break }
+    foreach ($p in $mlpaths) {
+        if (test-path $p) { $apps["multilogin"] = $p; break }
     }
-    
-    # GoLogin
-    $glPaths = @(
-        "$env:ProgramFiles\GoLogin\gologin.exe",
-        "${env:ProgramFiles(x86)}\GoLogin\gologin.exe"
+
+    # gologin
+    $glpaths = @(
+        "$env:programfiles\gologin\gologin.exe",
+        "${env:programfiles(x86)}\gologin\gologin.exe"
     )
-    foreach ($p in $glPaths) {
-        if (Test-Path $p) { $apps["GoLogin"] = $p; break }
+    foreach ($p in $glpaths) {
+        if (test-path $p) { $apps["gologin"] = $p; break }
     }
-    
-    # Adspower
-    $adPaths = @(
-        "$env:ProgramFiles\Adspower\adspower.exe",
-        "${env:ProgramFiles(x86)}\Adspower\adspower.exe"
+
+    # adspower
+    $adpaths = @(
+        "$env:programfiles\adspower\adspower.exe",
+        "${env:programfiles(x86)}\adspower\adspower.exe"
     )
-    foreach ($p in $adPaths) {
-        if (Test-Path $p) { $apps["Adspower"] = $p; break }
+    foreach ($p in $adpaths) {
+        if (test-path $p) { $apps["adspower"] = $p; break }
     }
-    
-    if ($apps.Count -gt 0) {
-        Write-Log "Aplicaciones detectadas: $($apps.Keys -join ', ')"
-        foreach ($key in $apps.Keys) {
-            Write-Host "  [DETECTADO] $key -> $($apps[$key])" -ForegroundColor Green
+
+    if ($apps.count -gt 0) {
+        write-log "aplicaciones detectadas: $($apps.keys -join ', ')"
+        foreach ($key in $apps.keys) {
+            write-host "  [detectado] $key -> $($apps[$key])" -foregroundcolor green
         }
     } else {
-        Write-Log "Sin aplicaciones de perfiles detectadas"
-        Write-Host "  [SIN APPS] No se detectaron aplicaciones de gestion de perfiles." -ForegroundColor Yellow
+        write-log "sin aplicaciones de perfiles detectadas"
+        write-host "  [sin apps] no se detectaron aplicaciones de gestion de perfiles." -foregroundcolor yellow
     }
-    
+
     return $apps
 }
 
 # ============================================================================
-# FUNCION: Detectar navegadores disponibles
+# funcion: detectar navegadores disponibles
 # ============================================================================
-function Get-Browsers {
-    Write-Log "Detectando navegadores disponibles..."
-    
+function get-browsers {
+    write-log "detectando navegadores disponibles..."
+
     $browsers = @()
-    
-    # Chrome
-    $chromePaths = @(
-        "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-        "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
-        "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+
+    # chrome
+    $chromepaths = @(
+        "$env:programfiles\google\chrome\application\chrome.exe",
+        "${env:programfiles(x86)}\google\chrome\application\chrome.exe",
+        "$env:localappdata\google\chrome\application\chrome.exe"
     )
-    foreach ($p in $chromePaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Chrome"; ruta=$p; user_data="$env:LOCALAPPDATA\Google\Chrome\User Data"}; break }
+    foreach ($p in $chromepaths) {
+        if (test-path $p) { $browsers += @{nombre="chrome"; ruta=$p; user_data="$env:localappdata\google\chrome\user data"}; break }
     }
-    
-    # Edge
-    $edgePaths = @(
-        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
-        "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+
+    # edge
+    $edgepaths = @(
+        "${env:programfiles(x86)}\microsoft\edge\application\msedge.exe",
+        "$env:programfiles\microsoft\edge\application\msedge.exe"
     )
-    foreach ($p in $edgePaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Edge"; ruta=$p; user_data="$env:LOCALAPPDATA\Microsoft\Edge\User Data"}; break }
+    foreach ($p in $edgepaths) {
+        if (test-path $p) { $browsers += @{nombre="edge"; ruta=$p; user_data="$env:localappdata\microsoft\edge\user data"}; break }
     }
-    
-    # Brave
-    $bravePaths = @(
-        "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe",
-        "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe",
-        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe"
+
+    # brave
+    $bravepaths = @(
+        "$env:programfiles\bravesoftware\brave-browser\application\brave.exe",
+        "${env:programfiles(x86)}\bravesoftware\brave-browser\application\brave.exe",
+        "$env:localappdata\bravesoftware\brave-browser\application\brave.exe"
     )
-    foreach ($p in $bravePaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Brave"; ruta=$p; user_data="$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"}; break }
+    foreach ($p in $bravepaths) {
+        if (test-path $p) { $browsers += @{nombre="brave"; ruta=$p; user_data="$env:localappdata\bravesoftware\brave-browser\user data"}; break }
     }
-    
-    # Firefox
-    $ffPaths = @(
-        "$env:ProgramFiles\Mozilla Firefox\firefox.exe",
-        "${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe"
+
+    # firefox
+    $ffpaths = @(
+        "$env:programfiles\mozilla firefox\firefox.exe",
+        "${env:programfiles(x86)}\mozilla firefox\firefox.exe"
     )
-    foreach ($p in $ffPaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Firefox"; ruta=$p; user_data="$env:APPDATA\Mozilla\Firefox\Profiles"}; break }
+    foreach ($p in $ffpaths) {
+        if (test-path $p) { $browsers += @{nombre="firefox"; ruta=$p; user_data="$env:appdata\mozilla\firefox\profiles"}; break }
     }
-    
-    # Opera
-    $operaPaths = @(
-        "$env:ProgramFiles\Opera\opera.exe",
-        "${env:ProgramFiles(x86)}\Opera\opera.exe",
-        "$env:LOCALAPPDATA\Programs\Opera\opera.exe"
+
+    # opera
+    $operapaths = @(
+        "$env:programfiles\opera\opera.exe",
+        "${env:programfiles(x86)}\opera\opera.exe",
+        "$env:localappdata\programs\opera\opera.exe"
     )
-    foreach ($p in $operaPaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Opera"; ruta=$p; user_data="$env:APPDATA\Opera Software\Opera Stable"}; break }
+    foreach ($p in $operapaths) {
+        if (test-path $p) { $browsers += @{nombre="opera"; ruta=$p; user_data="$env:appdata\opera software\opera stable"}; break }
     }
-    
-    # Vivaldi
-    $vivaldiPaths = @(
-        "$env:ProgramFiles\Vivaldi\Application\vivaldi.exe",
-        "${env:ProgramFiles(x86)}\Vivaldi\Application\vivaldi.exe",
-        "$env:LOCALAPPDATA\Vivaldi\Application\vivaldi.exe"
-    )
-    foreach ($p in $vivaldiPaths) {
-        if (Test-Path $p) { $browsers += @{nombre="Vivaldi"; ruta=$p; user_data="$env:LOCALAPPDATA\Vivaldi\User Data"}; break }
-    }
-    
-    Write-Log "Navegadores detectados: $($browsers.Count)"
+
+    write-log "navegadores detectados: $($browsers.count)"
     foreach ($b in $browsers) {
-        Write-Host "  [NAVEGADOR] $($b.nombre) -> $($b.ruta)" -ForegroundColor Cyan
+        write-host "  [navegador] $($b.nombre) -> $($b.ruta)" -foregroundcolor cyan
     }
-    
+
     return $browsers
 }
 
 # ============================================================================
-# FUNCION: Generar config.json para PCBOT
+# funcion: generar config.json para pcbot
 # ============================================================================
-function New-ConfigJSON {
-    $configPath = Join-Path $script:BASE_DIR "config.json"
-    
+function new-configjson {
+    $configpath = join-path $script:base_dir "config.json"
+
     $config = @{
         pcbot = @{
-            nombre_pc = $script:NOMBRE_PC
-            usuario = $script:USUARIO
-            ip_local = $script:IP_LOCAL
-            ip_tailscale = $script:IP_TAILSCALE
-            client_id = $script:CLIENT_ID
+            nombre_pc = $script:nombre_pc
+            usuario = $script:usuario
+            ip_local = $script:ip_local
+            ip_tailscale = $script:ip_tailscale
+            client_id = $script:client_id
         }
         pcmaster = @{
-            ip = $script:PCMASTER_IP
-            ws_port = $script:PCMASTER_WS_PORT
+            ip = $script:pcmaster_ip
+            ws_port = $script:pcmaster_ws_port
         }
-        version = $script:VERSION
+        version = $script:version
         seguridad = @{
-            protocolo = "SHS"
+            protocolo = "shs"
             version = "1.0"
         }
     }
-    
-    $config | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding UTF8
-    Write-Log "config.json creado/actualizado"
-    Write-Host "  config.json actualizado con informacion del sistema" -ForegroundColor Green
+
+    $config | convertto-json -depth 4 | set-content -path $configpath -encoding utf8
+    write-log "config.json creado/actualizado"
+    write-host "  config.json actualizado con informacion del sistema" -foregroundcolor green
 }
 
 # ============================================================================
-# FUNCION: Instalar dependencias Python
+# funcion: instalar dependencias python
 # ============================================================================
-function Install-Dependencies {
-    Write-Log "Instalando dependencias Python..."
-    
-    $packages = @("websockets", "requests", "psutil")
-    
+function install-dependencies {
+    write-log "instalando dependencias python..."
+
+    $packages = @("websockets", "requests", "psutil", "aiohttp", "asyncio")
+
     foreach ($pkg in $packages) {
         try {
             $installed = & pip show $pkg 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                Write-Log "  $pkg ya instalado"
+            if ($lastexitcode -eq 0) {
+                write-log "  $pkg ya instalado"
             } else {
-                Write-Log "  Instalando $pkg..."
-                & pip install $pkg -q 2>&1 | Out-Null
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Log "  $pkg instalado correctamente"
+                write-log "  instalando $pkg..."
+                & pip install $pkg -q 2>&1 | out-null
+                if ($lastexitcode -eq 0) {
+                    write-log "  $pkg instalado correctamente"
                 } else {
-                    Write-Log "  ERROR instalando $pkg" "ERROR"
+                    write-log "  error instalando $pkg" "error"
                 }
             }
         } catch {
-            Write-Log "  ERROR con $pkg : $_" "ERROR"
+            write-log "  error con $pkg : $_" "error"
         }
     }
-    
-    # playwright (opcional, para automatizar navegadores)
-    try {
-        $pw = & pip show playwright 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-Log "  playwright ya instalado"
-        } else {
-            Write-Log "  playwright no instalado (opcional para navegadores automaticos)"
-        }
-    } catch {}
 }
 
 # ============================================================================
-# FUNCION: Panel de estado y recomendaciones
+# funcion: crear directorios necesarios
 # ============================================================================
-function Show-Panel {
-    param($ProfileApps, $Browsers)
-    
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  ROXYMASTER v$script:VERSION - PCBOT" -ForegroundColor Cyan
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  PC: $script:NOMBRE_PC" -ForegroundColor White
-    Write-Host "  Usuario: $script:USUARIO" -ForegroundColor White
-    Write-Host "  IP Local: $script:IP_LOCAL" -ForegroundColor White
-    Write-Host "  IP Tailscale: $script:IP_TAILSCALE" -ForegroundColor White
-    Write-Host "  Client ID: $script:CLIENT_ID" -ForegroundColor White
-    Write-Host "----------------------------------------" -ForegroundColor DarkGray
-    Write-Host "  PCMASTER Target: $script:PCMASTER_IP`:$script:PCMASTER_WS_PORT" -ForegroundColor White
-    Write-Host "----------------------------------------" -ForegroundColor DarkGray
-    
-    if ($ProfileApps.Count -gt 0) {
-        Write-Host "  [APPS DE PERFILES DETECTADAS]" -ForegroundColor Green
-        foreach ($key in $ProfileApps.Keys) {
-            Write-Host "    $key" -ForegroundColor Gray
+function ensure-directories {
+    $dirs = @(
+        (join-path $script:base_dir "scripts"),
+        (join-path $script:base_dir "scripts\core"),
+        (join-path $script:base_dir "scripts\api"),
+        (join-path $script:base_dir "data"),
+        (join-path $script:base_dir "logs")
+    )
+    foreach ($d in $dirs) {
+        if (-not (test-path $d)) {
+            new-item -itemtype directory -path $d -force | out-null
+            write-log "directorio creado: $d"
         }
-        Write-Host ""
-        Write-Host "  >> Los perfiles deben crearse MANUALMENTE en la aplicacion" -ForegroundColor Yellow
-        Write-Host "  >> Configurar huellas digitales y proxies manualmente" -ForegroundColor Yellow
-        Write-Host "  >> Luego iniciar los perfiles para que PCBOT los detecte" -ForegroundColor Yellow
+    }
+}
+
+# ============================================================================
+# funcion: panel de estado y recomendaciones
+# ============================================================================
+function show-panel {
+    param($profileapps, $browsers)
+
+    write-host ""
+    write-host "========================================" -foregroundcolor cyan
+    write-host "  roxymaster v$($script:version) - pcbot" -foregroundcolor cyan
+    write-host "========================================" -foregroundcolor cyan
+    write-host "  pc: $($script:nombre_pc)" -foregroundcolor white
+    write-host "  usuario: $($script:usuario)" -foregroundcolor white
+    write-host "  ip local: $($script:ip_local)" -foregroundcolor white
+    write-host "  ip tailscale: $($script:ip_tailscale)" -foregroundcolor white
+    write-host "  client id: $($script:client_id)" -foregroundcolor white
+    write-host "----------------------------------------" -foregroundcolor darkgray
+    write-host "  pcmaster target: $($script:pcmaster_ip):$($script:pcmaster_ws_port)" -foregroundcolor white
+    write-host "----------------------------------------" -foregroundcolor darkgray
+
+    if ($profileapps.count -gt 0) {
+        write-host "  [apps de perfiles detectadas]" -foregroundcolor green
+        foreach ($key in $profileapps.keys) {
+            write-host "    $key" -foregroundcolor gray
+        }
+        write-host ""
+        write-host "  >> los perfiles deben crearse manualmente en la aplicacion" -foregroundcolor yellow
+        write-host "  >> configurar huellas digitales y proxies manualmente" -foregroundcolor yellow
+        write-host "  >> luego iniciar los perfiles para que pcbot los detecte" -foregroundcolor yellow
     } else {
-        Write-Host "  [MODO NAVEGADORES - SIN APPS]" -ForegroundColor Yellow
-        Write-Host "  Navegadores detectados: $($Browsers.Count)" -ForegroundColor Gray
-        Write-Host ""
-        Write-Host "  >> PCBOT creara 10 perfiles usando los navegadores disponibles" -ForegroundColor Cyan
-        Write-Host "  >> Numero maximo de perfiles: 10" -ForegroundColor Cyan
-        Write-Host "  >> Se usaran perfiles Chrome para diversificar huella" -ForegroundColor Cyan
+        write-host "  [modo navegadores - sin apps]" -foregroundcolor yellow
+        write-host "  navegadores detectados: $($browsers.count)" -foregroundcolor gray
+        write-host ""
+        write-host "  >> pcbot detectara perfiles desde roxybrowser o navegadores" -foregroundcolor cyan
     }
-    
-    Write-Host "----------------------------------------" -ForegroundColor DarkGray
-    Write-Host "  PCMASTER: $script:PCMASTER_IP" -ForegroundColor Yellow
-    Write-Host "  Puerto: $script:PCMASTER_WS_PORT" -ForegroundColor Yellow
-    Write-Host "========================================" -ForegroundColor Cyan
+
+    write-host "----------------------------------------" -foregroundcolor darkgray
+    write-host "  pcmaster: $($script:pcmaster_ip)" -foregroundcolor yellow
+    write-host "  puerto: $($script:pcmaster_ws_port)" -foregroundcolor yellow
+    write-host "========================================" -foregroundcolor cyan
 }
 
 # ============================================================================
-# FUNCION: Lanzar PCBOT Python
+# funcion: lanzar pcbot python (main.py)
 # ============================================================================
-function Start-PCBOT {
-    $scriptsDir = Join-Path $script:BASE_DIR "scripts"
-    $pcbotScript = Join-Path $scriptsDir "pcbot.py"
-    
-    if (-not (Test-Path $pcbotScript)) {
-        Write-Log "ERROR: No se encontro $pcbotScript" "ERROR"
+function start-pcbot {
+    $scriptsdir = join-path $script:base_dir "scripts"
+    $pcbotscript = join-path $scriptsdir "main.py"
+
+    if (-not (test-path $pcbotscript)) {
+        write-log "error: no se encontro $pcbotscript" "error"
         return $false
     }
-    
-    Write-Log "========================================"
-    Write-Log "  INICIANDO PCBOT CLIENT"
-    Write-Log "  Conectando a PCMASTER: $script:PCMASTER_IP`:$script:PCMASTER_WS_PORT"
-    Write-Log "  Client ID: $script:CLIENT_ID"
-    Write-Log "========================================"
-    
-    $env:ROXYMASTER_BASE = $script:BASE_DIR
-    
+
+    write-log "========================================"
+    write-log "  iniciando pcbot client"
+    write-log "  conectando a pcmaster: $($script:pcmaster_ip):$($script:pcmaster_ws_port)"
+    write-log "  client id: $($script:client_id)"
+    write-log "========================================"
+
+    $env:roxymaster_base = $script:base_dir
+
     try {
-        Set-Location $scriptsDir
-        $process = Start-Process -FilePath "python" -ArgumentList $pcbotScript -NoNewWindow -PassThru
-        Write-Log "PCBOT Python iniciado (PID: $($process.Id))"
+        set-location $scriptsdir
+        $process = start-process -filepath "python" -argumentlist $pcbotscript -nonewwindow -passthru
+        write-log "pcbot python iniciado (pid: $($process.id))"
         return $process
     } catch {
-        Write-Log "ERROR al iniciar PCBOT: $_" "ERROR"
+        write-log "error al iniciar pcbot: $_" "error"
         return $null
     }
 }
 
 # ============================================================================
-# MAIN
+# main
 # ============================================================================
-function Main {
-    Clear-Host
-    
-    # Banner
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  ROXYMASTER v$script:VERSION" -ForegroundColor Cyan
-    Write-Host "  INSTALADOR PCBOT (CLIENTE BOT)" -ForegroundColor Cyan
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host ""
-    
-    # 1. Determinar ruta base (dinamica, detecta el usuario actual)
-    $script:BASE_DIR = Join-Path $env:USERPROFILE "Desktop\ROXYMASTER\PCBOT"
-    
-    if (-not (Test-Path $script:BASE_DIR)) {
-        Write-Host "ERROR: No se encuentra la carpeta:" -ForegroundColor Red
-        Write-Host "  $script:BASE_DIR" -ForegroundColor Red
-        Write-Host "Cree la carpeta manualmente y coloque los archivos necesarios." -ForegroundColor Red
+function main {
+    clear-host
+
+    # banner
+    write-host ""
+    write-host "========================================" -foregroundcolor cyan
+    write-host "  roxymaster v$($script:version)" -foregroundcolor cyan
+    write-host "  instalador pcbot (cliente)" -foregroundcolor cyan
+    write-host "========================================" -foregroundcolor cyan
+    write-host ""
+
+    # 1. determinar ruta base (detecta la carpeta pcbot)
+    $script:base_dir = join-path $env:userprofile "desktop\roxymaster\pcbot"
+    # si no existe, probar minusculas
+    if (-not (test-path $script:base_dir)) {
+        $script:base_dir = join-path $env:userprofile "desktop\roxymaster\pcbot"
+    }
+    # si aun no existe, probar la ruta actual
+    if (-not (test-path $script:base_dir)) {
+        $script:base_dir = (get-location).path
+    }
+
+    if (-not (test-path $script:base_dir)) {
+        write-host "error: no se encuentra la carpeta pcbot." -foregroundcolor red
+        write-host "asegurate de que exista: $($env:userprofile)\desktop\roxymaster\pcbot" -foregroundcolor red
         exit 1
     }
-    
-    $script:LOG_FILE = Join-Path $script:BASE_DIR "pcbot_install.log"
-    Write-Log "Iniciando instalador PCBOT v$script:VERSION"
-    Write-Log "Ruta base: $script:BASE_DIR"
-    
-    # 2. Mutex anti-duplicado
-    $mutex = Test-Mutex
+
+    $script:log_file = join-path $script:base_dir "pcbot_install.log"
+    write-log "iniciando instalador pcbot v$($script:version)"
+    write-log "ruta base: $($script:base_dir)"
+
+    # 2. mutex anti-duplicado
+    $mutex = test-mutex
     if ($null -eq $mutex) { }
-    
-    # 3. Detectar Python
-    if (-not (Test-Python)) { exit 1 }
-    
-    # 4. Recopilar info del sistema
-    Get-SystemInfo
-    
-    # 5. Leer IP del PCMASTER desde config.json si existe
-    $configPath = Join-Path $script:BASE_DIR "config.json"
-    if (Test-Path $configPath) {
+
+    # 3. detectar python
+    if (-not (test-python)) { exit 1 }
+
+    # 4. recopilar info del sistema
+    get-systeminfo
+
+    # 5. leer ip del pcmaster desde config.json si existe
+    $configpath = join-path $script:base_dir "config.json"
+    if (test-path $configpath) {
         try {
-            $existingConfig = Get-Content $configPath -Raw | ConvertFrom-Json
-            if ($existingConfig.pcmaster -and $existingConfig.pcmaster.ip) {
-                $script:PCMASTER_IP = $existingConfig.pcmaster.ip
+            $existingconfig = get-content $configpath -raw | convertfrom-json
+            if ($existingconfig.pcmaster -and $existingconfig.pcmaster.ip) {
+                $script:pcmaster_ip = $existingconfig.pcmaster.ip
             }
         } catch {}
     }
-    if (-not $script:PCMASTER_IP) {
-        $script:PCMASTER_IP = "100.111.179.65"  # IP Tailscale de PCMASTER por defecto
+    if (-not $script:pcmaster_ip) {
+        $script:pcmaster_ip = "100.111.179.65"  # ip tailscale de pcmaster por defecto
     }
-    Write-Log "PCMASTER target: $script:PCMASTER_IP`:$script:PCMASTER_WS_PORT"
-    
-    # 6. Detectar apps de perfiles y navegadores
-    $profileApps = Get-ProfileApps
-    $browsers = Get-Browsers
-    
-    # 7. Generar/actualizar config.json
-    New-ConfigJSON
-    
-    # 8. Instalar dependencias
-    Install-Dependencies
-    
-    # 9. Verificar archivos Python
-    $scriptsDir = Join-Path $script:BASE_DIR "scripts"
-    if (-not (Test-Path (Join-Path $scriptsDir "pcbot.py"))) {
-        Write-Host ""
-        Write-Host "========================================" -ForegroundColor Red
-        Write-Host "  FALTA pcbot.py" -ForegroundColor Red
-        Write-Host "  Coloque pcbot.py y shs.py en:" -ForegroundColor Red
-        Write-Host "  $scriptsDir" -ForegroundColor Red
-        Write-Host "========================================" -ForegroundColor Red
-        exit 1
-    }
-    
-    # 10. Panel de estado
-    Show-Panel -ProfileApps $profileApps -Browsers $browsers
-    
-    # 11. Lanzar PCBOT
-    Write-Host ""
-    Write-Host "Iniciando cliente PCBOT..." -ForegroundColor Yellow
-    $process = Start-PCBOT
-    
-    if ($process) {
-        Write-Host ""
-        Write-Host "PCBOT iniciado correctamente." -ForegroundColor Green
-        Write-Host "Conectado a PCMASTER: $script:PCMASTER_IP`:$script:PCMASTER_WS_PORT" -ForegroundColor White
-        Write-Host "Presione Ctrl+C para detener." -ForegroundColor Gray
-        
-        try {
-            $process.WaitForExit()
-        } catch {
-            Write-Log "PCBOT detenido por el usuario"
+    write-log "pcmaster target: $($script:pcmaster_ip):$($script:pcmaster_ws_port)"
+
+    # 6. detectar apps de perfiles y navegadores
+    $profileapps = get-profileapps
+    $browsers = get-browsers
+
+    # 7. crear directorios necesarios
+    ensure-directories
+
+    # 8. generar/actualizar config.json
+    new-configjson
+
+    # 9. instalar dependencias
+    install-dependencies
+
+    # 10. verificar archivos python (main.py en lugar de pcbot.py)
+    $scriptsdir = join-path $script:base_dir "scripts"
+    $requiredfiles = @(
+        (join-path $scriptsdir "main.py"),
+        (join-path $scriptsdir "config_loader.py"),
+        (join-path $scriptsdir "shs.py"),
+        (join-path $scriptsdir "deteccion_perfiles.py"),
+        (join-path $scriptsdir "http_portal.py"),
+        (join-path $scriptsdir "core\state_tracker.py"),
+        (join-path $scriptsdir "core\token_engine.py"),
+        (join-path $scriptsdir "core\profile_manager.py"),
+        (join-path $scriptsdir "api\ws_client.py"),
+        (join-path $scriptsdir "api\roxybrowser_api.py")
+    )
+
+    $missingfiles = @()
+    foreach ($f in $requiredfiles) {
+        if (-not (test-path $f)) {
+            $missingfiles += $f
         }
     }
-    
-    Write-Log "Instalador PCBOT finalizado"
+
+    if ($missingfiles.count -gt 0) {
+        write-host ""
+        write-host "========================================" -foregroundcolor red
+        write-host "  archivos faltantes:" -foregroundcolor red
+        foreach ($mf in $missingfiles) {
+            write-host "    $mf" -foregroundcolor red
+        }
+        write-host "========================================" -foregroundcolor red
+        write-host "  copia los archivos de scripts desde pcmaster o el repositorio." -foregroundcolor yellow
+        # no salimos, puede que algunos modulos se carguen dinamicamente
+    }
+
+    # 11. panel de estado
+    show-panel -profileapps $profileapps -browsers $browsers
+
+    # 12. lanzar pcbot
+    write-host ""
+    write-host "iniciando cliente pcbot..." -foregroundcolor yellow
+    $process = start-pcbot
+
+    if ($process) {
+        write-host ""
+        write-host "pcbot iniciado correctamente." -foregroundcolor green
+        write-host "conectado a pcmaster: $($script:pcmaster_ip):$($script:pcmaster_ws_port)" -foregroundcolor white
+        write-host "portal local: http://127.0.0.1:8087" -foregroundcolor white
+        write-host "presione ctrl+c para detener." -foregroundcolor gray
+
+        try {
+            $process.waitforexit()
+        } catch {
+            write-log "pcbot detenido por el usuario"
+        }
+    }
+
+    write-log "instalador pcbot finalizado"
 }
 
-# Ejecutar
-Main
+# ejecutar
+main

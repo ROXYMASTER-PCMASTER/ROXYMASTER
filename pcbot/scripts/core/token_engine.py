@@ -9,7 +9,7 @@ import json
 import logging
 import os
 
-from pcbot.scripts.config_loader import DATA_DIR
+from config_loader import DATA_DIR
 
 logger = logging.getLogger(__name__)
 

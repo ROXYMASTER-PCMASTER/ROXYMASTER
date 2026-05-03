@@ -1,0 +1,170 @@
+/* roxymaster - estilos personalizados del portal granjero */
+:root {
+    --rm-primary: #4361ee;
+    --rm-secondary: #3f37c9;
+    --rm-success: #06d6a0;
+    --rm-warning: #ffd166;
+    --rm-danger: #ef476f;
+    --rm-dark: #1b1b2f;
+    --rm-card-bg: #162447;
+    --rm-body-bg: #0f0f23;
+}
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--rm-body-bg);
+    color: #e0e0e0;
+}
+.sidebar {
+    background: var(--rm-dark);
+    min-height: 100vh;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+.sidebar .nav-link {
+    color: #a0a0b8;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 2px 0;
+    transition: all 0.2s;
+}
+.sidebar .nav-link:hover {
+    color: #fff;
+    background: rgba(67, 97, 238, 0.15);
+}
+.sidebar .nav-link.active {
+    color: #fff;
+    background: var(--rm-primary);
+}
+.card {
+    background: var(--rm-card-bg);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+}
+.card-header {
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-weight: 600;
+}
+.stat-card {
+    background: linear-gradient(135deg, var(--rm-card-bg), #1a1a3e);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+.stat-card .label {
+    color: #888;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.stat-card .value {
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.badge-kbt {
+    background: rgba(67, 97, 238, 0.2);
+    color: #7b9cff;
+    font-weight: 600;
+}
+.btn-rm {
+    background: var(--rm-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.btn-rm:hover {
+    background: var(--rm-secondary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.table {
+    color: #e0e0e0;
+    margin-bottom: 0;
+}
+.table thead th {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: #888;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+.table td {
+    border-color: rgba(255,255,255,0.05);
+    vertical-align: middle;
+}
+.progress-rm {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+.progress-rm .progress-bar {
+    background: var(--rm-primary);
+    border-radius: 3px;
+}
+.perfil-card {
+    background: var(--rm-card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.2s;
+}
+.perfil-card.active {
+    border-color: var(--rm-success);
+}
+.perfil-card.hung {
+    border-color: var(--rm-warning);
+}
+.perfil-card .perfil-id {
+    font-weight: 600;
+    color: #fff;
+}
+.modal-content {
+    background: var(--rm-card-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.modal-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.modal-footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.form-control {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e0e0e0;
+}
+.form-control:focus {
+    background: rgba(0,0,0,0.4);
+    border-color: var(--rm-primary);
+    color: #e0e0e0;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.3);
+}
+.dropdown-menu {
+    background: var(--rm-dark);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.dropdown-item {
+    color: #a0a0b8;
+}
+.dropdown-item:hover {
+    background: rgba(67, 97, 238, 0.15);
+    color: #fff;
+}
+.pestana-content {
+    display: none;
+}
+.pestana-content.active {
+    display: block;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--rm-body-bg); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }

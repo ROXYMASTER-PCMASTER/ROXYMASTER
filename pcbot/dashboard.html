@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -159,7 +159,7 @@ tr:hover{background:#1c2128}
     <span class="badge badge-user" style="margin-left:8px" id="userBadge">USUARIO</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span id="connectionBadge" class="badge badge-offline">● DESCONECTADO</span>
+    <span id="connectionBadge" class="badge badge-offline">â— DESCONECTADO</span>
     <span id="clock" style="color:#8b949e;font-size:0.85em">--</span>
     <span style="color:#484f58">|</span>
     <span style="color:#c9d1d9;font-size:0.8em">IP: <b id="ipLocal">--</b></span>
@@ -224,7 +224,7 @@ tr:hover{background:#1c2128}
 
   <!-- CONEXION PCMASTER -->
   <div class="card full">
-    <h3>Conexión con PCMASTER</h3>
+    <h3>ConexiÃ³n con PCMASTER</h3>
     <div class="stat-row">
       <div class="stat-box green" id="boxPcmaster">
         <div class="num" id="pcmasterStatus">DESCONECTADO</div>
@@ -236,8 +236,8 @@ tr:hover{background:#1c2128}
       </div>
     </div>
     <div style="margin-top:8px">
-      <button class="btn btn-green" onclick="reconectarPcmaster()">↻ Reconectar</button>
-      <button class="btn" onclick="refrescarTodo()">↻ Refrescar</button>
+      <button class="btn btn-green" onclick="reconectarPcmaster()">â†» Reconectar</button>
+      <button class="btn" onclick="refrescarTodo()">â†» Refrescar</button>
     </div>
   </div>
 
@@ -304,14 +304,14 @@ async function toggleModo(){
   if(modoConectado){
     lblSolo.classList.remove('active'); lblSolo.classList.add('inactive');
     lblCon.classList.remove('inactive'); lblCon.classList.add('active');
-    document.getElementById('connectionBadge').textContent = '● CONECTANDO...';
+    document.getElementById('connectionBadge').textContent = 'â— CONECTANDO...';
     document.getElementById('connectionBadge').className = 'badge badge-online pulse';
     desc.textContent = 'Modo CONECTADO: Recibes ordenes de PCMASTER y ganas tokens por tiempo de visualizacion.';
     log('Cambiando a modo CONECTADO...', 'ok');
   }else{
     lblSolo.classList.remove('inactive'); lblSolo.classList.add('active');
     lblCon.classList.remove('active'); lblCon.classList.add('inactive');
-    document.getElementById('connectionBadge').textContent = '● DESCONECTADO';
+    document.getElementById('connectionBadge').textContent = 'â— DESCONECTADO';
     document.getElementById('connectionBadge').className = 'badge badge-disconnected';
     desc.textContent = 'Modo SOLO PARA MI: Usas tus perfiles manualmente. No ganas tokens. No recibes ordenes de PCMASTER.';
     log('Cambiando a modo SOLO PARA MI...', 'warn');
@@ -340,7 +340,7 @@ async function refrescarTodo(){
     document.getElementById('lastUpdate').textContent = 'Ultima actualizacion: '+new Date().toLocaleTimeString();
   }catch(e){
     log('Error conectando al backend: '+e.message, 'err');
-    document.getElementById('connectionBadge').textContent = '● SIN BACKEND';
+    document.getElementById('connectionBadge').textContent = 'â— SIN BACKEND';
     document.getElementById('connectionBadge').className = 'badge badge-disconnected';
   }
 }
@@ -366,13 +366,13 @@ function actualizarUI(data){
   if(s.conectado_pcmaster){
     document.getElementById('pcmasterStatus').textContent = 'CONECTADO';
     document.getElementById('pcmasterStatus').style.color = '#3fb950';
-    document.getElementById('connectionBadge').textContent = '● CONECTADO';
+    document.getElementById('connectionBadge').textContent = 'â— CONECTADO';
     document.getElementById('connectionBadge').className = 'badge badge-online';
   }else{
     document.getElementById('pcmasterStatus').textContent = 'DESCONECTADO';
     document.getElementById('pcmasterStatus').style.color = '#da3633';
     if(modoConectado){
-      document.getElementById('connectionBadge').textContent = '● RECONECTANDO...';
+      document.getElementById('connectionBadge').textContent = 'â— RECONECTANDO...';
       document.getElementById('connectionBadge').className = 'badge badge-offline pulse';
     }
   }

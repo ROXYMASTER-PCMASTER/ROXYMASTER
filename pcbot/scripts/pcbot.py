@@ -1,4 +1,4 @@
-import asyncio, threading, logging
+﻿import asyncio, threading, logging
 from detector import detectar_info_sistema, detectar_roxybrowser
 from conector_ws import WSClient
 from portal_local import iniciar_portal
@@ -10,7 +10,7 @@ async def main():
     info = detectar_info_sistema()
     roxy = detectar_roxybrowser()
     logger.info(f"sistema: {info}, roxy: {roxy}")
-    ws = WSClient("ws://192.168.1.17:5006", info["hostname"], manejar_comando)
+    ws = WSClient("ws://100.111.179.65:5006", info["hostname"], manejar_comando)
     threading.Thread(target=iniciar_portal, daemon=True).start()
     await ws.connect()
 if __name__ == "__main__":

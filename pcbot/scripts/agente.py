@@ -1,4 +1,4 @@
-﻿import asyncio, threading, logging
+import asyncio, threading, logging
 from detector import detectar_info, detectar_roxybrowser
 from conector_ws import WSClient
 from portal_local import iniciar_portal
