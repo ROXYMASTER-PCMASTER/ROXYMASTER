@@ -1,28 +1,117 @@
-from fastapi import APIRouter, Request
-from marketplace import listar_ordenes_activas, crear_orden, ejecutar_orden, cancelar_orden, obtener_historial_ordenes
-from tokenomics import obtener_wallet_por_usuario
-from auth import verificar_token
-router = APIRouter()
+# api_marketplace.py - router fastapi para marketplace p2p. roxymaster v8.3
+# todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
-async def verificar_auth(request: Request):
-    token = request.headers.get("x-token") or request.headers.get("authorization", "").replace("Bearer ", "")
-    if not token:
-        return None
-    return verificar_token(token)
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from typing import Optional
 
-@router.get("/api/marketplace/ordenes")
-async def api_ordenes(request: Request):
-    return {"ok": True, "ordenes": listar_ordenes_activas()}
+from api_auth import verificar_token_dependencia
+from marketplace import (
+    crear_orden,
+    tomar_orden,
+    liberar_orden,
+    cancelar_orden,
+    listar_ordenes,
+    obtener_orden,
+    resolver_disputa,
+)
 
-@router.post("/api/marketplace/crear")
-async def api_crear(request: Request):
-    auth = await verificar_auth(request)
-    if not auth:
-        return {"ok": False}
-    data = await request.json()
-    return crear_orden(data.get("tipo","venta"), obtener_wallet_por_usuario(auth[0]), auth[0], data.get("cantidad",0), data.get("precio", 0.0))
+router = APIRouter(prefix="/api/marketplace", tags=["marketplace"])
 
-@router.post("/api/marketplace/cancelar")
-async def api_cancelar(request: Request):
-    data = await request.json()
-    return cancelar_orden(data.get("orden_id",""))
+
+class CrearOrdenRequest(BaseModel):
+    cantidad_kbt: float
+    precio_pen: float
+    tipo: str = "venta"
+    comentario: Optional[str] = None
+
+
+@router.get("/ordenes")
+async def api_listar_ordenes(
+    estado: Optional[str] = None,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """lista ordenes p2p con filtro opcional por estado."""
+    ordenes = listar_ordenes(estado=estado)
+    return {"exito": True, "ordenes": ordenes}
+
+
+@router.get("/ordenes/{orden_id}")
+async def api_obtener_orden(
+    orden_id: int,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """obtiene detalle de una orden especifica."""
+    orden = obtener_orden(orden_id)
+    if not orden:
+        raise HTTPException(status_code=404, detail="orden no encontrada")
+    return {"exito": True, "orden": orden}
+
+
+@router.post("/crear")
+async def api_crear_orden(
+    req: CrearOrdenRequest,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """crea una nueva orden de venta o compra."""
+    resultado = crear_orden(
+        vendedor_id=sesion["usuario_id"],
+        cantidad_kbt=req.cantidad_kbt,
+        precio_pen=req.precio_pen,
+        tipo=req.tipo,
+        comentario=req.comentario,
+    )
+    if not resultado.get("exito"):
+        raise HTTPException(status_code=400, detail=resultado.get("error"))
+    return resultado
+
+
+@router.post("/tomar/{orden_id}")
+async def api_tomar_orden(
+    orden_id: int,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """acepta una orden abierta y la pone en escrow."""
+    resultado = tomar_orden(sesion["usuario_id"], orden_id)
+    if not resultado.get("exito"):
+        raise HTTPException(status_code=400, detail=resultado.get("error"))
+    return resultado
+
+
+@router.post("/liberar/{orden_id}")
+async def api_liberar_orden(
+    orden_id: int,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """libera los kbt al vendedor confirmando la recepcion."""
+    resultado = liberar_orden(sesion["usuario_id"], orden_id)
+    if not resultado.get("exito"):
+        raise HTTPException(status_code=400, detail=resultado.get("error"))
+    return resultado
+
+
+@router.post("/cancelar/{orden_id}")
+async def api_cancelar_orden(
+    orden_id: int,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """cancela una orden abierta propia."""
+    resultado = cancelar_orden(sesion["usuario_id"], orden_id)
+    if not resultado.get("exito"):
+        raise HTTPException(status_code=400, detail=resultado.get("error"))
+    return resultado
+
+
+@router.post("/disputa/{orden_id}")
+async def api_resolver_disputa(
+    orden_id: int,
+    a_favor_de: str = "vendedor",
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """resuelve una disputa (solo admin)."""
+    if sesion.get("rol") != "admin":
+        raise HTTPException(status_code=403, detail="solo administradores")
+    resultado = resolver_disputa(orden_id, a_favor_de, sesion["usuario_id"])
+    if not resultado.get("exito"):
+        raise HTTPException(status_code=400, detail=resultado.get("error"))
+    return resultado

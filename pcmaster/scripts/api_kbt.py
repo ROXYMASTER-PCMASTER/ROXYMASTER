@@ -1,24 +1,43 @@
-from fastapi import APIRouter, Request
-from tokenomics import obtener_balance, obtener_wallet_por_usuario, obtener_historial_token, obtener_estadisticas_kbt
-from auth import verificar_token
-router = APIRouter()
+# api_kbt.py - router fastapi para endpoints kbt. roxymaster v8.3
+# todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
-async def verificar_auth(request: Request):
-    token = request.headers.get("x-token") or request.headers.get("authorization", "").replace("Bearer ", "")
-    if not token:
-        return None
-    return verificar_token(token)
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
 
-@router.get("/api/kbt/balance")
-async def api_kbt_balance(request: Request):
-    auth = await verificar_auth(request)
-    if not auth:
-        return {"ok": False}
-    uid, _, _ = auth
-    balance = obtener_balance(uid)
-    wallet = obtener_wallet_por_usuario(uid)
-    return {"ok": True, "balance": balance, "wallet": wallet}
+from api_auth import verificar_token_dependencia
+from tokenomics import (
+    obtener_balance as consultar_balance,
+    estadisticas_kbt as obtener_estadisticas_kbt,
+    generar_proyecciones,
+)
 
-@router.get("/api/kbt/estadisticas")
-async def api_kbt_estadisticas(request: Request):
-    return {"ok": True, "estadisticas": obtener_estadisticas_kbt()}
+router = APIRouter(prefix="/api/kbt", tags=["kbt"])
+
+
+@router.get("/balance")
+async def api_balance(sesion: dict = Depends(verificar_token_dependencia)):
+    """consulta el balance kbt del usuario autenticado."""
+    usuario_id = sesion["usuario_id"]
+    balance = consultar_balance(usuario_id)
+    if balance is None:
+        raise HTTPException(status_code=404, detail="wallet no encontrada")
+    return {"exito": True, "balance": balance}
+
+
+@router.get("/estadisticas")
+async def api_estadisticas(sesion: dict = Depends(verificar_token_dependencia)):
+    """obtiene estadisticas globales del token kbt."""
+    stats = obtener_estadisticas_kbt()
+    return {"exito": True, "estadisticas": stats}
+
+
+@router.get("/proyecciones")
+async def api_proyecciones(
+    meses: int = 3,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """genera proyecciones a 3, 9 o 18 meses."""
+    if meses not in (3, 9, 18):
+        raise HTTPException(status_code=400, detail="meses debe ser 3, 9 o 18")
+    proyecciones = generar_proyecciones(meses)
+    return {"exito": True, "meses": meses, "proyecciones": proyecciones}

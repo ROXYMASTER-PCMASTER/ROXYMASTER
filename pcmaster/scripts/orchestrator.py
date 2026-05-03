@@ -1,345 +1,433 @@
-﻿import asyncio, time, json, logging, sqlite3, os
+﻿# orchestrator.py - cola de comandos y ws con pcbot. roxymaster v8.3
+# todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
+
+import asyncio
+import json
+import time
+import uuid
 from datetime import datetime
-from config import DATA_DIR
 
-DB_PATH = os.path.join(DATA_DIR, "roxymaster.db")
-logger = logging.getLogger("orchestrator")
+from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion, get_db_context
+from shs import firmar, verificar_firma, secreto_sistema
 
-# estado interno
-grupos = {}  # url -> {perfiles, inicio, duracion, comentarios, streamer, pcbot_id}
-ws_server_ref = None
-comandos_db = []  # historial en memoria
-pendientes_db = {}
 
-# referencias a objetos globales del servidor (lazy)
-_pcbots = {}
-_perfiles_map = {}
-_enviar_fn = None
+# ---------------------------------------------------------------------------
+# constantes
+# ---------------------------------------------------------------------------
+_secreto = secreto_sistema
+_reconexion_delay = 5  # segundos entre reintentos
+_heartbeat_interval = 30  # segundos
 
-def _get_ws_state():
-    """obtiene referencias a los objetos globales del servidor ws."""
-    global _pcbots, _perfiles_map, _enviar_fn
-    try:
-        from ws_handler import pcbots, perfiles_map, enviar as _env
-        _pcbots = pcbots
-        _perfiles_map = perfiles_map
-        _enviar_fn = _env
-    except ImportError:
-        try:
-            from server import pcbots, perfiles_map, enviar as _env
-            _pcbots = pcbots
-            _perfiles_map = perfiles_map
-            _enviar_fn = _env
-        except ImportError:
-            logger.warning("no se pudo importar ws_handler ni server para ws state")
 
-def init_orchestrator_db():
-    """inicializa las tablas del orquestador."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript('''
-        create table if not exists comandos (
-            id integer primary key autoincrement,
-            comando_id text unique not null,
-            tipo text not null,
-            parametros text,
-            estado text default 'pendiente',
-            fecha_creacion text default (datetime('now','localtime')),
-            fecha_ejecucion text,
-            resultado text,
-            streamer text,
-            pcbot_id text
-        );
-        create table if not exists urls_asignadas (
-            id integer primary key autoincrement,
-            url text not null,
-            streamer text,
-            perfiles_asignados integer default 0,
-            duracion_min integer default 60,
-            comentarios_activos integer default 0,
-            estado text default 'activa',
-            fecha_asignacion text default (datetime('now','localtime')),
-            fecha_fin text,
-            pcbot_id text
-        );
-        create table if not exists sesiones_activas (
-            id integer primary key autoincrement,
-            perfil_id text not null,
-            url text,
-            streamer text,
-            estado text default 'activo',
-            inicio text default (datetime('now','localtime')),
-            fin text
-        );
-    ''')
-    conn.commit()
-    conn.close()
+def _ahora_str() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def set_ws_server(server):
-    global ws_server_ref
-    ws_server_ref = server
 
-async def enviar_comando(pcbot_id, tipo, datos):
-    """envia un comando a un pcbot especifico."""
-    _get_ws_state()
-    if pcbot_id in _pcbots:
-        try:
-            msg = json.dumps({"type": tipo, "data": datos})
-            await _pcbots[pcbot_id].send(msg)
-            return {"ok": True}
-        except Exception as e:
-            logger.error(f"error enviando comando a {pcbot_id}: {e}")
-            return {"ok": False, "error": str(e)}
-    return {"ok": False, "error": "pcbot no conectado"}
+def _ts() -> str:
+    return str(int(time.time()))
 
-async def broadcast_comando(tipo, datos):
-    """envia un comando a todos los pcbots conectados."""
-    _get_ws_state()
-    resultados = {}
-    for pid in list(_pcbots.keys()):
-        try:
-            msg = json.dumps({"type": tipo, "data": datos})
-            await _pcbots[pid].send(msg)
-            resultados[pid] = "enviado"
-        except Exception as e:
-            resultados[pid] = f"error: {e}"
-    return {"ok": True, "resultados": resultados}
 
-async def asignar_url(url, streamer, perfiles=1, duracion=60, comentarios=False, pcbot_id=None):
-    """asigna una url para ser vista por perfiles."""
-    import secrets
-    comando_id = secrets.token_hex(8)
+# ---------------------------------------------------------------------------
+# cola de comandos interna (dict en memoria)
+# ---------------------------------------------------------------------------
+_cola_comandos: dict = {}  # {comando_id: {tipo, parametros, pcbot_id, futuro}}
+_conexiones_ws: dict = {}  # {pcbot_id: websocket}
+_pcbot_info: dict = {}  # {pcbot_id: {hostname, ip, perfiles, ...}}
 
-    # buscar perfiles libres
-    _get_ws_state()
-    libres = [k for k, v in _perfiles_map.items() if v.get("estado", "desconocido") != "activo"]
-    if pcbot_id:
-        libres = [k for k in libres if _perfiles_map[k].get("pcbot") == pcbot_id]
-    seleccionados = libres[:perfiles]
 
-    if not seleccionados:
-        return {"ok": False, "error": "no hay perfiles libres disponibles"}
+# ---------------------------------------------------------------------------
+# crear comando y encolarlo
+# ---------------------------------------------------------------------------
+async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None) -> dict:
+    """
+    crea un comando en la base de datos y lo encola para envio.
+    tipos soportados: asignar, comentarios_activar, detener, estado, open_url.
+    """
+    comando_id = str(uuid.uuid4())[:12]
+    params_json = json.dumps(parametros, ensure_ascii=False)
 
-    # crear grupo
-    grupos[url] = {
-        "perfiles": seleccionados,
-        "inicio": time.time(),
-        "duracion": duracion * 60,
-        "comentarios": comentarios,
-        "streamer": streamer,
-        "pcbot_id": pcbot_id,
+    cmd_id_db = ejecutar_insercion(
+        """insert into comandos (comando_id, tipo, parametros, estado, fecha_creacion, pcbot_id)
+           values (?, ?, ?, 'pendiente', ?, ?)""",
+        (comando_id, tipo, params_json, _ahora_str(), pcbot_id),
+    )
+
+    if not cmd_id_db:
+        return {"exito": False, "error": "no se pudo crear el comando en la base de datos"}
+
+    comando = {
         "comando_id": comando_id,
+        "tipo": tipo,
+        "parametros": parametros,
+        "pcbot_id": pcbot_id,
+        "estado": "pendiente",
+        "fecha_creacion": _ahora_str(),
     }
 
-    # guardar en db
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        "insert into comandos (comando_id, tipo, parametros, estado, streamer, pcbot_id) values (?,?,?,?,?,?)",
-        (comando_id, "asignar_url", json.dumps({"url": url, "perfiles": len(seleccionados), "duracion": duracion, "comentarios": comentarios}),
-         "ejecutado", streamer, pcbot_id)
-    )
-    conn.execute(
-        "insert into urls_asignadas (url, streamer, perfiles_asignados, duracion_min, comentarios_activos, estado, pcbot_id) values (?,?,?,?,?,?,?)",
-        (url, streamer, len(seleccionados), duracion, 1 if comentarios else 0, "activa", pcbot_id)
-    )
-    conn.commit()
-    conn.close()
+    _cola_comandos[comando_id] = comando
 
-    # enviar a pcbots
-    for key in seleccionados:
-        info = _perfiles_map[key]
-        await enviar(info["pcbot"], "open_url", {"url": url, "profile": info["name"], "dirId": info.get("dirId", "")})
-        await asyncio.sleep(1)
+    # intentar enviar inmediatamente si hay conexion activa
+    if pcbot_id and pcbot_id in _conexiones_ws:
+        try:
+            await _enviar_a_pcbot(pcbot_id, comando)
+        except Exception as e:
+            pass  # se reintentara via heartbeat
 
-    return {"ok": True, "asignados": len(seleccionados), "url": url, "duracion": duracion, "comando_id": comando_id}
-
-async def activar_comentarios(url, streamer=None, nivel=1):
-    """activa comentarios en una url asignada."""
-    if url in grupos:
-        grupos[url]["comentarios"] = True
-        # guardar en db
-        conn = sqlite3.connect(DB_PATH)
-        conn.execute("update urls_asignadas set comentarios_activos=1 where url=? and estado='activa'", (url,))
-        conn.commit()
-        conn.close()
-        return {"ok": True, "mensaje": f"comentarios activados para {url}"}
-    return {"ok": False, "error": f"url no encontrada: {url}"}
-
-async def detener_url(url, pcbot_id=None):
-    """detiene una url asignada y libera los perfiles."""
-    if url in grupos:
-        grupo = grupos.pop(url)
-        # actualizar db
-        conn = sqlite3.connect(DB_PATH)
-        conn.execute("update urls_asignadas set estado='finalizada', fecha_fin=datetime('now','localtime') where url=? and estado='activa'", (url,))
-        conn.commit()
-        conn.close()
-        return {"ok": True, "mensaje": f"url {url} detenida, {len(grupo['perfiles'])} perfiles liberados"}
-    return {"ok": False, "error": f"url no encontrada: {url}"}
-
-def cancelar_comando(comando_id):
-    """cancela un comando pendiente."""
-    if comando_id in pendientes_db:
-        pendientes_db.pop(comando_id)
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("update comandos set estado='cancelado' where comando_id=?", (comando_id,))
-    cambios = conn.total_changes
-    conn.commit()
-    conn.close()
-    if cambios == 0:
-        return {"ok": False, "error": "comando no encontrado"}
-    return {"ok": True, "mensaje": "comando cancelado"}
-
-def obtener_comandos_pendientes():
-    """obtiene comandos pendientes de ejecucion."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute("select * from comandos where estado='pendiente' order by fecha_creacion desc").fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_historial_comandos(limite=50):
-    """obtiene el historial de comandos ejecutados."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute("select * from comandos order by fecha_creacion desc limit ?", (limite,)).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_urls_asignadas(estado=None):
-    """obtiene urls asignadas activas o todas."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    if estado:
-        rows = conn.execute("select * from urls_asignadas where estado=? order by fecha_asignacion desc", (estado,)).fetchall()
-    else:
-        rows = conn.execute("select * from urls_asignadas order by fecha_asignacion desc").fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_sesiones_activas():
-    """obtiene sesiones activas de perfiles."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute("select * from sesiones_activas where estado='activo' order by inicio desc").fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-async def procesar_respuesta_comando(comando_id, resultado):
-    """procesa la respuesta de un comando enviado a pcbot."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        "update comandos set estado='completado', fecha_ejecucion=datetime('now','localtime'), resultado=? where comando_id=?",
-        (json.dumps(resultado) if isinstance(resultado, dict) else str(resultado), comando_id)
-    )
-    conn.commit()
-    conn.close()
-    if comando_id in pendientes_db:
-        pendientes_db.pop(comando_id)
-    logger.info(f"comando {comando_id} completado: {resultado}")
+    return {"exito": True, "comando_id": comando_id, "estado": "pendiente"}
 
 
-# ==================== parser de comandos por texto ====================
+# ---------------------------------------------------------------------------
+# enviar comando a un pcbot via ws
+# ---------------------------------------------------------------------------
+async def _enviar_a_pcbot(pcbot_id: str, comando: dict) -> bool:
+    """envia un comando firmado a un pcbot conectado via websocket."""
+    ws = _conexiones_ws.get(pcbot_id)
+    if not ws:
+        return False
 
-async def parsear_y_ejecutar(texto_comando):
-    """parsea un comando en texto natural y lo ejecuta.
-    formatos soportados:
-    - asignar <cantidad> url <url> duracion <minutos> [pcbot <pcbot_id>] [streamer <nombre>]
-    - detener url <url>
-    - comentarios_activar url <url> nivel <nivel>
-    - comentarios_desactivar url <url>
-    - estado
+    try:
+        ts = _ts()
+        payload = {
+            "tipo": "comando",
+            "comando_id": comando["comando_id"],
+            "accion": comando["tipo"],
+            "parametros": comando["parametros"],
+            "timestamp": ts,
+        }
+        payload_json = json.dumps(payload, ensure_ascii=False)
+        firma = firmar(payload_json, _secreto)
+
+        mensaje = {
+            "payload": payload_json,
+            "firma": firma,
+            "timestamp": ts,
+        }
+
+        await ws.send_json(mensaje)
+
+        # marcar como enviado en db
+        ejecutar_sql(
+            "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
+            (_ahora_str(), comando["comando_id"]),
+        )
+        return True
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# manejar conexion websocket de un pcbot
+# ---------------------------------------------------------------------------
+async def manejar_conexion_pcbot(websocket, pcbot_id: str):
     """
-    txt = texto_comando.strip().lower()
-    partes = txt.split()
+    maneja el ciclo de vida de una conexion ws con un pcbot.
+    verifica firma, recibe heartbeats, envia comandos pendientes.
+    """
+    _conexiones_ws[pcbot_id] = websocket
+    print(f"[orchestrator] pcbot conectado: {pcbot_id}")
 
-    if not partes:
-        return {"ok": False, "error": "comando vacio"}
+    try:
+        # handshake inicial
+        datos_raw = await asyncio.wait_for(websocket.receive_text(), timeout=10)
+        datos = json.loads(datos_raw)
 
-    accion = partes[0]
+        # verificar firma
+        if not verificar_firma(datos.get("payload", ""), datos.get("firma", ""), _secreto):
+            await websocket.send_json({"error": "firma invalida"})
+            await websocket.close()
+            del _conexiones_ws[pcbot_id]
+            return
 
-    if accion == "asignar":
-        try:
-            idx_url = partes.index("url") if "url" in partes else -1
-            idx_dur = partes.index("duracion") if "duracion" in partes else -1
-            idx_pcbot = partes.index("pcbot") if "pcbot" in partes else -1
-            idx_streamer = partes.index("streamer") if "streamer" in partes else -1
-
-            cant = int(partes[1]) if len(partes) > 1 else 1
-            url = partes[idx_url + 1] if idx_url >= 0 and idx_url + 1 < len(partes) else ""
-            dur = int(partes[idx_dur + 1]) if idx_dur >= 0 and idx_dur + 1 < len(partes) else 60
-            pcbot_id = partes[idx_pcbot + 1] if idx_pcbot >= 0 and idx_pcbot + 1 < len(partes) else None
-            streamer = partes[idx_streamer + 1] if idx_streamer >= 0 and idx_streamer + 1 < len(partes) else "sistema"
-
-            if not url:
-                return {"ok": False, "error": "url requerida. formato: asignar <cant> url <url> duracion <min>"}
-
-            return await asignar_url(url=url, streamer=streamer, perfiles=cant, duracion=dur, pcbot_id=pcbot_id)
-        except (ValueError, IndexError) as e:
-            return {"ok": False, "error": f"formato invalido: {e}. usar: asignar <cant> url <url> duracion <min>"}
-
-    elif accion == "detener":
-        try:
-            idx_url = partes.index("url") if "url" in partes else -1
-            url = partes[idx_url + 1] if idx_url >= 0 and idx_url + 1 < len(partes) else ""
-            if not url:
-                return {"ok": False, "error": "url requerida. formato: detener url <url>"}
-            return await detener_url(url)
-        except (ValueError, IndexError) as e:
-            return {"ok": False, "error": f"formato invalido: {e}. usar: detener url <url>"}
-
-    elif accion == "comentarios_activar":
-        try:
-            idx_url = partes.index("url") if "url" in partes else -1
-            idx_nivel = partes.index("nivel") if "nivel" in partes else -1
-            url = partes[idx_url + 1] if idx_url >= 0 and idx_url + 1 < len(partes) else ""
-            nivel = int(partes[idx_nivel + 1]) if idx_nivel >= 0 and idx_nivel + 1 < len(partes) else 1
-            if not url:
-                return {"ok": False, "error": "url requerida. formato: comentarios_activar url <url> nivel <n>"}
-            return await activar_comentarios(url, nivel=nivel)
-        except (ValueError, IndexError) as e:
-            return {"ok": False, "error": f"formato invalido: {e}"}
-
-    elif accion == "comentarios_desactivar":
-        try:
-            idx_url = partes.index("url") if "url" in partes else -1
-            url = partes[idx_url + 1] if idx_url >= 0 and idx_url + 1 < len(partes) else ""
-            if not url:
-                return {"ok": False, "error": "url requerida. formato: comentarios_desactivar url <url>"}
-            if url in grupos:
-                grupos[url]["comentarios"] = False
-                return {"ok": True, "mensaje": f"comentarios desactivados para {url}"}
-            return {"ok": False, "error": f"url no encontrada: {url}"}
-        except (ValueError, IndexError) as e:
-            return {"ok": False, "error": f"formato invalido: {e}"}
-
-    elif accion == "estado":
-        return {
-            "ok": True,
-            "grupos_activos": len(grupos),
-            "perfiles_totales": len(_perfiles_map),
-            "pcbots_conectados": len(_pcbots),
-            "detalle_grupos": {url: {"perfiles": g["perfiles"], "duracion_restante": max(0, g["duracion"] - (time.time() - g["inicio"]))} for url, g in grupos.items()}
+        info_sistema = json.loads(datos.get("payload", "{}"))
+        _pcbot_info[pcbot_id] = {
+            "hostname": info_sistema.get("hostname", pcbot_id),
+            "ip_local": info_sistema.get("ip_local", ""),
+            "ip_tailscale": info_sistema.get("ip_tailscale", ""),
+            "ip_wan": info_sistema.get("ip_wan", ""),
+            "perfiles": info_sistema.get("perfiles", []),
+            "navegadores": info_sistema.get("navegadores", []),
+            "ultima_conexion": _ahora_str(),
         }
 
-    else:
-        return {"ok": False, "error": f"accion desconocida: {accion}. comandos validos: asignar, detener, comentarios_activar, comentarios_desactivar, estado"}
+        # enviar comandos pendientes para este pcbot
+        await _enviar_pendientes(pcbot_id)
+
+        # bucle de heartbeats y comandos
+        while True:
+            try:
+                msg_raw = await asyncio.wait_for(websocket.receive_text(), timeout=30)
+                msg = json.loads(msg_raw)
+
+                if not verificar_firma(msg.get("payload", ""), msg.get("firma", ""), _secreto):
+                    continue
+
+                datos = json.loads(msg.get("payload", "{}"))
+                tipo = datos.get("tipo", "")
+
+                if tipo == "heartbeat":
+                    await _procesar_heartbeat(pcbot_id, datos)
+                elif tipo == "respuesta":
+                    await _procesar_respuesta(pcbot_id, datos)
+                elif tipo == "alerta":
+                    await _procesar_alerta(pcbot_id, datos)
+
+            except asyncio.TimeoutError:
+                print(f"[orchestrator] timeout de 30s sin mensaje de {pcbot_id}, marcando como inactivo")
+                _pcbot_info[pcbot_id]["estado"] = "inactivo"
+                # desconectar
+                break
+            except Exception:
+                break
+
+    except asyncio.TimeoutError:
+        print(f"[orchestrator] timeout handshake con {pcbot_id}")
+    except Exception as e:
+        print(f"[orchestrator] error con pcbot {pcbot_id}: {e}")
+    finally:
+        _conexiones_ws.pop(pcbot_id, None)
+        print(f"[orchestrator] pcbot desconectado: {pcbot_id}")
 
 
-# ==================== clases para api_endpoints.py ====================
-
-class OrchestratorManager:
-    def __init__(self):
-        init_orchestrator_db()
-
-    async def parsear_comando(self, texto):
-        return await parsear_y_ejecutar(texto)
-
-    def estado_actual(self):
-        _get_ws_state()
-        return {
-            "pcbots": len(_pcbots),
-            "perfiles": len(_perfiles_map),
-            "grupos": len(grupos),
-            "perfiles_lista": [{"key": k, "pcbot": v.get("pcbot"), "name": v.get("name"), "dirId": v.get("dirId")} for k, v in _perfiles_map.items()],
-            "grupos_detalle": {url: {"perfiles": g["perfiles"], "streamer": g.get("streamer", ""), "duracion": g.get("duracion", 0), "comentarios": g.get("comentarios", False)} for url, g in grupos.items()}
+# ---------------------------------------------------------------------------
+# enviar comandos pendientes
+# ---------------------------------------------------------------------------
+async def _enviar_pendientes(pcbot_id: str):
+    """envia todos los comandos pendientes para un pcbot especifico."""
+    pendientes = ejecutar_sql(
+        "select * from comandos where pcbot_id = ? and estado = 'pendiente' order by fecha_creacion",
+        (pcbot_id,),
+    )
+    for cmd in pendientes:
+        comando = {
+            "comando_id": cmd["comando_id"],
+            "tipo": cmd["tipo"],
+            "parametros": json.loads(cmd["parametros"]) if cmd["parametros"] else {},
+            "estado": cmd["estado"],
         }
+        await _enviar_a_pcbot(pcbot_id, comando)
+
+
+# ---------------------------------------------------------------------------
+# heartbeat de control
+# ---------------------------------------------------------------------------
+async def _enviar_heartbeat_control(websocket):
+    """envia un heartbeat de control al pcbot."""
+    try:
+        ts = _ts()
+        payload = json.dumps({"tipo": "heartbeat_control", "timestamp": ts})
+        firma = firmar(payload, _secreto)
+        await websocket.send_json({"payload": payload, "firma": firma, "timestamp": ts})
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# procesar heartbeat del pcbot
+# ---------------------------------------------------------------------------
+async def _procesar_heartbeat(pcbot_id: str, datos: dict):
+    """procesa heartbeat del pcbot: actualiza info y tokens minados."""
+    _pcbot_info[pcbot_id] = _pcbot_info.get(pcbot_id, {})
+    _pcbot_info[pcbot_id]["ultimo_heartbeat"] = _ahora_str()
+    _pcbot_info[pcbot_id]["uptime_segundos"] = datos.get("uptime", 0)
+    _pcbot_info[pcbot_id]["kbt_acumulados"] = datos.get("kbt_acumulados", 0)
+    _pcbot_info[pcbot_id]["perfiles_activos"] = datos.get("perfiles_activos", 0)
+    _pcbot_info[pcbot_id]["estado"] = datos.get("estado", "conectado")
+
+    # actualizar tabla de perfiles con heartbeat
+    for perfil in datos.get("perfiles", []):
+        perfil_id = perfil.get("id", "")
+        if perfil_id:
+            with get_db_context() as conn:
+                conn.execute(
+                    "update perfiles set horas_conexion = horas_conexion + 0.0333, ultimo_heartbeat = ? where nombre_perfil = ?",
+                    (_ahora_str(), perfil_id),
+                )
+                conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# procesar respuesta del pcbot
+# ---------------------------------------------------------------------------
+async def _procesar_respuesta(pcbot_id: str, datos: dict):
+    """procesa la respuesta de un comando ejecutado por el pcbot."""
+    comando_id = datos.get("comando_id", "")
+    resultado = datos.get("resultado", "")
+    exito = datos.get("exito", False)
+
+    if comando_id:
+        ejecutar_sql(
+            "update comandos set estado = ?, resultado = ?, fecha_ejecucion = ? where comando_id = ?",
+            ("completado" if exito else "fallido", json.dumps(resultado, ensure_ascii=False), _ahora_str(), comando_id),
+        )
+
+    # limpiar de cola si estaba
+    _cola_comandos.pop(comando_id, None)
+
+
+# ---------------------------------------------------------------------------
+# procesar alerta del pcbot
+# ---------------------------------------------------------------------------
+async def _procesar_alerta(pcbot_id: str, datos: dict):
+    """procesa alertas de seguridad o eventos del pcbot."""
+    tipo = datos.get("tipo_alerta", "desconocido")
+    detalle = datos.get("detalle", "")
+    ip_origen = _pcbot_info.get(pcbot_id, {}).get("ip_wan", "")
+
+    ejecutar_insercion(
+        "insert into eventos_seguridad (tipo, pcbot_id, detalle, ip_origen) values (?, ?, ?, ?)",
+        (tipo, pcbot_id, detalle, ip_origen),
+    )
+    print(f"[orchestrator] alerta de {pcbot_id}: {tipo} - {detalle}")
+
+
+# ---------------------------------------------------------------------------
+# comandos de alto nivel
+# ---------------------------------------------------------------------------
+async def comando_asignar(
+    pcbot_id: str,
+    cantidad: int,
+    url: str,
+    duracion_min: int = 60,
+    comentarios_activos: bool = False,
+    streamer: str = "",
+) -> dict:
+    """
+    asigna una url a uno o varios perfiles en un pcbot.
+    formato: "asignar <cant> url <url> duracion <min>"
+    """
+    parametros = {
+        "cantidad": cantidad,
+        "url": url,
+        "duracion_min": duracion_min,
+        "comentarios_activos": comentarios_activos,
+    }
+
+    # registrar url asignada en la db
+    url_id = ejecutar_insercion(
+        """insert into urls_asignadas (url, streamer, perfiles_asignados, duracion_min,
+           comentarios_activos, estado, fecha_asignacion, pcbot_id)
+           values (?, ?, ?, ?, ?, 'activa', ?, ?)""",
+        (url, streamer, cantidad, duracion_min, 1 if comentarios_activos else 0, _ahora_str(), pcbot_id),
+    )
+
+    resultado = await crear_comando("asignar", parametros, pcbot_id)
+    if resultado.get("exito"):
+        resultado["url_id"] = url_id
+    return resultado
+
+
+async def comando_comentarios_activar(pcbot_id: str, url: str) -> dict:
+    """activa comentarios en una url ya asignada."""
+    # buscar url en db
+    url_existente = ejecutar_sql_unico(
+        "select * from urls_asignadas where url = ? and pcbot_id = ? and estado = 'activa'",
+        (url, pcbot_id),
+    )
+    if not url_existente:
+        return {"exito": False, "error": "url no encontrada o no esta activa"}
+
+    ejecutar_sql("update urls_asignadas set comentarios_activos = 1 where id = ?", (url_existente["id"],))
+
+    return await crear_comando("comentarios_activar", {"url": url}, pcbot_id)
+
+
+async def comando_detener(pcbot_id: str, url: str) -> dict:
+    """detiene la actividad en una url especifica."""
+    ejecutar_sql(
+        "update urls_asignadas set estado = 'detenida', fecha_fin = ? where url = ? and pcbot_id = ?",
+        (_ahora_str(), url, pcbot_id),
+    )
+    return await crear_comando("detener", {"url": url}, pcbot_id)
+
+
+async def comando_estado(pcbot_id: str) -> dict:
+    """solicita el estado actual del pcbot."""
+    return await crear_comando("estado", {}, pcbot_id)
+
+
+async def comando_open_url(pcbot_id: str, url: str, perfil_ids: list = None) -> dict:
+    """abre una url en perfiles especificos del pcbot."""
+    parametros = {
+        "url": url,
+        "perfil_ids": perfil_ids or [],
+    }
+    return await crear_comando("open_url", parametros, pcbot_id)
+
+
+# ---------------------------------------------------------------------------
+# obtener info de un pcbot
+# ---------------------------------------------------------------------------
+def obtener_info_pcbot(pcbot_id: str) -> dict:
+    """devuelve la info en memoria de un pcbot conectado."""
+    return _pcbot_info.get(pcbot_id, {})
+
+
+def listar_pcbots_conectados() -> list:
+    """lista todos los pcbots actualmente conectados."""
+    return [
+        {
+            "pcbot_id": pcbot_id,
+            "hostname": info.get("hostname", ""),
+            "ip_wan": info.get("ip_wan", ""),
+            "perfiles_activos": info.get("perfiles_activos", 0),
+            "kbt_acumulados": info.get("kbt_acumulados", 0),
+            "ultimo_heartbeat": info.get("ultimo_heartbeat", ""),
+            "estado": info.get("estado", "desconocido"),
+        }
+        for pcbot_id, info in _pcbot_info.items()
+    ]
+
+
+def listar_comandos_pendientes(pcbot_id: str = None) -> list:
+    """lista comandos pendientes en la base de datos."""
+    if pcbot_id:
+        return ejecutar_sql(
+            "select * from comandos where pcbot_id = ? and estado = 'pendiente' order by fecha_creacion",
+            (pcbot_id,),
+        )
+    return ejecutar_sql("select * from comandos where estado = 'pendiente' order by fecha_creacion")
+
+
+# ---------------------------------------------------------------------------
+# broadcast a todos los pcbots
+# ---------------------------------------------------------------------------
+async def broadcast_comando(tipo: str, parametros: dict) -> dict:
+    """envia un comando a todos los pcbots conectados."""
+    resultados = {}
+    for pcbot_id in list(_conexiones_ws.keys()):
+        resultado = await crear_comando(tipo, parametros, pcbot_id)
+        resultados[pcbot_id] = resultado
+    return {"exito": True, "resultados": resultados}
+
+
+# ---------------------------------------------------------------------------
+# alias de compatibilidad para server.py
+# ---------------------------------------------------------------------------
+gestor_websockets = _conexiones_ws
+cola_comandos = _cola_comandos
+
+
+async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
+    """procesa un mensaje recibido via websocket desde un pcbot.
+    wrapper de compatibilidad para server.py."""
+    tipo = mensaje.get("tipo", "")
+
+    if tipo == "heartbeat":
+        await _procesar_heartbeat(pcbot_id, mensaje)
+        await _enviar_pendientes(pcbot_id)
+    elif tipo == "respuesta":
+        await _procesar_respuesta(pcbot_id, mensaje)
+    elif tipo == "alerta":
+        await _procesar_alerta(pcbot_id, mensaje)
+    elif tipo == "info_sistema":
+        _pcbot_info[pcbot_id] = {
+            "hostname": mensaje.get("hostname", pcbot_id),
+            "ip_local": mensaje.get("ip_local", ""),
+            "ip_tailscale": mensaje.get("ip_tailscale", ""),
+            "ip_wan": mensaje.get("ip_wan", ""),
+            "perfiles": mensaje.get("perfiles", []),
+            "navegadores": mensaje.get("navegadores", []),
+            "ultima_conexion": _ahora_str(),
+        }
+
+    return {"tipo": "ack", "pcbot_id": pcbot_id, "timestamp": _ahora_str()}

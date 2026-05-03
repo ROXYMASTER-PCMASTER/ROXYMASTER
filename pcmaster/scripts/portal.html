@@ -1,452 +1,430 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>roxymaster admin dashboard v8.3</title>
+<title>roxymaster admin v8.3</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
-header{background:#161b22;border-bottom:1px solid #30363d;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
-header h1{font-size:1.2rem;color:#58a6ff}
-header .user{font-size:0.85rem;color:#8b949e}
-nav{display:flex;gap:4px;padding:8px 16px;background:#0d1117;border-bottom:1px solid #30363d;flex-wrap:wrap}
-nav button{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 16px;cursor:pointer;font-size:0.85rem;border-radius:4px;transition:all .2s}
-nav button:hover{background:#30363d;border-color:#58a6ff}
-nav button.active{background:#1f6feb;border-color:#58a6ff;color:#fff}
-main{padding:16px}
-.panel{display:none}
-.panel.active{display:block}
-.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px}
-.card h2{font-size:1rem;color:#58a6ff;margin-bottom:12px;border-bottom:1px solid #30363d;padding-bottom:8px}
-table{width:100%;border-collapse:collapse;font-size:0.82rem}
-th,td{text-align:left;padding:8px;border-bottom:1px solid #21262d}
-th{color:#8b949e;font-weight:600}
-.metric{display:inline-block;background:#21262d;border-radius:6px;padding:8px 12px;margin:4px}
-.metric .label{font-size:0.7rem;color:#8b949e;display:block}
-.metric .value{font-size:1.1rem;color:#58a6ff;font-weight:bold}
-.btn{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:6px 14px;cursor:pointer;font-size:0.82rem;border-radius:4px;margin:4px}
-.btn:hover{background:#30363d}
-.btn-primary{background:#1f6feb;border-color:#58a6ff;color:#fff}
-.btn-danger{background:#da3633;border-color:#f85149;color:#fff}
-.btn-success{background:#238636;border-color:#3fb950;color:#fff}
-input,select,textarea{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:4px;font-size:0.85rem;margin:4px}
-textarea{width:100%;min-height:60px;resize:vertical}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72rem;margin:1px}
-.badge-success{background:#238636;color:#fff}
-.badge-warning{background:#9e6a03;color:#fff}
-.badge-danger{background:#da3633;color:#fff}
-.badge-info{background:#1f6feb;color:#fff}
-.scrollable{max-height:500px;overflow-y:auto}
-#loading{position:fixed;top:0;left:0;width:100%;height:3px;background:transparent;z-index:9999}
-#loading::after{content:'';display:block;height:3px;background:#58a6ff;animation:load 1.5s infinite}
-@keyframes load{0%{width:0}50%{width:70%}100%{width:100%}}
-.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;font-size:0.85rem;z-index:9999;opacity:0;transition:opacity .3s}
-.toast.show{opacity:1}
-.toast-success{background:#238636;color:#fff}
-.toast-error{background:#da3633;color:#fff}
-.login-box{max-width:400px;margin:60px auto;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:24px}
-.login-box input{width:100%;margin:8px 0}
-.login-box button{width:100%;margin-top:12px}
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-input: #21262d;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --orange: #d29922;
+  --red: #f85149;
+  --purple: #bc8cff;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin:0; padding:0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+/* sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar h2 {
+  font-size: 14px;
+  color: var(--accent);
+  padding: 0 16px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+.sidebar nav { display: flex; flex-direction: column; flex: 1; }
+.sidebar nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 10px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  position: relative;
+}
+.sidebar nav a:hover { color: var(--text); background: #1c2128; }
+.sidebar nav a.activo {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: #1c2128;
+}
+.sidebar nav a .badge {
+  background: var(--red);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 10px;
+  margin-left: 6px;
+  display: none;
+}
+.sidebar .user-info {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.sidebar .user-info button {
+  margin-top: 8px;
+  width: 100%;
+}
+/* main */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 20px 24px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 { font-size: 18px; font-weight: 600; }
+.header .acciones { display: flex; gap: 8px; }
+/* tabs */
+.tab-content { display: none; }
+.tab-content.activo { display: block; }
+/* cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+.card h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 12px 0 8px;
+  color: var(--text);
+}
+/* kpi grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.kpi-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.kpi-card .kpi-titulo {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+  margin-bottom: 6px;
+}
+.kpi-card .kpi-valor {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.kpi-card .kpi-subtitulo {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.kpi-card .kpi-expand {
+  display: none;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.kpi-card.expandida .kpi-expand { display: block; }
+/* botones */
+.btn {
+  display: inline-block;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  background: var(--bg-input);
+  color: var(--text);
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--text-muted); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { opacity: 0.85; }
+.btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-danger:hover { opacity: 0.85; }
+.btn-success { background: var(--green); color: #000; border-color: var(--green); }
+.btn-outline { background: transparent; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+/* inputs */
+input, select, textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 60px; }
+label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+/* tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+table th, table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+table th { color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: lowercase; }
+table tr:hover { background: #1c2128; }
+table td.editable { cursor: pointer; }
+table td.editable input { padding: 2px 4px; font-size: 12px; }
+/* filtros */
+.filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filtros input, .filtros select { width: auto; min-width: 150px; }
+/* modales */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.activo { display: flex; }
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 640px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h2 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+.modal .close {
+  float: right;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+.modal .close:hover { color: var(--red); }
+/* toast */
+.toast-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  max-width: 380px;
+  animation: slideIn 0.3s ease;
+}
+.toast-success { background: #1a3a2a; color: var(--green); border: 1px solid var(--green); }
+.toast-error { background: #3a1a1a; color: var(--red); border: 1px solid var(--red); }
+.toast-info { background: #1a2a3a; color: var(--accent); border: 1px solid var(--accent); }
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+/* var row (tokenomia) */
+.var-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.var-label {
+  width: 180px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.var-input { width: 120px; }
+/* proyecciones grid */
+.proy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.proy-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.proy-card .proy-titulo { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+.proy-card .proy-linea { font-size: 12px; color: var(--text-muted); margin: 3px 0; }
+/* happy hour */
+.hh-estado-activo { color: var(--green); font-weight: 600; }
+.hh-estado-inactivo { color: var(--text-muted); }
+/* mensajes */
+.mensaje-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.mensaje-row .m-de { color: var(--text-muted); }
+.mensaje-row .m-texto { color: var(--text); margin: 2px 0; }
+.mensaje-row .m-fecha { color: var(--text-muted); font-size: 11px; }
+/* seguridad */
+.evento-row {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.evento-row .ev-tipo {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.ev-critico { background: var(--red); color: #fff; }
+.ev-alerta { background: var(--orange); color: #000; }
+.ev-info { background: var(--accent); color: #fff; }
+/* paginacion */
+.paginacion { display: flex; gap: 6px; margin-top: 12px; justify-content: center; }
+.paginacion button { min-width: 30px; }
+/* loading */
+.loading { text-align: center; padding: 40px; color: var(--text-muted); }
+.loading::after { content: "..."; animation: dots 1.2s steps(3) infinite; }
+@keyframes dots { 33%{content:"."} 66%{content:".."} }
 </style>
 </head>
 <body>
-<header>
-<h1>roxymaster admin dashboard v8.3</h1>
-<div class="user" id="user_info">cargando...</div>
-</header>
-<nav id="navbar" style="display:none">
-<button class="active" data-panel="kpi">kpi general</button>
-<button data-panel="proyecciones">proyecciones</button>
-<button data-panel="usuarios">usuarios</button>
-<button data-panel="perfiles">perfiles</button>
-<button data-panel="pcs">pcs</button>
-<button data-panel="sesiones">sesiones</button>
-<button data-panel="retiros">retiros</button>
-<button data-panel="mensajes">mensajes</button>
-<button data-panel="happy_hour">happy hour</button>
-<button data-panel="seguridad">seguridad</button>
-</nav>
-<main>
-<div id="login_panel" class="panel active">
-<div class="login-box">
-<h2>acceso administrador</h2>
-<input type="email" id="login_email" placeholder="email">
-<input type="password" id="login_password" placeholder="password">
-<button class="btn btn-primary" onclick="login()">iniciar sesion</button>
-<div id="login_error" style="color:#f85149;margin-top:8px;font-size:0.85rem"></div>
-</div>
-</div>
-<div id="dashboard_panels" style="display:none">
 
-<!-- kpi -->
-<div id="pnl_kpi" class="panel active">
-<div class="card" id="kpi_content">cargando kpis...</div>
-</div>
+<!-- sidebar -->
+<aside class="sidebar">
+  <h2>roxymaster admin</h2>
+  <nav>
+    <a data-tab="kpi" class="activo">kpi</a>
+    <a data-tab="usuarios">usuarios</a>
+    <a data-tab="perfiles">perfiles</a>
+    <a data-tab="pcs">pcbots</a>
+    <a data-tab="sesiones">sesiones</a>
+    <a data-tab="retiros">retiros</a>
+    <a data-tab="mensajes">mensajes <span class="badge" id="msg_badge">0</span></a>
+    <a data-tab="monitoreo">monitoreo</a>
+    <a data-tab="tokenomia">tokenomia</a>
+    <a data-tab="proyecciones">proyecciones</a>
+    <a data-tab="happy_hour">happy hour</a>
+    <a data-tab="seguridad">seguridad</a>
+  </nav>
+  <div class="user-info">
+    <div id="usuario_email">cargando...</div>
+    <button class="btn btn-sm" onclick="roxy.cerrar_sesion()">cerrar sesion</button>
+  </div>
+</aside>
 
-<!-- proyecciones -->
-<div id="pnl_proyecciones" class="panel">
-<div class="card" id="proy_content">cargando proyecciones...</div>
-</div>
+<!-- main content -->
+<main class="main">
+  <header class="header">
+    <h1 id="panel_titulo">panel kpi</h1>
+    <div class="acciones">
+      <button class="btn btn-sm" onclick="roxy.cerrar_sesion()">salir</button>
+    </div>
+  </header>
 
-<!-- usuarios -->
-<div id="pnl_usuarios" class="panel">
-<div class="card">
-<h2>buscar / listar usuarios</h2>
-<div class="row">
-<input type="text" id="usr_search" placeholder="buscar por email o username" style="width:250px">
-<select id="usr_rol_filtro"><option value="">todos los roles</option><option value="admin">admin</option><option value="usuario">usuario</option><option value="superadmin">superadmin</option></select>
-<button class="btn btn-primary" onclick="cargar_usuarios()">listar</button>
-</div>
-<div id="usr_list" class="scrollable" style="margin-top:12px"></div>
-</div>
-<div class="card">
-<h2>cambiar rol</h2>
-<div class="row">
-<input type="number" id="rol_user_id" placeholder="usuario id" style="width:100px">
-<select id="rol_nuevo"><option value="usuario">usuario</option><option value="admin">admin</option><option value="superadmin">superadmin</option></select>
-<button class="btn btn-primary" onclick="cambiar_rol()">actualizar</button>
-</div>
-</div>
-<div class="card">
-<h2>activar / desactivar usuario</h2>
-<div class="row">
-<input type="number" id="toggle_user_id" placeholder="usuario id" style="width:100px">
-<button class="btn btn-success" onclick="toggle_usuario(1)">activar</button>
-<button class="btn btn-danger" onclick="toggle_usuario(0)">desactivar</button>
-</div>
-</div>
-</div>
-
-<!-- perfiles -->
-<div id="pnl_perfiles" class="panel">
-<div class="card">
-<h2>todos los perfiles</h2>
-<div class="row">
-<select id="perfil_estado"><option value="">todos</option><option value="activo">activo</option><option value="inactivo">inactivo</option><option value="hung">hung</option></select>
-<button class="btn btn-primary" onclick="cargar_perfiles()">filtrar</button>
-</div>
-<div id="perfil_list" class="scrollable" style="margin-top:12px"></div>
-</div>
-</div>
-
-<!-- pcs -->
-<div id="pnl_pcs" class="panel">
-<div class="card">
-<h2>pcbots registradas</h2>
-<div id="pcs_list" class="scrollable">cargando...</div>
-</div>
-</div>
-
-<!-- sesiones -->
-<div id="pnl_sesiones" class="panel">
-<div class="card">
-<h2>sesiones activas</h2>
-<div id="ses_list" class="scrollable">cargando...</div>
-</div>
-</div>
-
-<!-- retiros -->
-<div id="pnl_retiros" class="panel">
-<div class="card">
-<h2>retiros pendientes</h2>
-<div id="ret_list" class="scrollable">cargando...</div>
-</div>
-</div>
-
-<!-- mensajes -->
-<div id="pnl_mensajes" class="panel">
-<div class="card">
-<h2>enviar mensaje</h2>
-<div class="row">
-<input type="email" id="msg_email" placeholder="email destino" style="width:200px">
-<textarea id="msg_texto" placeholder="escribe tu mensaje..."></textarea>
-<button class="btn btn-primary" onclick="enviar_mensaje()">enviar</button>
-</div>
-</div>
-<div class="card">
-<h2>historial de mensajes</h2>
-<div id="msg_list" class="scrollable">cargando...</div>
-</div>
-</div>
-
-<!-- happy hour -->
-<div id="pnl_happy_hour" class="panel">
-<div class="card">
-<h2>activar happy hour</h2>
-<div class="row">
-<label>multiplicador: <input type="number" id="hh_mult" value="2.0" step="0.1" style="width:70px"></label>
-<label>inicio: <input type="text" id="hh_inicio" placeholder="YYYY-MM-DD HH:MM"></label>
-<label>fin: <input type="text" id="hh_fin" placeholder="YYYY-MM-DD HH:MM"></label>
-<button class="btn btn-success" onclick="activar_hh()">activar</button>
-<button class="btn btn-danger" onclick="desactivar_hh()">desactivar</button>
-</div>
-</div>
-<div class="card">
-<h2>historial</h2>
-<div id="hh_list" class="scrollable">cargando...</div>
-</div>
-</div>
-
-<!-- seguridad -->
-<div id="pnl_seguridad" class="panel">
-<div class="card">
-<h2>eventos de seguridad</h2>
-<select id="sec_tipo"><option value="">todos</option><option value="handshake_fallido">handshake fallido</option><option value="token_invalido">token invalido</option><option value="ip_bloqueada">ip bloqueada</option></select>
-<button class="btn btn-primary" onclick="cargar_seguridad()">filtrar</button>
-<div id="sec_list" class="scrollable" style="margin-top:12px">cargando...</div>
-</div>
-</div>
-
-</div>
+  <!-- paneles -->
+  <div id="tab_kpi" class="tab-content activo"><div class="loading"></div></div>
+  <div id="tab_usuarios" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_perfiles" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_pcs" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_sesiones" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_retiros" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_mensajes" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_monitoreo" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_tokenomia" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_proyecciones" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_happy_hour" class="tab-content"><div class="loading"></div></div>
+  <div id="tab_seguridad" class="tab-content"><div class="loading"></div></div>
 </main>
-<div id="toast" class="toast"></div>
+
+<!-- modal generico -->
+<div class="modal-overlay" id="modal_overlay">
+  <div class="modal" id="modal_contenido"></div>
+</div>
+
+<!-- toast container -->
+<div class="toast-container" id="toast_container"></div>
+
+<!-- scripts -->
+<script src="/static/admin_core.js"></script>
+<script src="/static/admin_kpi.js"></script>
+<script src="/static/admin_usuarios.js"></script>
+<script src="/static/admin_perfiles.js"></script>
+<script src="/static/admin_pcs.js"></script>
+<script src="/static/admin_sesiones.js"></script>
+<script src="/static/admin_retiros.js"></script>
+<script src="/static/admin_mensajes.js"></script>
+<script src="/static/admin_monitoreo.js"></script>
+<script src="/static/admin_tokenomia.js"></script>
+<script src="/static/admin_proyecciones.js"></script>
+<script src="/static/admin_happy_hour.js"></script>
+<script src="/static/admin_seguridad.js"></script>
+
+<!-- boot -->
 <script>
-let token='';
-const api='';
-
-function toast(msg,cls){
-const t=document.getElementById('toast');
-t.textContent=msg;t.className='toast '+cls+' show';
-setTimeout(()=>t.classList.remove('show'),3000);
-}
-
-async function api_call(method,url,body=null){
-const opts={method,headers:{'Content-Type':'application/json'}};
-if(token)opts.headers['Authorization']='Bearer '+token;
-if(body)opts.body=JSON.stringify(body);
-const r=await fetch(url,opts);
-const d=await r.json();
-if(!r.ok)throw new Error(d.detail||d.error||'error '+r.status);
-return d;
-}
-
-async function login(){
-const email=document.getElementById('login_email').value;
-const password=document.getElementById('login_password').value;
-try{
-const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-const d=await r.json();
-if(!r.ok){document.getElementById('login_error').textContent=d.detail||'error';return;}
-token=d.token;
-document.getElementById('user_info').textContent=d.email+' ('+d.rol+')';
-document.getElementById('login_panel').classList.remove('active');
-document.getElementById('dashboard_panels').style.display='block';
-document.getElementById('navbar').style.display='flex';
-cargar_kpi();
-cargar_proyecciones();
-}catch(e){document.getElementById('login_error').textContent=e.message;}
-}
-
-// navegacion
-document.querySelectorAll('nav button').forEach(b=>{
-b.addEventListener('click',()=>{
-document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
-b.classList.add('active');
-document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-const pid='pnl_'+b.dataset.panel;
-document.getElementById(pid).classList.add('active');
-if(b.dataset.panel==='kpi')cargar_kpi();
-if(b.dataset.panel==='proyecciones')cargar_proyecciones();
-if(b.dataset.panel==='pcs')cargar_pcs();
-if(b.dataset.panel==='sesiones')cargar_sesiones();
-if(b.dataset.panel==='retiros')cargar_retiros();
-if(b.dataset.panel==='mensajes')cargar_mensajes();
-if(b.dataset.panel==='happy_hour')cargar_hh();
-if(b.dataset.panel==='seguridad')cargar_seguridad();
+"use strict";
+document.addEventListener("DOMContentLoaded", function () {
+  roxy.init();
 });
-});
-
-async function cargar_kpi(){
-try{
-const d=await api_call('GET','/api/admin/kpi');
-let h='<div style="display:flex;flex-wrap:wrap;gap:8px">';
-const u=d.usuarios;h+=`<div class="metric"><span class="label">usuarios</span><span class="value">${u.total}</span></div>`;
-h+=`<div class="metric"><span class="label">activos</span><span class="value">${u.activos}</span></div>`;
-h+=`<div class="metric"><span class="label">admins</span><span class="value">${u.admin}</span></div>`;
-const k=d.kbt;h+=`<div class="metric"><span class="label">kbt circulando</span><span class="value">${k.circulando.toFixed(2)}</span></div>`;
-h+=`<div class="metric"><span class="label">minado total</span><span class="value">${k.total_minado.toFixed(2)}</span></div>`;
-h+=`<div class="metric"><span class="label">reserva tokens</span><span class="value">${k.reserva_tokens.toFixed(2)}</span></div>`;
-const o=d.operaciones;h+=`<div class="metric"><span class="label">retiros pend.</span><span class="value">${o.retiros_pendientes}</span></div>`;
-h+=`<div class="metric"><span class="label">vol. 24h</span><span class="value">${o.volumen_24h.toFixed(2)}</span></div>`;
-h+=`<div class="metric"><span class="label">hh activo</span><span class="value">${d.happy_hour.activo?'si':'no'}</span></div>`;
-h+=`<div class="metric"><span class="label">pcbots conectados</span><span class="value">${d.pcbots.conectados}</span></div>`;
-const p=d.perfiles;h+=`<div class="metric"><span class="label">perfiles activos</span><span class="value">${p.activos}/${p.total}</span></div>`;
-h+='</div>';
-document.getElementById('kpi_content').innerHTML=h;
-}catch(e){document.getElementById('kpi_content').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cargar_proyecciones(){
-try{
-const d=await api_call('GET','/api/admin/proyecciones');
-let h='<table><tr><th>meses</th><th>usuarios est.</th><th>perfiles est.</th><th>tokens emitidos</th><th>circulantes est.</th><th>margen dueno</th><th>ganancia granjeros</th><th>comisiones est.</th></tr>';
-d.escenarios.forEach(e=>{
-h+=`<tr><td>${e.meses}</td><td>${e.usuarios_estimados}</td><td>${e.perfiles_estimados}</td><td>${e.tokens_emitidos_periodo}</td><td>${e.tokens_circulantes_est}</td><td>${e.margen_dueno}</td><td>${e.ganancia_granjeros}</td><td>${e.comisiones_est}</td></tr>`;
-});
-h+='</table>';
-document.getElementById('proy_content').innerHTML=h;
-}catch(e){document.getElementById('proy_content').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cargar_usuarios(){
-const q=document.getElementById('usr_search').value;
-const rol=document.getElementById('usr_rol_filtro').value;
-try{
-const d=await api_call('GET','/api/admin/usuarios?q='+encodeURIComponent(q)+'&rol='+encodeURIComponent(rol));
-let h='<table><tr><th>id</th><th>email</th><th>username</th><th>rol</th><th>fiabilidad</th><th>pcbot</th><th>modo</th><th>activo</th><th>acciones</th></tr>';
-d.usuarios.forEach(u=>{
-const acls=u.activo?'badge-success':'badge-danger';
-h+=`<tr><td>${u.id}</td><td>${u.email}</td><td>${u.username||''}</td><td>${u.rol}</td><td>${u.nivel_fiabilidad||'bronce'}</td><td>${u.pcbot_id||''}</td><td>${u.modo||''}</td><td><span class="badge ${acls}">${u.activo?'si':'no'}</span></td>`;
-h+=`<td><button class="btn btn-sm" onclick="document.getElementById('rol_user_id').value=${u.id}">cambiar rol</button></td></tr>`;
-});
-h+='</table>';
-document.getElementById('usr_list').innerHTML=h||'no se encontraron usuarios.';
-}catch(e){document.getElementById('usr_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-cargar_usuarios();
-
-async function cambiar_rol(){
-const id=document.getElementById('rol_user_id').value;
-const rol=document.getElementById('rol_nuevo').value;
-try{
-await api_call('PUT','/api/admin/usuarios/'+id+'/rol',{nuevo_rol:rol});
-toast('rol actualizado','toast-success');
-cargar_usuarios();
-}catch(e){toast(e.message,'toast-error');}
-}
-
-async function toggle_usuario(estado){
-const id=document.getElementById('toggle_user_id').value;
-try{
-await api_call('POST','/api/admin/usuarios/'+id+'/toggle',{activo:estado});
-toast(estado?'usuario activado':'usuario desactivado','toast-success');
-cargar_usuarios();
-}catch(e){toast(e.message,'toast-error');}
-}
-
-async function cargar_perfiles(){
-const e=document.getElementById('perfil_estado').value;
-const url='/api/admin/perfiles'+(e?'?estado='+e:'');
-try{
-const d=await api_call('GET',url);
-let h='<table><tr><th>id</th><th>usuario</th><th>perfil</th><th>estado</th><th>ip wan</th><th>horas uso</th><th>horas hh</th><th>ultimo heartbeat</th></tr>';
-d.perfiles.forEach(p=>{
-h+=`<tr><td>${p.id}</td><td>${p.email}</td><td>${p.nombre_perfil}</td><td><span class="badge badge-${p.estado==='activo'?'success':'warning'}">${p.estado}</span></td><td>${p.ip_wan||''}</td><td>${p.horas_en_uso||0}</td><td>${p.horas_hh||0}</td><td>${p.ultimo_heartbeat||''}</td></tr>`;
-});
-h+='</table>';
-document.getElementById('perfil_list').innerHTML=h||'no se encontraron perfiles.';
-}catch(e){document.getElementById('perfil_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cargar_pcs(){
-try{
-const d=await api_call('GET','/api/admin/pcs');
-let h='<table><tr><th>id</th><th>email</th><th>pcbot_id</th><th>modo</th><th>uptime</th><th>perfiles</th><th>ultimo login</th></tr>';
-d.pcs.forEach(p=>{
-h+=`<tr><td>${p.id}</td><td>${p.email}</td><td>${p.pcbot_id}</td><td><span class="badge badge-${p.modo==='conectado'?'success':'warning'}">${p.modo}</span></td><td>${p.uptime_horas||0}h</td><td>${p.perfiles_asociados}</td><td>${p.ultimo_login||''}</td></tr>`;
-});
-h+='</table>';
-document.getElementById('pcs_list').innerHTML=h||'no hay pcbots registradas.';
-}catch(e){document.getElementById('pcs_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cargar_sesiones(){
-try{
-const d=await api_call('GET','/api/admin/sesiones');
-let h='<table><tr><th>token</th><th>usuario</th><th>rol</th><th>pcbot</th><th>creado</th><th>expira</th><th>accion</th></tr>';
-d.sesiones.forEach(s=>{
-h+=`<tr><td><code>${s.token}</code></td><td>${s.email}</td><td>${s.rol}</td><td>${s.pcbot_id||''}</td><td>${s.fecha_creacion}</td><td>${s.fecha_expiracion}</td><td><button class="btn btn-danger btn-sm" onclick="cerrar_sesion('${s.token}')">cerrar</button></td></tr>`;
-});
-h+='</table>';
-document.getElementById('ses_list').innerHTML=h||'no hay sesiones activas.';
-}catch(e){document.getElementById('ses_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cerrar_sesion(tk){
-if(!confirm('cerrar esta sesion?'))return;
-try{await api_call('DELETE','/api/admin/sesiones/'+tk);toast('sesion cerrada','toast-success');cargar_sesiones();}
-catch(e){toast(e.message,'toast-error');}
-}
-
-async function cargar_retiros(){
-try{
-const d=await api_call('GET','/api/admin/kbt/retiros?estado=pendiente');
-let h='<table><tr><th>id</th><th>usuario id</th><th>kbt</th><th>pen</th><th>comision</th><th>fecha</th><th>acciones</th></tr>';
-d.retiros.forEach(r=>{
-h+=`<tr><td>${r.id}</td><td>${r.usuario_id}</td><td>${r.cantidad_kbt}</td><td>${r.cantidad_pen}</td><td>${r.comision}</td><td>${r.fecha_solicitud}</td>
-<td><button class="btn btn-success btn-sm" onclick="procesar_retiro(${r.id},'aprobar')">aprobar</button>
-<button class="btn btn-danger btn-sm" onclick="procesar_retiro(${r.id},'rechazar')">rechazar</button></td></tr>`;
-});
-h+='</table>';
-document.getElementById('ret_list').innerHTML=h||'no hay retiros pendientes.';
-}catch(e){document.getElementById('ret_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function procesar_retiro(id,accion){
-if(!confirm(accion+' retiro #'+id+'?'))return;
-try{await api_call('POST','/api/admin/retiros/procesar',{retiro_id:id,accion});toast('retiro '+accion,'toast-success');cargar_retiros();}
-catch(e){toast(e.message,'toast-error');}
-}
-
-async function enviar_mensaje(){
-const email=document.getElementById('msg_email').value;
-const texto=document.getElementById('msg_texto').value;
-try{await api_call('POST','/api/admin/mensajes/enviar',{email_destino:email,texto});toast('mensaje enviado','toast-success');cargar_mensajes();}
-catch(e){toast(e.message,'toast-error');}
-}
-
-async function cargar_mensajes(){
-try{
-const d=await api_call('GET','/api/admin/mensajes/historial');
-let h='<table><tr><th>id</th><th>origen</th><th>destino</th><th>texto</th><th>leido</th><th>fecha</th></tr>';
-d.mensajes.forEach(m=>{
-h+=`<tr><td>${m.id}</td><td>${m.origen_email}</td><td>${m.destino_email}</td><td>${m.texto}</td><td>${m.leido?'si':'no'}</td><td>${m.fecha}</td></tr>`;
-});
-h+='</table>';
-document.getElementById('msg_list').innerHTML=h||'no hay mensajes.';
-}catch(e){document.getElementById('msg_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function activar_hh(){
-const mult=document.getElementById('hh_mult').value;
-const ini=document.getElementById('hh_inicio').value;
-const fin=document.getElementById('hh_fin').value;
-try{await api_call('POST','/api/admin/happy_hour/activar',{multiplicador:parseFloat(mult),fecha_inicio:ini,fecha_fin:fin});toast('happy hour activado','toast-success');cargar_hh();}
-catch(e){toast(e.message,'toast-error');}
-}
-
-async function desactivar_hh(){
-try{await api_call('POST','/api/admin/happy_hour/desactivar');toast('happy hour desactivado','toast-success');cargar_hh();}
-catch(e){toast(e.message,'toast-error');}
-}
-
-async function cargar_hh(){
-try{
-const d=await api_call('GET','/api/admin/happy_hour/historial');
-let h='<table><tr><th>id</th><th>multiplicador</th><th>inicio</th><th>fin</th><th>activo</th></tr>';
-d.historial.forEach(r=>{
-h+=`<tr><td>${r.id}</td><td>${r.multiplicador}x</td><td>${r.fecha_inicio}</td><td>${r.fecha_fin}</td><td><span class="badge badge-${r.activo?'success':'danger'}">${r.activo?'si':'no'}</span></td></tr>`;
-});
-h+='</table>';
-document.getElementById('hh_list').innerHTML=h||'sin historial.';
-}catch(e){document.getElementById('hh_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
-
-async function cargar_seguridad(){
-const tipo=document.getElementById('sec_tipo').value;
-const url='/api/admin/seguridad'+(tipo?'?tipo='+tipo:'');
-try{
-const d=await api_call('GET',url);
-let h='<table><tr><th>id</th><th>tipo</th><th>pcbot</th><th>detalle</th><th>ip</th><th>fecha</th></tr>';
-d.eventos.forEach(e=>{
-h+=`<tr><td>${e.id}</td><td><span class="badge badge-warning">${e.tipo}</span></td><td>${e.pcbot_id||''}</td><td>${e.detalle||''}</td><td>${e.ip_origen||''}</td><td>${e.fecha}</td></tr>`;
-});
-h+='</table>';
-document.getElementById('sec_list').innerHTML=h||'sin eventos.';
-}catch(e){document.getElementById('sec_list').innerHTML='<span style="color:#f85149">error: '+e.message+'</span>';}
-}
 </script>
 </body>
 </html>

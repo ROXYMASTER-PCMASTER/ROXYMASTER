@@ -1,168 +1,250 @@
-﻿import sqlite3, os, time, secrets
-from config import DATA_DIR
-DB_PATH = os.path.join(DATA_DIR, "roxymaster.db")
+﻿# marketplace.py - ordenes p2p, escrow, comision 15%. roxymaster v8.3
+# todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
-# ==================== funciones wrapper para server.py v8.3 ====================
+from datetime import datetime
+from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
+from variables_globales import comision_marketplace
 
-def init_marketplace_db():
-    """inicializa las tablas del marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript('''
-        create table if not exists ordenes_marketplace (
-            id integer primary key autoincrement,
-            tipo text not null,
-            wallet_vendedor text,
-            wallet_comprador text,
-            vendedor_uid integer,
-            comprador_uid integer,
-            vendedor text,
-            comprador text,
-            cantidad real not null,
-            precio_unitario real not null,
-            total real,
-            estado text default 'activa',
-            fecha_creacion text default (datetime('now','localtime')),
-            fecha_ejecucion text,
-            fecha_cancelacion text,
-            foreign key (vendedor_uid) references usuarios(id),
-            foreign key (comprador_uid) references usuarios(id)
-        );
-    ''')
-    conn.commit()
-    conn.close()
 
-def crear_orden(tipo, wallet_id, uid, cantidad, precio, vendedor_email=None):
-    """crea una orden en el marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    total = cantidad * precio
+def _ahora_str() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+# ---------------------------------------------------------------------------
+# crear orden de venta p2p
+# ---------------------------------------------------------------------------
+def crear_orden(
+    vendedor_id: int,
+    cantidad_kbt: float,
+    precio_pen: float,
+    tipo: str = "venta",
+    comentario: str = None,
+) -> dict:
+    """
+    crea una orden p2p. el vendedor bloquea los kbt en escrow.
+    tipo puede ser 'venta' o 'compra'.
+    """
+    if cantidad_kbt <= 0 or precio_pen <= 0:
+        return {"exito": False, "error": "cantidad y precio deben ser positivos"}
+
+    if tipo not in ("venta", "compra"):
+        return {"exito": False, "error": "tipo invalido, debe ser 'venta' o 'compra'"}
+
+    # verificar saldo del vendedor si es venta
     if tipo == "venta":
-        conn.execute(
-            "insert into ordenes_marketplace (tipo, wallet_vendedor, vendedor_uid, cantidad, precio_unitario, total, estado, vendedor) values (?,?,?,?,?,?,?,?)",
-            (tipo, wallet_id, uid, cantidad, precio, total, "activa", vendedor_email)
-        )
-    else:
-        conn.execute(
-            "insert into ordenes_marketplace (tipo, wallet_comprador, comprador_uid, cantidad, precio_unitario, total, estado, comprador) values (?,?,?,?,?,?,?,?)",
-            (tipo, wallet_id, uid, cantidad, precio, total, "activa", vendedor_email)
-        )
-    conn.commit()
-    orden_id = conn.execute("select last_insert_rowid()").fetchone()[0]
-    conn.close()
-    return {"ok": True, "orden_id": orden_id, "tipo": tipo, "cantidad": cantidad, "precio_unitario": precio, "total": total}
+        wallet = ejecutar_sql_unico("select balance from wallets where usuario_id = ?", (vendedor_id,))
+        if not wallet or wallet["balance"] < cantidad_kbt:
+            return {"exito": False, "error": "saldo insuficiente para crear la orden"}
+        # bloquear tokens en escrow (debitar del balance)
+        ejecutar_sql("update wallets set balance = balance - ? where usuario_id = ?",
+                     (cantidad_kbt, vendedor_id))
 
-def cancelar_orden(orden_id):
-    """cancela una orden activa."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        "update ordenes_marketplace set estado='cancelada', fecha_cancelacion=datetime('now','localtime') where id=? and estado='activa'",
-        (orden_id,)
+    orden_id = ejecutar_insercion(
+        """insert into ordenes_p2p (vendedor_id, comprador_id, cantidad_kbt, precio_pen, tipo, estado, fecha_creacion)
+           values (?, null, ?, ?, ?, 'abierta', ?)""",
+        (vendedor_id, cantidad_kbt, precio_pen, tipo, _ahora_str()),
     )
-    cambios = conn.total_changes
-    conn.commit()
-    conn.close()
-    if cambios == 0:
-        return {"ok": False, "error": "orden no encontrada o ya no esta activa"}
-    return {"ok": True, "mensaje": "orden cancelada"}
 
-def ejecutar_orden(orden_id, wallet_comprador, comprador_uid):
-    """ejecuta una orden de compra del marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    orden = conn.execute("select * from ordenes_marketplace where id=? and estado='activa'", (orden_id,)).fetchone()
-    if not orden:
-        conn.close()
-        return {"ok": False, "error": "orden no encontrada o ya no esta activa"}
-    orden = dict(orden)
-    # verificar que el comprador tiene saldo suficiente
-    saldo_comprador = conn.execute("select saldo_tokens from wallets where wallet=?", (wallet_comprador,)).fetchone()
-    if not saldo_comprador or saldo_comprador[0] < orden["total"]:
-        conn.close()
-        return {"ok": False, "error": "saldo insuficiente"}
+    if not orden_id:
+        # revertir si fallo
+        if tipo == "venta":
+            ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                         (cantidad_kbt, vendedor_id))
+        return {"exito": False, "error": "error al crear la orden"}
 
-    # debitar comprador
-    conn.execute("update wallets set saldo_tokens = saldo_tokens - ?, ultima_actividad=datetime('now','localtime') where wallet=?",
-                 (orden["total"], wallet_comprador))
-    # acreditar vendedor
-    conn.execute("update wallets set saldo_tokens = saldo_tokens + ?, ultima_actividad=datetime('now','localtime') where wallet=?",
-                 (orden["total"], orden["wallet_vendedor"]))
-    # marcar orden como completada
-    conn.execute(
-        "update ordenes_marketplace set estado='completada', wallet_comprador=?, comprador_uid=?, fecha_ejecucion=datetime('now','localtime') where id=?",
-        (wallet_comprador, comprador_uid, orden_id))
-    # registrar transacciones
-    conn.execute("insert into transacciones (wallet_origen, wallet_destino, cantidad, tipo, concepto, orden_id) values (?,?,?,?,?,?)",
-                 (wallet_comprador, orden["wallet_vendedor"], orden["total"], "compra_marketplace", f"orden_{orden_id}", orden_id))
-    conn.commit()
-    conn.close()
-    return {"ok": True, "mensaje": "orden ejecutada", "orden_id": orden_id, "total": orden["total"]}
-
-def listar_ordenes_activas(tipo=None):
-    """lista ordenes activas del marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    if tipo:
-        rows = conn.execute("select * from ordenes_marketplace where estado='activa' and tipo=? order by fecha_creacion desc", (tipo,)).fetchall()
-    else:
-        rows = conn.execute("select * from ordenes_marketplace where estado='activa' order by fecha_creacion desc").fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_orden(orden_id):
-    """obtiene una orden por su id."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    row = conn.execute("select * from ordenes_marketplace where id=?", (orden_id,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def obtener_historial_ordenes(limite=50):
-    """obtiene el historial de ordenes del marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute("select * from ordenes_marketplace order by fecha_creacion desc limit ?", (limite,)).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-def obtener_estadisticas_marketplace():
-    """obtiene estadisticas del marketplace."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    activas = conn.execute("select count(*) as c from ordenes_marketplace where estado='activa'").fetchone()["c"]
-    completadas = conn.execute("select count(*) as c from ordenes_marketplace where estado='completada'").fetchone()["c"]
-    total_volumen = conn.execute("select coalesce(sum(total),0) as s from ordenes_marketplace where estado='completada'").fetchone()["s"]
-    conn.close()
     return {
-        "ordenes_activas": activas,
-        "ordenes_completadas": completadas,
-        "volumen_total": total_volumen,
+        "exito": True,
+        "orden_id": orden_id,
+        "cantidad_kbt": cantidad_kbt,
+        "precio_pen": precio_pen,
+        "total_pen": round(cantidad_kbt * precio_pen, 2),
+        "comision_pct": comision_marketplace * 100,
     }
 
-# ==================== clase MarketplaceManager para api_endpoints.py ====================
 
-class MarketplaceManager:
-    def __init__(self):
-        init_marketplace_db()
+# ---------------------------------------------------------------------------
+# tomar orden de compra (aceptar una orden abierta)
+# ---------------------------------------------------------------------------
+def tomar_orden(comprador_id: int, orden_id: int) -> dict:
+    """un comprador acepta una orden abierta y la marca como 'en_escrow'."""
+    orden = ejecutar_sql_unico(
+        "select * from ordenes_p2p where id = ? and estado = 'abierta'", (orden_id,)
+    )
+    if not orden:
+        return {"exito": False, "error": "orden no encontrada o ya no esta disponible"}
 
-    def crear_oferta(self, email, tokens, precio_soles):
-        """crea una oferta de venta."""
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        user = conn.execute("select id, wallet from usuarios where lower(email)=lower(?)", (email.strip(),)).fetchone()
-        if not user:
-            conn.close()
-            return {"ok": False, "error": "usuario no encontrado"}
-        wallet = conn.execute("select wallet, saldo_tokens from wallets where usuario_id=?", (user["id"],)).fetchone()
-        if not wallet:
-            conn.close()
-            return {"ok": False, "error": "wallet no encontrada"}
-        conn.close()
-        return crear_orden("venta", wallet["wallet"], user["id"], tokens, precio_soles, email)
+    if orden["vendedor_id"] == comprador_id:
+        return {"exito": False, "error": "no puedes comprar tu propia orden"}
 
-    def listar_activas(self, tipo=None):
-        return listar_ordenes_activas(tipo)
+    # verificar saldo del comprador si la orden es de venta
+    if orden["tipo"] == "venta":
+        total_pen = orden["cantidad_kbt"] * orden["precio_pen"]
+        wallet_comprador = ejecutar_sql_unico(
+            "select balance from wallets where usuario_id = ?", (comprador_id,)
+        )
+        if not wallet_comprador or wallet_comprador["balance"] < total_pen:
+            return {"exito": False, "error": "saldo insuficiente para comprar esta orden"}
 
-    def historial(self, limite=50):
-        return obtener_historial_ordenes(limite)
+    # marcar orden como en escrow
+    ejecutar_sql(
+        "update ordenes_p2p set comprador_id = ?, estado = 'en_escrow', fecha_escrow = ? where id = ?",
+        (comprador_id, _ahora_str(), orden_id),
+    )
 
-    def estadisticas(self):
-        return obtener_estadisticas_marketplace()
+    return {
+        "exito": True,
+        "orden_id": orden_id,
+        "vendedor_id": orden["vendedor_id"],
+        "comprador_id": comprador_id,
+        "cantidad_kbt": orden["cantidad_kbt"],
+        "precio_pen": orden["precio_pen"],
+        "estado": "en_escrow",
+    }
+
+
+# ---------------------------------------------------------------------------
+# liberar orden (el comprador confirma recepcion)
+# ---------------------------------------------------------------------------
+def liberar_orden(comprador_id: int, orden_id: int) -> dict:
+    """
+    el comprador confirma que recibio el pago/fiat y libera los kbt al vendedor.
+    aplica la comision del 15% al marketplace.
+    """
+    orden = ejecutar_sql_unico(
+        "select * from ordenes_p2p where id = ? and estado = 'en_escrow' and comprador_id = ?",
+        (orden_id, comprador_id),
+    )
+    if not orden:
+        return {"exito": False, "error": "orden no encontrada o no esta en escrow para este comprador"}
+
+    cantidad = orden["cantidad_kbt"]
+    comision = round(cantidad * comision_marketplace, 8)
+    cantidad_neta = round(cantidad - comision, 8)
+
+    if orden["tipo"] == "venta":
+        # transferir kbt al comprador, comision a reserva
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (cantidad_neta, comprador_id))
+        ejecutar_sql("update wallets set comprado_total = comprado_total + ? where usuario_id = ?",
+                     (cantidad_neta, comprador_id))
+        # comision al fondo de reserva
+        ejecutar_sql("update reserva set tokens = tokens + ? where id = 1", (comision,))
+    else:
+        # orden de compra: devolver kbt al vendedor mas el pago
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (cantidad_neta, orden["vendedor_id"]))
+
+    # registrar transacciones
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto) values (?, ?, 'p2p_venta', ?, ?)",
+        (orden["vendedor_id"], comprador_id, cantidad_neta,
+         f"p2p orden #{orden_id}: {cantidad_neta} kbt transferidos"),
+    )
+    if comision > 0:
+        ejecutar_insercion(
+            "insert into transacciones (origen_id, destino_id, tipo, monto, concepto) values (?, null, 'comision_p2p', ?, ?)",
+            (orden["vendedor_id"], comision, f"comision p2p orden #{orden_id}"),
+        )
+
+    ejecutar_sql(
+        "update ordenes_p2p set estado = 'completada', fecha_completada = ? where id = ?",
+        (_ahora_str(), orden_id),
+    )
+
+    return {
+        "exito": True,
+        "orden_id": orden_id,
+        "cantidad_transferida": cantidad_neta,
+        "comision": comision,
+        "comision_pct": comision_marketplace * 100,
+    }
+
+
+# ---------------------------------------------------------------------------
+# cancelar orden
+# ---------------------------------------------------------------------------
+def cancelar_orden(usuario_id: int, orden_id: int) -> dict:
+    """cancela una orden abierta y devuelve los kbt al vendedor."""
+    orden = ejecutar_sql_unico(
+        "select * from ordenes_p2p where id = ? and vendedor_id = ? and estado in ('abierta', 'en_escrow')",
+        (orden_id, usuario_id),
+    )
+    if not orden:
+        return {"exito": False, "error": "orden no encontrada o no puedes cancelarla"}
+
+    # devolver kbt al vendedor
+    if orden["tipo"] == "venta":
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (orden["cantidad_kbt"], usuario_id))
+
+    ejecutar_sql(
+        "update ordenes_p2p set estado = 'cancelada', fecha_completada = ? where id = ?",
+        (_ahora_str(), orden_id),
+    )
+
+    return {"exito": True, "orden_id": orden_id, "estado": "cancelada"}
+
+
+# ---------------------------------------------------------------------------
+# listar ordenes
+# ---------------------------------------------------------------------------
+def listar_ordenes(estado: str = None, usuario_id: int = None) -> list:
+    """lista ordenes p2p con filtros opcionales."""
+    query = "select o.*, u.email as vendedor_email, u2.email as comprador_email from ordenes_p2p o left join usuarios u on o.vendedor_id = u.id left join usuarios u2 on o.comprador_id = u2.id where 1=1"
+    params = []
+    if estado:
+        query += " and o.estado = ?"
+        params.append(estado)
+    if usuario_id:
+        query += " and (o.vendedor_id = ? or o.comprador_id = ?)"
+        params.extend([usuario_id, usuario_id])
+    query += " order by o.fecha_creacion desc"
+    return ejecutar_sql(query, tuple(params))
+
+
+def obtener_orden(orden_id: int) -> dict:
+    """obtiene una orden especifica por id."""
+    orden = ejecutar_sql_unico(
+        "select o.*, u.email as vendedor_email, u2.email as comprador_email "
+        "from ordenes_p2p o left join usuarios u on o.vendedor_id = u.id "
+        "left join usuarios u2 on o.comprador_id = u2.id where o.id = ?",
+        (orden_id,),
+    )
+    return dict(orden) if orden else None
+
+
+# ---------------------------------------------------------------------------
+# disputa (admin)
+# ---------------------------------------------------------------------------
+def resolver_disputa(orden_id: int, a_favor_de: str, admin_id: int) -> dict:
+    """
+    resuelve una disputa de una orden en escrow.
+    a_favor_de: 'vendedor' o 'comprador'.
+    """
+    orden = ejecutar_sql_unico(
+        "select * from ordenes_p2p where id = ? and estado = 'en_escrow'", (orden_id,)
+    )
+    if not orden:
+        return {"exito": False, "error": "orden no encontrada o no esta en escrow"}
+
+    cantidad = orden["cantidad_kbt"]
+    comision = round(cantidad * comision_marketplace, 8)
+    cantidad_neta = round(cantidad - comision, 8)
+
+    if a_favor_de == "comprador":
+        # devolver kbt al comprador
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (cantidad, orden["comprador_id"]))
+    else:
+        # liberar al vendedor
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (cantidad_neta, orden["vendedor_id"]))
+        # comision a reserva
+        ejecutar_sql("update reserva set tokens = tokens + ? where id = 1", (comision,))
+
+    ejecutar_sql(
+        "update ordenes_p2p set estado = 'resuelta', fecha_completada = ? where id = ?",
+        (_ahora_str(), orden_id),
+    )
+
+    return {"exito": True, "orden_id": orden_id, "resuelta_a_favor_de": a_favor_de}

@@ -1,44 +1,321 @@
-﻿import sqlite3, os
-from config import DATA_DIR
-DB_PATH = os.path.join(DATA_DIR, "roxymaster.db")
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+﻿# db.py - inicializador de base de datos unificada roxymaster v8.3
+# todas las tablas en una sola base sqlite: data/roxymaster.db
+# todos los nombres en minusculas, utf-8 sin bom
+
+import sqlite3
+from config_loader import ruta_db
+from contextlib import contextmanager
+
+_db_path = ruta_db
+
+# ---------------------------------------------------------------------------
+# esquema unificado (20 tablas)
+# ---------------------------------------------------------------------------
+esquema_sql = """
+pragma journal_mode=WAL;
+pragma foreign_keys=ON;
+
+create table if not exists usuarios (
+    id integer primary key autoincrement,
+    email text unique not null,
+    password_hash text not null,
+    username text,
+    rol text default 'usuario',
+    wallet text unique,
+    codigo_referido text unique,
+    referido_por text default 'pcmaster',
+    referido_cambiado integer default 0,
+    nivel_fiabilidad text default 'bronce',
+    uptime_horas real default 0,
+    pcbot_id text,
+    modo text default 'conectado',
+    ultimo_login text,
+    fecha_registro text default (datetime('now','localtime')),
+    activo integer default 1
+);
+
+create table if not exists sesiones (
+    token text primary key,
+    usuario_id integer not null,
+    email text not null,
+    rol text not null,
+    fecha_creacion text default (datetime('now','localtime')),
+    fecha_expiracion text not null,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+create table if not exists wallets (
+    id integer primary key autoincrement,
+    usuario_id integer unique not null,
+    balance real default 0,
+    minado_total real default 0,
+    recolectado_total real default 0,
+    comprado_total real default 0,
+    retirado_total real default 0,
+    staking_total real default 0,
+    staking_desde text,
+    actualizado text default (datetime('now','localtime')),
+    foreign key (usuario_id) references usuarios(id)
+);
+
+create table if not exists transacciones (
+    id integer primary key autoincrement,
+    origen_id integer,
+    destino_id integer,
+    tipo text not null,
+    monto real not null,
+    concepto text,
+    fecha text default (datetime('now','localtime')),
+    foreign key (origen_id) references usuarios(id),
+    foreign key (destino_id) references usuarios(id)
+);
+
+create table if not exists reserva (
+    id integer primary key check(id=1),
+    tokens real default 0,
+    soles real default 0
+);
+
+create table if not exists genesis (
+    id integer primary key,
+    etapa integer unique,
+    porcentaje real,
+    tokens real generated always as (15000000.0 * porcentaje) stored,
+    liberado integer default 0,
+    fecha_liberacion text
+);
+
+create table if not exists perfiles (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    nombre_perfil text,
+    tipo text default 'local',
+    estado text default 'inactivo',
+    ip_wan text,
+    horas_conexion real default 0,
+    horas_en_uso real default 0,
+    horas_hh real default 0,
+    ultimo_heartbeat text,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+create table if not exists referidos (
+    id integer primary key autoincrement,
+    referidor_id integer not null,
+    referido_id integer not null unique,
+    nivel integer not null,
+    comisiones_generadas real default 0,
+    fecha_activacion text,
+    foreign key (referidor_id) references usuarios(id),
+    foreign key (referido_id) references usuarios(id)
+);
+
+create table if not exists codigos_referido (
+    usuario_id integer primary key,
+    codigo text unique not null,
+    activo integer default 1,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+create table if not exists ordenes_p2p (
+    id integer primary key autoincrement,
+    vendedor_id integer not null,
+    comprador_id integer,
+    cantidad_kbt real not null,
+    precio_pen real not null,
+    tipo text default 'venta',
+    estado text default 'abierta',
+    fecha_creacion text default (datetime('now','localtime')),
+    fecha_escrow text,
+    fecha_completada text,
+    foreign key (vendedor_id) references usuarios(id),
+    foreign key (comprador_id) references usuarios(id)
+);
+
+create table if not exists retiros (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    cantidad_kbt real not null,
+    cantidad_pen real not null,
+    comision real not null,
+    estado text default 'pendiente',
+    fecha_solicitud text default (datetime('now','localtime')),
+    fecha_procesado text,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+create table if not exists happy_hour (
+    id integer primary key autoincrement,
+    multiplicador real default 2.0,
+    fecha_inicio text not null,
+    fecha_fin text not null,
+    activo integer default 1
+);
+
+create table if not exists variables_globales (
+    clave text primary key,
+    valor text not null
+);
+
+create table if not exists comandos (
+    id integer primary key autoincrement,
+    comando_id text unique not null,
+    tipo text not null,
+    parametros text,
+    estado text default 'pendiente',
+    fecha_creacion text default (datetime('now','localtime')),
+    fecha_ejecucion text,
+    resultado text,
+    streamer text,
+    pcbot_id text
+);
+
+create table if not exists urls_asignadas (
+    id integer primary key autoincrement,
+    url text not null,
+    streamer text,
+    perfiles_asignados integer default 0,
+    duracion_min integer default 60,
+    comentarios_activos integer default 0,
+    estado text default 'activa',
+    fecha_asignacion text default (datetime('now','localtime')),
+    fecha_fin text,
+    pcbot_id text
+);
+
+create table if not exists sesiones_activas (
+    id integer primary key autoincrement,
+    perfil_id text not null,
+    url text,
+    streamer text,
+    estado text default 'activo',
+    inicio text default (datetime('now','localtime')),
+    fin text
+);
+
+create table if not exists eventos_seguridad (
+    id integer primary key autoincrement,
+    tipo text not null,
+    pcbot_id text,
+    detalle text,
+    ip_origen text,
+    fecha text default (datetime('now','localtime'))
+);
+
+create table if not exists mensajes (
+    id integer primary key autoincrement,
+    origen_id integer not null,
+    destino_id integer not null,
+    texto text not null,
+    leido integer default 0,
+    fecha text default (datetime('now','localtime')),
+    foreign key (origen_id) references usuarios(id),
+    foreign key (destino_id) references usuarios(id)
+);
+
+-- indice para busquedas frecuentes
+create index if not exists idx_mensajes_destino on mensajes(destino_id);
+create index if not exists idx_sesiones_usuario on sesiones(usuario_id);
+create index if not exists idx_transacciones_origen on transacciones(origen_id);
+create index if not exists idx_transacciones_destino on transacciones(destino_id);
+create index if not exists idx_transacciones_fecha on transacciones(fecha);
+create index if not exists idx_referidos_referidor on referidos(referidor_id);
+create index if not exists idx_referidos_referido on referidos(referido_id);
+create index if not exists idx_retiros_usuario on retiros(usuario_id);
+create index if not exists idx_retiros_estado on retiros(estado);
+create index if not exists idx_perfiles_usuario on perfiles(usuario_id);
+create index if not exists idx_comandos_estado on comandos(estado);
+create index if not exists idx_comandos_pcbot on comandos(pcbot_id);
+create index if not exists idx_urls_streamer on urls_asignadas(streamer);
+create index if not exists idx_urls_estado on urls_asignadas(estado);
+create index if not exists idx_sesiones_activas_perfil on sesiones_activas(perfil_id);
+create index if not exists idx_eventos_pcbot on eventos_seguridad(pcbot_id);
+"""
+
+
 def init_db():
-    conn = get_db()
-    conn.executescript('''
-        create table if not exists auth_users (
-            email text primary key,
-            password_hash text not null,
-            rol text default 'usuario',
-            pcbot_id text,
-            saldo_tokens real default 0,
-            saldo_soles real default 0,
-            referido_por text,
-            fecha_registro text default (datetime('now'))
-        );
-        create table if not exists auth_tokens (
-            token text primary key,
-            email text not null,
-            expires text not null
-        );
-        create table if not exists perfiles (
-            id integer primary key autoincrement,
-            granjero_id text not null,
-            nombre_perfil text,
-            tipo text default 'local',
-            estado text default 'inactivo',
-            ip_wan text,
-            horas_conexion real default 0
-        );
-        create table if not exists transacciones_kbt (
-            id integer primary key autoincrement,
-            email text not null,
-            tipo text not null,
-            cantidad real not null,
-            fecha text default (datetime('now'))
-        );
-    ''')
+    """crea todas las tablas si no existen y llena datos iniciales."""
+    conn = sqlite3.connect(_db_path)
+    conn.executescript(esquema_sql)
+    conn.commit()
+    # insertar reserva si no existe
+    conn.execute(
+        "insert or ignore into reserva (id, tokens, soles) values (1, 0, 0)"
+    )
+    # insertar etapas genesis si no existen (15M tokens)
+    etapas_genesis = [
+        (1, 1, 0.100, 0, "2026-06-01"),   # 10% etapa 1
+        (2, 2, 0.070, 0, "2026-09-01"),   # 7%
+        (3, 3, 0.060, 0, "2026-12-01"),   # 6%
+        (4, 4, 0.060, 0, "2027-03-01"),
+        (5, 5, 0.050, 0, "2027-06-01"),
+        (6, 6, 0.050, 0, "2027-09-01"),
+        (7, 7, 0.050, 0, "2027-12-01"),
+        (8, 8, 0.040, 0, "2028-03-01"),
+        (9, 9, 0.030, 0, "2028-06-01"),
+        (10, 10, 0.020, 0, "2028-09-01"),
+        (11, 11, 0.020, 0, "2028-12-01"),
+        (12, 12, 0.010, 0, "2029-03-01"),
+    ]
+    for etapa in etapas_genesis:
+        conn.execute(
+            "insert or ignore into genesis (id, etapa, porcentaje, liberado, fecha_liberacion) values (?, ?, ?, ?, ?)",
+            etapa,
+        )
     conn.commit()
     conn.close()
+
+
+def get_db() -> sqlite3.Connection:
+    """devuelve una conexion a la base de datos con row_factory habilitado."""
+    conn = sqlite3.connect(_db_path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("pragma foreign_keys=ON")
+    return conn
+
+
+@contextmanager
+def get_db_context():
+    """context manager para conexion segura a la base de datos."""
+    conn = get_db()
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+def ejecutar_sql(sql: str, params: tuple = ()) -> list:
+    """ejecuta una consulta sql y devuelve todos los resultados como lista de diccionarios."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.commit()
+    conn.close()
+    return rows
+
+
+def ejecutar_sql_unico(sql: str, params: tuple = ()) -> dict:
+    """ejecuta una consulta sql y devuelve un unico registro como diccionario, o None."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def ejecutar_insercion(sql: str, params: tuple = ()) -> int:
+    """ejecuta una insercion sql y devuelve el lastrowid."""
+    conn = sqlite3.connect(_db_path)
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    conn.commit()
+    last_id = cursor.lastrowid
+    conn.close()
+    return last_id
+def obtener_todas_variables():
+    conn = get_db()
+    rows = conn.execute("SELECT clave, valor FROM variables_globales").fetchall()
+    conn.close()
+    return {row["clave"]: row["valor"] for row in rows}

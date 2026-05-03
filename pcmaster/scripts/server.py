@@ -1,83 +1,196 @@
-# server.py - orquestador principal roxymaster v8.3
-import asyncio, sys, logging
-from pathlib import Path
-from fastapi import FastAPI
+# server.py - punto de entrada fastapi + websocket. roxymaster v8.3
+# utf-8 sin bom, nombres en minusculas, <= 400 lineas
+
+import asyncio
+import json
+import logging
+import sys
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
-import uvicorn, websockets
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import uvicorn
 
-_base_dir = Path(__file__).parent.parent.absolute()
-_scripts_dir = _base_dir / "scripts"
-_data_dir = _base_dir / "data"
-_portal_html = _base_dir / "portal.html"
-sys.path.insert(0, str(_scripts_dir))
+from config_loader import cargar_configuracion
+from db import init_db as inicializar_db, get_db
+from shs import firmar_payload as firmar_mensaje, verificar_payload
+import websockets
+from orchestrator import (
+    gestor_websockets,
+    cola_comandos,
+    procesar_mensaje_ws,
+    manejar_conexion_pcbot,
+)
+from tasks import iniciar_tareas_periodicas, inicializar_registros_tareas
+from tokenomics import inicializar_tokenomics, emitir_kbt_admin
 
-from variables_globales import WS_HOST, WS_PORT, HTTP_HOST, HTTP_PORT, SECRETO_SISTEMA
-from database import init_all_databases
-from tasks import tarea_quema_diaria, tarea_limpieza_pcbots
-from ws_handler import manejar_conexion, _WebSocketServerProxy
-from orchestrator import set_ws_server
+from api_auth import router as router_auth
+from api_kbt import router as router_kbt
+from api_dashboard import router as router_dashboard
+from api_marketplace import router as router_marketplace
+from api_comandos import router as router_comandos
+from api_admin import router as router_admin
+from api_superadmin import router as router_superadmin
+from api_mensajes import router as router_mensajes
+from api_tokenomia import router as router_tokenomia
+from api_pedidos import router as router_pedidos
+from api_monitoreo import router as router_monitoreo
+from api_encriptacion import router as router_encriptacion
+from api_version import router as router_version
 
-# importar routers de API
-from api_auth import router as auth_router
-from api_dashboard import router as dashboard_router
-from api_comandos import router as comandos_router
-from api_kbt import router as kbt_router
-from api_marketplace import router as marketplace_router
-from api_admin import router as admin_router
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s", handlers=[logging.StreamHandler(sys.stdout)])
+logger = logging.getLogger("roxymaster.server")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("roxymaster")
+config = {}
+tarea_fondo = None
 
-app = FastAPI(title="roxymaster api v8.3", version="8.3.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global tarea_fondo
+    logger.info("iniciando roxymaster server v8.3...")
+    config.update(cargar_configuracion())
+    logger.info(f"configuracion cargada desde {config.get('archivo_config', 'config.json')}")
+    db_path = config.get("db_path", "data/roxymaster.db")
+    os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else "data", exist_ok=True)
+    inicializar_db()
+    logger.info(f"base de datos inicializada: {db_path}")
+    inicializar_tokenomics()
+    inicializar_registros_tareas()
+    from auth import registrar_usuario
+    admin_email = config.get("admin_email", "admin@roxymaster.local")
+    admin_pass = config.get("admin_password", "admin123")
+    existente = get_db().execute("select id from usuarios where email = ?", (admin_email,)).fetchone()
+    if not existente:
+        resultado = registrar_usuario(email=admin_email, password=admin_pass, username="admin", codigo_referido_externo=None, pcbot_id="pcmaster")
+        if resultado.get("exito"):
+            from db import ejecutar_sql
+            ejecutar_sql("update usuarios set rol = 'admin' where email = ?", (admin_email,))
+            logger.info(f"usuario admin creado: {admin_email}")
+        else:
+            logger.warning(f"no se pudo crear admin: {resultado.get('error')}")
+    tarea_fondo = asyncio.create_task(iniciar_tareas_periodicas())
+    logger.info("tareas periodicas iniciadas")
+    yield
+    logger.info("deteniendo servidor...")
+    if tarea_fondo:
+        tarea_fondo.cancel()
+        try:
+            await tarea_fondo
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(title="roxymaster api v8.3", description="api central del ecosistema roxymaster kbt", version="8.3.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# montar routers
-app.include_router(auth_router)
-app.include_router(dashboard_router)
-app.include_router(comandos_router)
-app.include_router(kbt_router)
-app.include_router(marketplace_router)
-app.include_router(admin_router)
+app.include_router(router_auth)
+app.include_router(router_kbt)
+app.include_router(router_dashboard)
+app.include_router(router_marketplace)
+app.include_router(router_comandos)
+app.include_router(router_admin)
+app.include_router(router_superadmin)
+app.include_router(router_mensajes)
+app.include_router(router_tokenomia)
+app.include_router(router_pedidos)
+app.include_router(router_monitoreo)
+app.include_router(router_encriptacion)
+app.include_router(router_version)
+
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    logger.info("archivos estaticos servidos desde %s", static_dir)
+
+logger.info("routers registrados: auth, kbt, dashboard, marketplace, comandos, admin, superadmin, mensajes, tokenomia, pedidos, monitoreo, encriptacion, version")
+
 
 @app.get("/")
 async def raiz():
-    if _portal_html.exists():
-        return FileResponse(str(_portal_html), media_type="text/html")
-    return HTMLResponse("<h1>roxymaster v8.3</h1>")
+    portal_path = os.path.join(os.path.dirname(__file__), "portal.html")
+    if os.path.exists(portal_path):
+        return FileResponse(portal_path, media_type="text/html")
+    return {"sistema": "roxymaster", "version": "8.3.0", "estado": "operativo", "timestamp": datetime.now().isoformat()}
 
-@app.get("/portal.html")
-async def portal():
-    if _portal_html.exists():
-        return FileResponse(str(_portal_html), media_type="text/html")
-    return HTMLResponse("<h1>portal no encontrado</h1>", status_code=404)
 
-async def iniciar_websocket():
-    logger.info(f"[ws] {WS_HOST}:{WS_PORT}")
-    async with websockets.serve(manejar_conexion, WS_HOST, WS_PORT, ping_interval=30, ping_timeout=10, close_timeout=5, max_size=10*1024*1024):
-        await asyncio.Future()
+@app.websocket("/ws/{pcbot_id}")
+async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
+    await websocket.accept()
+    logger.info(f"pcbot conectado via ws: {pcbot_id}")
+    gestor_websockets[pcbot_id] = {"ws": websocket, "conectado_desde": datetime.now().isoformat(), "ultimo_heartbeat": datetime.now().isoformat()}
+    handshake = firmar_mensaje({"tipo": "handshake", "servidor": "pcmaster", "version": "8.3.0"})
+    await websocket.send_json(handshake)
+    try:
+        from db import ejecutar_sql
+        ejecutar_sql("update usuarios set modo = 'conectado', pcbot_id = ? where pcbot_id = ?", (pcbot_id, pcbot_id))
+    except Exception:
+        pass
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if not verificar_payload(data):
+                logger.warning(f"firma invalida de {pcbot_id}")
+                await websocket.send_json({"tipo": "error", "mensaje": "firma invalida"})
+                continue
+            mensaje = {k: v for k, v in data.items() if k not in ("timestamp", "signature")}
+            respuesta = await procesar_mensaje_ws(pcbot_id, mensaje)
+            if respuesta:
+                await websocket.send_json(firmar_mensaje(respuesta))
+            gestor_websockets[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()
+    except WebSocketDisconnect:
+        logger.info(f"pcbot desconectado: {pcbot_id}")
+        gestor_websockets.pop(pcbot_id, None)
+        try:
+            from db import ejecutar_sql
+            ejecutar_sql("update usuarios set modo = 'desconectado' where pcbot_id = ?", (pcbot_id,))
+        except Exception:
+            pass
+    except Exception as e:
+        logger.error(f"error en ws de {pcbot_id}: {e}")
+        gestor_websockets.pop(pcbot_id, None)
 
-async def iniciar_http():
-    config = uvicorn.Config(app, host=HTTP_HOST, port=HTTP_PORT, log_level="warning", access_log=False)
-    await uvicorn.Server(config).serve()
 
-async def main():
-    init_all_databases()
-    set_ws_server(_WebSocketServerProxy())
-    asyncio.create_task(tarea_quema_diaria())
-    asyncio.create_task(tarea_limpieza_pcbots())
-    print(f'\n{"="*60}')
-    print(f"  roxymaster v8.3 - pcmaster server")
-    print(f"  ws:  {WS_HOST}:{WS_PORT}")
-    print(f"  http: {HTTP_HOST}:{HTTP_PORT}")
-    print(f'{"="*60}\n')
-    await asyncio.gather(iniciar_websocket(), iniciar_http())
+@app.get("/api/health")
+async def health_check():
+    return {"estado": "saludable", "pcbots_conectados": len(gestor_websockets), "comandos_pendientes": len(cola_comandos), "timestamp": datetime.now().isoformat()}
+
+
+class _WsAdapter:
+    def __init__(self, ws):
+        self._ws = ws
+
+    async def receive_text(self):
+        return await self._ws.recv()
+
+    async def send_json(self, data):
+        await self._ws.send(json.dumps(data))
+
+    async def close(self):
+        await self._ws.close()
+
+
+async def iniciar_ws_externo():
+    async def handler(websocket):
+        await manejar_conexion_pcbot(_WsAdapter(websocket), "anonimo")
+    logger.info("websocket externo iniciado en 0.0.0.0:5006")
+    await websockets.serve(handler, "0.0.0.0", 5006)
+
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nservidor detenido.")
-    except Exception as e:
-        logger.error(f"error fatal: {e}")
-        raise
+    _cfg = cargar_configuracion()
+    host = _cfg.get("host", "0.0.0.0")
+    puerto = _cfg.get("puerto", 8086)
+
+    async def main():
+        ws_task = asyncio.create_task(iniciar_ws_externo())
+        logger.info(f"iniciando fastapi en {host}:{puerto}")
+        uvicorn_config = uvicorn.Config("server:app", host=host, port=puerto, reload=False, log_level="info")
+        uvicorn_server = uvicorn.Server(uvicorn_config)
+        await uvicorn_server.serve()
+
+    asyncio.run(main())
