@@ -194,3 +194,7 @@ if __name__ == "__main__":
         await uvicorn_server.serve()
 
     asyncio.run(main())
+@app.get("/login")
+async def login_page():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/")
