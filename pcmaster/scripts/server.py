@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from config_loader import cargar_configuracion
-from db import init_db as inicializar_db, get_db
+from db import init_db as inicializar_db, get_db, ejecutar_sql_unico
 from shs import firmar_payload as firmar_mensaje, verificar_payload
 import websockets
 from orchestrator import (
@@ -118,6 +118,47 @@ async def raiz():
     return {"sistema": "roxymaster", "version": "8.3.0", "estado": "operativo", "timestamp": datetime.now().isoformat()}
 
 
+# ===== websocket de monitoreo admin =====
+conexiones_monitoreo: dict = {}
+
+
+@app.websocket("/ws/admin/monitor")
+async def websocket_monitoreo(websocket: WebSocket):
+    """websocket que transmite metricas del sistema a paneles admin."""
+    await websocket.accept()
+    conexion_id = f"monitor_{datetime.now().timestamp()}"
+    conexiones_monitoreo[conexion_id] = websocket
+    logger.info("cliente de monitoreo conectado")
+    try:
+        while True:
+            try:
+                usuarios_hoy = ejecutar_sql_unico("select count(*) as total from sesiones where date(fecha_creacion) = date('now','localtime')")
+                usuarios_hoy = usuarios_hoy["total"] if usuarios_hoy else 0
+                pcs = ejecutar_sql_unico("select count(*) as total from usuarios where pcbot_id is not null")
+                pcs = pcs["total"] if pcs else 0
+                pcs_online = ejecutar_sql_unico("select count(*) as total from usuarios where pcbot_id is not null and modo = 'conectado'")
+                pcs_online = pcs_online["total"] if pcs_online else 0
+                metricas = {
+                    "tipo": "monitoreo",
+                    "timestamp": datetime.now().isoformat(),
+                    "pcbots_conectados": len(gestor_websockets),
+                    "comandos_pendientes": len(cola_comandos),
+                    "usuarios_conectados_hoy": usuarios_hoy,
+                    "pcs_registradas": pcs,
+                    "pcs_online": pcs_online,
+                }
+                await websocket.send_json(metricas)
+            except Exception as e:
+                logger.warning(f"error enviando metricas monitoreo: {e}")
+            await asyncio.sleep(5)
+    except WebSocketDisconnect:
+        logger.info("cliente de monitoreo desconectado")
+    except Exception as e:
+        logger.error(f"error en monitoreo ws: {e}")
+    finally:
+        conexiones_monitoreo.pop(conexion_id, None)
+
+
 @app.websocket("/ws/{pcbot_id}")
 async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
     await websocket.accept()
@@ -194,7 +235,3 @@ if __name__ == "__main__":
         await uvicorn_server.serve()
 
     asyncio.run(main())
-@app.get("/login")
-async def login_page():
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/")

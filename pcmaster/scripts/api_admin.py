@@ -7,6 +7,11 @@ from pydantic import BaseModel
 from typing import Optional, List
 from api_auth import verificar_admin_dependencia
 from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
+from tokenomics import (
+    obtener_balance as consultar_balance,
+    estadisticas_kbt as obtener_estadisticas_kbt,
+    generar_proyecciones,
+)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -53,6 +58,15 @@ class MensajeEnviarRequest(BaseModel):
 
 class ToggleRequest(BaseModel):
     activo: int
+
+
+# ---------------------------------------------------------------------------
+# verificacion de token
+# ---------------------------------------------------------------------------
+@router.get("/verify")
+async def api_verify(sesion: dict = Depends(verificar_admin_dependencia)):
+    """verifica que el token admin sea valido."""
+    return {"exito": True, "usuario": sesion}
 
 
 # ---------------------------------------------------------------------------
@@ -496,4 +510,109 @@ async def api_estado_sistema(sesion: dict = Depends(verificar_admin_dependencia)
         "kbt_circulando": total_kbt["total"] or 0 if total_kbt else 0,
         "reserva": dict(reserva) if reserva else {},
         "comandos_pendientes": comandos_pendientes["total"] if comandos_pendientes else 0,
+    }
+
+
+# ---------------------------------------------------------------------------
+# kpi (indicadores)
+# ---------------------------------------------------------------------------
+@router.get("/kpi/resumen")
+async def api_kpi_resumen(sesion: dict = Depends(verificar_admin_dependencia)):
+    """devuelve resumen de indicadores para el panel kpi."""
+    usuarios_activos = ejecutar_sql_unico("select count(*) as total from usuarios where activo = 1")
+    pcs_online = ejecutar_sql_unico("select count(*) as total from usuarios where pcbot_id is not null and activo = 1")
+    sesiones_hoy = ejecutar_sql_unico(
+        "select count(*) as total from sesiones where date(fecha_creacion) = date('now','localtime')"
+    )
+    retiros_pend = ejecutar_sql_unico("select count(*) as total from retiros where estado = 'pendiente'")
+    monto_pend = ejecutar_sql_unico(
+        "select ifnull(sum(monto), 0) as total from retiros where estado = 'pendiente'"
+    )
+    msg_no_leidos = ejecutar_sql_unico("select count(*) as total from mensajes where leido = 0")
+    saldo_total = ejecutar_sql_unico("select ifnull(sum(balance), 0) as total from wallets")
+    semanal = []
+    for i in range(7):
+        row = ejecutar_sql_unico(
+            "select count(*) as total from sesiones where date(fecha_creacion) = date('now','localtime','-" + str(i) + " days')"
+        )
+        semanal.insert(0, row["total"] if row else 0)
+    return {
+        "exito": True,
+        "usuarios_activos": usuarios_activos["total"] if usuarios_activos else 0,
+        "pcs_online": pcs_online["total"] if pcs_online else 0,
+        "sesiones_hoy": sesiones_hoy["total"] if sesiones_hoy else 0,
+        "retiros_pendientes": retiros_pend["total"] if retiros_pend else 0,
+        "monto_pendiente": monto_pend["total"] if monto_pend else 0,
+        "mensajes_no_leidos": msg_no_leidos["total"] if msg_no_leidos else 0,
+        "saldo_total": saldo_total["total"] if saldo_total else 0,
+        "semanal": semanal,
+    }
+
+
+# ---------------------------------------------------------------------------
+# eventos de seguridad (alias con limit)
+# ---------------------------------------------------------------------------
+@router.get("/seguridad/eventos")
+async def api_eventos_seguridad(
+    limit: int = Query(50),
+    sesion: dict = Depends(verificar_admin_dependencia),
+):
+    """devuelve eventos de seguridad recientes."""
+    rows = ejecutar_sql(
+        "select * from eventos_seguridad order by fecha desc limit ?",
+        (limit,),
+    )
+    return {"exito": True, "eventos": [dict(r) for r in rows]}
+
+
+# ---------------------------------------------------------------------------
+# tokenomia (admin)
+# ---------------------------------------------------------------------------
+@router.get("/tokenomia/estado")
+async def api_tokenomia_estado(sesion: dict = Depends(verificar_admin_dependencia)):
+    """devuelve estado completo de tokenomia."""
+    stats = obtener_estadisticas_kbt()
+    suministro_total = ejecutar_sql_unico("select ifnull(sum(balance), 0) as total from wallets")
+    suministro_circulante = ejecutar_sql_unico("select ifnull(sum(balance), 0) as total from wallets where usuario_id is not null")
+    precio_estimado = 0.001
+    market_cap = (suministro_circulante["total"] if suministro_circulante else 0) * precio_estimado
+    return {
+        "exito": True,
+        "variables": stats,
+        "suministro_total": suministro_total["total"] if suministro_total else 0,
+        "suministro_circulante": suministro_circulante["total"] if suministro_circulante else 0,
+        "precio_estimado": precio_estimado,
+        "market_cap": market_cap,
+    }
+
+
+# ---------------------------------------------------------------------------
+# proyecciones (admin)
+# ---------------------------------------------------------------------------
+@router.get("/proyecciones")
+async def api_proyecciones_admin(
+    meses: int = Query(3),
+    sesion: dict = Depends(verificar_admin_dependencia),
+):
+    """genera proyecciones para el panel admin."""
+    if meses not in (3, 9, 18):
+        meses = 3
+    proyecciones = generar_proyecciones(meses) if callable(generar_proyecciones) else []
+    return {"exito": True, "meses": meses, "proyecciones": proyecciones}
+
+
+# ---------------------------------------------------------------------------
+# happy hour (admin)
+# ---------------------------------------------------------------------------
+@router.get("/happy-hour/estado")
+async def api_happy_hour_estado(sesion: dict = Depends(verificar_admin_dependencia)):
+    """devuelve el estado actual del happy hour."""
+    config_hh = ejecutar_sql_unico("select * from config_happy_hour limit 1")
+    if not config_hh:
+        return {"exito": True, "activo": False, "multiplicador": "x2", "horario": "no configurado"}
+    return {
+        "exito": True,
+        "activo": bool(config_hh.get("activo", 0)),
+        "multiplicador": config_hh.get("multiplicador", "x2"),
+        "horario": config_hh.get("horario", "no configurado"),
     }

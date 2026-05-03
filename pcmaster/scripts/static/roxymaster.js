@@ -7,6 +7,7 @@ var roxy = (function () {
   var _usuario = null;
   var _tab_actual = "kpi";
   var _listeners = {};
+  var _sesion_verificada = false;
 
   function _api(path, options) {
     options = options || {};
@@ -95,6 +96,7 @@ var roxy = (function () {
   }
 
   function mostrarLogin() {
+    if (_sesion_verificada) { return; }
     var main = document.querySelector(".main-wrapper");
     if (!main) { return; }
     document.getElementById("preloader").style.display = "none";
@@ -102,7 +104,7 @@ var roxy = (function () {
       + '<div class="row justify-content-center mt-5">'
       + '<div class="col-md-4">'
       + '<div class="card"><div class="card-body p-4">'
-      + '<h3 class="text-center mb-4" style="color:var(--accent)">roxymaster admin</h3>'
+      + '<h3 class="text-center mb-4" style="color:var(--accent)">roxymaster v8.3</h3>'
       + '<div class="mb-3">'
       + '<label class="form-label">email</label>'
       + '<input type="email" class="form-control" id="login_email" placeholder="admin@email.com">'
@@ -162,6 +164,7 @@ var roxy = (function () {
       .then(function (data) {
         if (data.exito) {
           _usuario = data.usuario || data.sesion || null;
+          _sesion_verificada = true;
           document.getElementById("preloader").style.display = "none";
           mostrarInfoUsuario();
           navegar(_tab_actual);
@@ -174,6 +177,7 @@ var roxy = (function () {
       .catch(function () {
         _token = null;
         localStorage.removeItem("admin_token");
+        _sesion_verificada = false;
         mostrarLogin();
       });
   }
