@@ -18,7 +18,7 @@ var roxy = (function () {
       headers: headers,
     };
     if (options.body) { fetchOpts.body = JSON.stringify(options.body); }
-    return fetch("/api/admin" + path, fetchOpts)
+    return fetch(path, fetchOpts)
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.error) { throw new Error(data.error); }
@@ -130,7 +130,7 @@ var roxy = (function () {
       errorEl.style.display = "block";
       return;
     }
-    fetch("/api/admin/login", {
+    fetch("/api/login", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email: email, password: pass }),
