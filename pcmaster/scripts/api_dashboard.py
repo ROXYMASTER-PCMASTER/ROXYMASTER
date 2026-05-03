@@ -1,12 +1,11 @@
-from fastapi import Request
+from fastapi import APIRouter, Depends
+
 # api_dashboard.py - router fastapi para dashboard y mi_estado. roxymaster v8.3
 # todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
-from fastapi import APIRouter, Depends
-
 from api_auth import verificar_token_dependencia
 from auth import verificar_token
-from db import ejecutar_sql_unico
+from db import ejecutar_sql_unico, ejecutar_sql
 from tokenomics import obtener_balance as consultar_balance
 from orchestrator import listar_pcbots_conectados, listar_comandos_pendientes
 
@@ -63,24 +62,68 @@ async def api_mi_estado(sesion: dict = Depends(verificar_token_dependencia)):
         "wallet": dict(wallet) if wallet else {},
         "comandos_pendientes": comandos_pendientes,
     }
-@router.get("/api/mis_pcs")
-async def mis_pcs(request: Request):
-    auth = await verificar_auth(request)
-    if not auth: return {"ok": False, "error": "no autenticado"}
-    uid, _, _ = auth
-    conn = get_db()
-    pcs = conn.execute("SELECT pcbot_id, hostname, ip_local, ip_tailscale, modo, uptime_horas, perfiles_activos FROM pcbots_registrados WHERE usuario_id=?", (uid,)).fetchall()
-    conn.close()
-    return {"ok": True, "pcs": [dict(p) for p in pcs]}
 
-@router.get("/api/mis_referidos")
-async def mis_referidos(request: Request):
-    auth = await verificar_auth(request)
-    if not auth: return {"ok": False, "error": "no autenticado"}
-    uid, _, _ = auth
-    conn = get_db()
-    codigo = conn.execute("SELECT codigo FROM codigos_referido WHERE usuario_id=?", (uid,)).fetchone()
-    referidor = conn.execute("SELECT u.email FROM usuarios u JOIN referidos r ON u.id=r.referidor_id WHERE r.referido_id=?", (uid,)).fetchone()
-    referidos = conn.execute("SELECT u.email, r.nivel, r.comisiones_generadas FROM usuarios u JOIN referidos r ON u.id=r.referido_id WHERE r.referidor_id=?", (uid,)).fetchall()
-    conn.close()
-    return {"ok": True, "codigo": codigo[0] if codigo else "", "referidor": referidor[0] if referidor else "pcmaster", "referidos": [dict(r) for r in referidos]}
+
+@router.get("/mis_pcs")
+async def api_mis_pcs(sesion: dict = Depends(verificar_token_dependencia)):
+    """lista los pcs registrados del usuario autenticado."""
+    usuario_id = sesion["usuario_id"]
+
+    # datos del pc desde la tabla usuarios (pcbot_id, modo)
+    usuario = ejecutar_sql_unico(
+        "select id, pcbot_id, modo from usuarios where id = ?",
+        (usuario_id,),
+    )
+    # contar perfiles asociados al usuario
+    pcs = []
+    if usuario and usuario["pcbot_id"]:
+        perfiles = ejecutar_sql(
+            "select count(*) as total from perfiles where usuario_id = ?",
+            (usuario_id,),
+        )
+        total_perfiles = perfiles[0]["total"] if perfiles else 0
+        pcs.append({
+            "pcbot_id": usuario["pcbot_id"],
+            "modo": usuario["modo"],
+            "perfiles_activos": total_perfiles,
+        })
+
+    return {"ok": True, "pcs": pcs}
+
+
+@router.get("/mis_referidos")
+async def api_mis_referidos(sesion: dict = Depends(verificar_token_dependencia)):
+    """lista los referidos del usuario autenticado."""
+    usuario_id = sesion["usuario_id"]
+
+    # obtener codigo de referido del usuario
+    codigo_row = ejecutar_sql_unico(
+        "select codigo from codigos_referido where usuario_id = ?",
+        (usuario_id,),
+    )
+    codigo = codigo_row["codigo"] if codigo_row else ""
+
+    # obtener referidor (quien refirio a este usuario)
+    referidor_row = ejecutar_sql_unico(
+        "select u.email from usuarios u "
+        "join referidos r on u.id = r.referidor_id "
+        "where r.referido_id = ?",
+        (usuario_id,),
+    )
+    referidor = referidor_row["email"] if referidor_row else "pcmaster"
+
+    # obtener lista de referidos de este usuario
+    referidos = ejecutar_sql(
+        "select u.email, r.nivel, r.comisiones_generadas "
+        "from usuarios u "
+        "join referidos r on u.id = r.referido_id "
+        "where r.referidor_id = ?",
+        (usuario_id,),
+    )
+
+    return {
+        "ok": True,
+        "codigo": codigo,
+        "referidor": referidor,
+        "referidos": referidos,
+    }
