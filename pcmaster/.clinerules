@@ -45,3 +45,11 @@ antes de escribir codigo nuevo para cualquier tarea, ejecuta este diagnostico en
 2. estima: (a) lineas de codigo nuevo sin toolkit, (b) lineas a adaptar si usas las piezas encontradas.
 3. responde solo: "toolkit: [n] piezas | adaptar: [b] lineas | desde cero: [a] lineas | decision: [usar toolkit / codificar nuevo]".
 si la tarea es trivial (1 endpoint simple, 1 script <30 lineas), omite el diagnostico y codifica directo.
+
+## git push - unica y exclusivamente pcmaster/
+- cualquier operacion git push sobre el repositorio remoto (origin) solo debe incluir archivos dentro de C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\.
+- nunca trackear, committear ni pushear archivos fuera de pcmaster/ (como afuera/, REGLAS_ROXYMASTER.md de la raiz, ni ningun otro).
+- usar siempre git add pcmaster/ (nunca git add . ni git add --all) al preparar un commit, para garantizar que solo entre pcmaster/.
+- no tocar otras ramas (ni crear, ni eliminar, ni pushear). trabajar siempre sobre main.
+- no eliminar carpetas ni archivos del repositorio remoto que no esten en el commit actual. git push --force solo esta permitido si se verifica antes con git status que no hay archivos trackeados fuera de pcmaster/.
+- antes de cada push, ejecutar: git status y confirmar que ningun archivo fuera de pcmaster/ aparece como staged o tracked. si aparece, detener y corregir antes de pushear.
