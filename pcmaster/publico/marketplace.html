@@ -1,0 +1,545 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>marketplace - roxymaster</title>
+  <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #0d0d2b 0%, #1a0533 30%, #0a1628 60%, #0d2137 100%);
+    padding: 2.5rem 1.5rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; top: -60%; left: -40%;
+    width: 180%; height: 180%;
+    background: radial-gradient(circle at 30% 40%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(0, 255, 136, 0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #7c3aed, #00ff88, #ff6b35, transparent);
+    animation: headerGlow 3s ease-in-out infinite;
+  }
+  @keyframes headerGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  .header-content {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.25rem; flex-wrap: wrap;
+  }
+  .header-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #00ff88);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.4rem; color: #fff;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(0, 255, 136, 0.2);
+    animation: avatarPulse 3s ease-in-out infinite;
+  }
+  @keyframes avatarPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(0, 255, 136, 0.2); }
+    50% { box-shadow: 0 0 30px rgba(124, 58, 237, 0.6), 0 0 60px rgba(0, 255, 136, 0.3); }
+  }
+  .header-text { text-align: left; }
+  .header h1 {
+    font-size: 1.85rem; font-weight: 900; letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #00ff88, #7c3aed, #ff6b35);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+  }
+  .header h1::after {
+    content: '◆';
+    font-size: 0.5rem; vertical-align: super; margin-left: 4px;
+    -webkit-text-fill-color: #ff6b35;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+  }
+  .header .subtitle {
+    font-size: 0.9rem; color: #94a3b8; margin-top: 0.3rem;
+    max-width: 500px; line-height: 1.5; letter-spacing: 0.3px;
+  }
+  .header .subtitle span { color: #00ff88; font-weight: 600; }
+  .header .user-info {
+    margin-top: 0.75rem; font-size: 0.8rem; color: #64748b;
+  }
+  .header .user-info span { margin: 0 0.5rem; }
+  .header .user-info .badge {
+    display: inline-block; padding: 0.15rem 0.6rem; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #7c3aed33, #00ff8822);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    -webkit-text-fill-color: #a78bfa; color: #a78bfa;
+  }
+
+  /* resumen precios */
+  .price-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .price-card {
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 16px;
+    padding: 1.35rem 1.25rem;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    animation: cardFadeIn 0.5s ease both;
+  }
+  .price-card:nth-child(1) { animation-delay: 0.05s; }
+  .price-card:nth-child(2) { animation-delay: 0.1s; }
+  .price-card:nth-child(3) { animation-delay: 0.15s; }
+  .price-card:nth-child(4) { animation-delay: 0.2s; }
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .price-card::before {
+    content: '';
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .price-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #7c3aed, #00ff88);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .price-card:hover {
+    border-color: rgba(0, 255, 136, 0.4);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 255, 136, 0.15), 0 0 60px rgba(124, 58, 237, 0.08);
+  }
+  .price-card:hover::after { transform: scaleX(1); }
+  .price-card .p-icon {
+    font-size: 0.7rem; color: #7c3aed; margin-bottom: 0.3rem;
+  }
+  .price-card .p-label {
+    font-size: 0.78rem; color: #94a3b8; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 0.5rem; font-weight: 600;
+  }
+  .price-card .p-value {
+    font-size: 1.65rem; font-weight: 800;
+    background: linear-gradient(90deg, #00ff88, #7c3aed);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: -0.5px;
+  }
+  .price-card .p-value.verde { background: linear-gradient(90deg, #00ff88, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .price-card .p-value.rojo { background: linear-gradient(90deg, #ff3366, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .price-card .p-sub {
+    font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;
+  }
+
+  /* acciones marketplace */
+  .mkt-actions {
+    display: flex; gap: 0.75rem; flex-wrap: wrap;
+    max-width: 1200px; margin: 0 auto 1.5rem; padding: 0 1.5rem;
+  }
+  .btn-action {
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, #00ff88, #7c3aed);
+    color: #0a0a1a; border: none; border-radius: 12px;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.8px;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2), 0 0 30px rgba(124, 58, 237, 0.1);
+    flex: 1; min-width: 160px; text-align: center;
+  }
+  .btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4), 0 0 40px rgba(124, 58, 237, 0.2);
+  }
+  .btn-outline {
+    background: transparent; border: 1px solid rgba(124, 58, 237, 0.4);
+    color: #a78bfa; box-shadow: none;
+  }
+  .btn-outline:hover {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: #00ff88; color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #ff3366, #ef4444);
+    color: #fff; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.3);
+  }
+  .btn-danger:hover {
+    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.5);
+  }
+
+  /* tabs ordenes */
+  .order-tabs {
+    display: flex; gap: 0.5rem;
+    max-width: 1200px; margin: 0 auto 1rem; padding: 0 1.5rem;
+  }
+  .order-tab {
+    padding: 0.55rem 1.5rem;
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .order-tab:hover {
+    border-color: #00ff88; color: #00ff88;
+  }
+  .order-tab.active {
+    background: linear-gradient(135deg, #00ff8822, #7c3aed22);
+    border-color: rgba(0, 255, 136, 0.4); color: #00ff88;
+  }
+
+  /* tabla ordenes */
+  .orders-section {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    padding: 0 1.5rem;
+  }
+  .orders-section h2 {
+    font-size: 1.15rem; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 1rem;
+    background: linear-gradient(90deg, #00ff88, #7c3aed);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .orders-table {
+    width: 100%;
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 16px;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    overflow: hidden;
+  }
+  .order-row {
+    display: grid;
+    grid-template-columns: 0.8fr 1fr 1fr 1fr 1.2fr 1fr;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+    font-size: 0.85rem;
+    transition: background 0.3s;
+    align-items: center;
+  }
+  .order-row:hover { background: rgba(124, 58, 237, 0.05); }
+  .order-row.header {
+    color: #64748b; font-weight: 700; text-transform: uppercase;
+    font-size: 0.72rem; letter-spacing: 0.8px;
+    background: rgba(124, 58, 237, 0.08);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+  }
+  .order-tipo { font-weight: 700; }
+  .order-tipo.compra { color: #00ff88; }
+  .order-tipo.venta { color: #ff6b35; }
+  .order-precio { font-weight: 700; color: #e2e8f0; }
+  .order-cant { color: #94a3b8; }
+  .order-total { color: #a78bfa; font-weight: 600; }
+  .order-estado { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 8px; text-align: center; }
+  .order-estado.activa {
+    background: rgba(0, 255, 136, 0.1); color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+  }
+  .order-estado.completada {
+    background: rgba(124, 58, 237, 0.1); color: #a78bfa;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+  }
+  .order-estado.cancelada {
+    background: rgba(255, 51, 102, 0.1); color: #ff3366;
+    border: 1px solid rgba(255, 51, 102, 0.2);
+  }
+
+  /* navegacion inferior */
+  .bottom-nav {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    max-width: 1200px; margin: 0 auto 2rem; padding: 0 1.5rem;
+    justify-content: center;
+  }
+  .nav-btn {
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .nav-btn:hover {
+    border-color: #00ff88; color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+    transform: translateY(-2px);
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, #00ff8822, #7c3aed22);
+    border-color: rgba(0, 255, 136, 0.4); color: #00ff88;
+  }
+
+  @media (max-width: 768px) {
+    .price-summary { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: 0.75rem; }
+    .order-row { grid-template-columns: 0.6fr 0.8fr 0.8fr 0.8fr 1fr 0.8fr; font-size: 0.75rem; padding: 0.7rem 1rem; }
+    .header { padding: 1.75rem 1rem 1.5rem; }
+    .header h1 { font-size: 1.45rem; }
+    .header-avatar { width: 44px; height: 44px; font-size: 1.1rem; }
+    .mkt-actions { padding: 0 1rem; }
+    .order-tabs { padding: 0 1rem; overflow-x: auto; }
+  }
+  @media (max-width: 480px) {
+    .price-summary { grid-template-columns: 1fr; }
+    .header-content { flex-direction: column; text-align: center; }
+    .header-text { text-align: center; }
+    .order-row { grid-template-columns: 0.5fr 0.7fr 0.7fr 0.7fr 0.8fr 0.6fr; font-size: 0.7rem; padding: 0.6rem 0.75rem; }
+    .order-row.header { display: none; }
+    .mkt-actions { flex-direction: column; }
+  }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="header-avatar">m</div>
+      <div class="header-text">
+        <h1>marketplace</h1>
+        <p class="subtitle">compra y vende tokens <span>kbt</span> entre granjeros. precio p2p en tiempo real.</p>
+      </div>
+    </div>
+    <div class="user-info">
+      <span id="user-email">---</span>
+      <span>|</span>
+      <span class="badge" id="user-rol">---</span>
+    </div>
+  </header>
+
+  <!-- resumen precios -->
+  <div class="price-summary">
+    <div class="price-card">
+      <span class="p-icon">▲</span>
+      <div class="p-label">precio mas alto (venta)</div>
+      <div class="p-value verde" id="mk-precio-max">s/ 0.00</div>
+      <div class="p-sub">mejor precio de venta disponible</div>
+    </div>
+    <div class="price-card">
+      <span class="p-icon">▼</span>
+      <div class="p-label">precio mas bajo (compra)</div>
+      <div class="p-value rojo" id="mk-precio-min">s/ 0.00</div>
+      <div class="p-sub">mejor precio de compra disponible</div>
+    </div>
+    <div class="price-card">
+      <span class="p-icon">●</span>
+      <div class="p-label">total ordenes activas</div>
+      <div class="p-value" id="mk-total-ordenes">0</div>
+      <div class="p-sub">ordenes abiertas en el marketplace</div>
+    </div>
+    <div class="price-card">
+      <span class="p-icon">■</span>
+      <div class="p-label">volumen total</div>
+      <div class="p-value" id="mk-volumen">s/ 0.00</div>
+      <div class="p-sub">volumen total en ordenes activas</div>
+    </div>
+  </div>
+
+  <!-- acciones -->
+  <div class="mkt-actions">
+    <button id="btnCrearOrden" class="btn-action">◆ crear orden</button>
+    <button class="btn-action btn-outline" onclick="cargarMarketplace()">↻ recargar</button>
+  </div>
+
+  <!-- tabs -->
+  <div class="order-tabs">
+    <button class="order-tab active" data-tab="todas" onclick="filtrarOrdenes('todas', this)">todas</button>
+    <button class="order-tab" data-tab="compra" onclick="filtrarOrdenes('compra', this)">compra</button>
+    <button class="order-tab" data-tab="venta" onclick="filtrarOrdenes('venta', this)">venta</button>
+    <button class="order-tab" data-tab="mis_ordenes" onclick="filtrarOrdenes('mis_ordenes', this)">mis ordenes</button>
+  </div>
+
+  <!-- tabla ordenes -->
+  <div class="orders-section">
+    <h2>ordenes activas</h2>
+    <div class="orders-table">
+      <div class="order-row header">
+        <span>tipo</span>
+        <span>usuario</span>
+        <span>precio</span>
+        <span>cantidad</span>
+        <span>total</span>
+        <span>accion</span>
+      </div>
+      <div id="orders-list">
+        <div class="order-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">
+          cargando ordenes...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- navegacion inferior (opcional, comento si molesta) -->
+  <!--
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html'">dashboard</button>
+    <button class="nav-btn active" onclick="window.location.href='/publico/marketplace.html'">marketplace</button>
+    <button class="nav-btn" onclick="window.location.href='/publico/wallet.html'">wallet</button>
+    <button class="nav-btn" onclick="window.location.href='/publico/referidos.html'">referidos</button>
+    <button class="nav-btn" onclick="window.location.href='/publico/perfiles.html'">perfiles</button>
+    <button class="nav-btn" onclick="window.location.href='/publico/ayuda.html'">ayuda</button>
+  </div>
+  -->
+
+  <script>
+  var filtroActual = 'todas';
+
+  // Iniciar carga sin DOMContentLoaded
+  (function() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', cargarMarketplace);
+    } else {
+      cargarMarketplace();
+    }
+  })();
+
+  async function cargarMarketplace() {
+    // Obtener datos del usuario
+    try {
+      var d = await ui.api.get('/dashboard');
+      if (d.exito) {
+        document.getElementById('user-email').textContent = d.usuario?.email || '---';
+        document.getElementById('user-rol').textContent = d.usuario?.rol || '---';
+      }
+    } catch (e) { console.error(e); }
+
+    // Obtener órdenes
+    try {
+      var o = await ui.api.get('/marketplace/ordenes');
+      if (!o.exito) {
+        document.getElementById('orders-list').innerHTML =
+          '<div class="order-row" style="color:#ff3366;grid-column:1/-1;text-align:center;padding:2rem;">error al cargar ordenes</div>';
+        return;
+      }
+      var ordenes = o.ordenes || [];
+      document.getElementById('mk-total-ordenes').textContent = ordenes.length;
+
+      var precioMax = 0, precioMin = Infinity, volumen = 0;
+      ordenes.forEach(function(ord) {
+        var p = parseFloat(ord.precio_unitario || 0);
+        var c = parseFloat(ord.cantidad_kbt || 0);
+        if (p > precioMax) precioMax = p;
+        if (p < precioMin) precioMin = p;
+        volumen += p * c;
+      });
+      document.getElementById('mk-precio-max').textContent = 's/ ' + (precioMax || 0).toFixed(2);
+      document.getElementById('mk-precio-min').textContent = 's/ ' + (precioMin === Infinity ? 0 : precioMin).toFixed(2);
+      document.getElementById('mk-volumen').textContent = 's/ ' + (volumen || 0).toFixed(2);
+
+      renderizarOrdenes(ordenes);
+    } catch (e) {
+      console.error('error cargando marketplace:', e);
+      document.getElementById('orders-list').innerHTML =
+        '<div class="order-row" style="color:#ff3366;grid-column:1/-1;text-align:center;padding:2rem;">error de conexion</div>';
+    }
+  }
+
+  function renderizarOrdenes(ordenes) {
+    var list = document.getElementById('orders-list');
+    if (!ordenes || ordenes.length === 0) {
+      list.innerHTML = '<div class="order-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">no hay ordenes activas</div>';
+      return;
+    }
+    var filtradas = ordenes;
+    if (filtroActual === 'compra') {
+      filtradas = ordenes.filter(function(o) { return (o.tipo || '').toLowerCase() === 'compra'; });
+    } else if (filtroActual === 'venta') {
+      filtradas = ordenes.filter(function(o) { return (o.tipo || '').toLowerCase() === 'venta'; });
+    } else if (filtroActual === 'mis_ordenes') {
+      var miEmail = document.getElementById('user-email').textContent;
+      filtradas = ordenes.filter(function(o) { return o.usuario_email === miEmail; });
+    }
+
+    if (filtradas.length === 0) {
+      list.innerHTML = '<div class="order-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">no hay ordenes en esta categoria</div>';
+      return;
+    }
+
+    list.innerHTML = filtradas.map(function(o) {
+      var tipo = (o.tipo || '').toLowerCase();
+      var precio = parseFloat(o.precio_unitario || 0);
+      var cant = parseFloat(o.cantidad_kbt || 0);
+      var total = parseFloat(o.total_pen || (precio * cant));
+      var estado = (o.estado || 'activa').toLowerCase();
+      return '<div class="order-row">' +
+        '<span class="order-tipo ' + tipo + '">' + (tipo === 'compra' ? '▲ compra' : '▼ venta') + '</span>' +
+        '<span style="color:#94a3b8;font-size:0.8rem;">' + (o.usuario_email || '---') + '</span>' +
+        '<span class="order-precio">s/ ' + precio.toFixed(2) + '</span>' +
+        '<span class="order-cant">' + cant.toFixed(2) + ' kbt</span>' +
+        '<span class="order-total">s/ ' + total.toFixed(2) + '</span>' +
+        '<span><button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;" onclick="tomarOrden(' + o.id + ')">tomar</button></span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function filtrarOrdenes(tab, btn) {
+    filtroActual = tab;
+    document.querySelectorAll('.order-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    cargarMarketplace();
+  }
+
+  window.tomarOrden = async function(id) {
+    try {
+      var r = await ui.api.post('/marketplace/tomar/' + id);
+      if (r.exito !== false) {
+        ui._showSuccess('orden tomada, revisa tu wallet');
+        cargarMarketplace();
+      } else {
+        ui._showError(r.mensaje || r.detail || 'error al tomar orden');
+      }
+    } catch (e) { ui._showError('error: ' + e.message); }
+  };
+
+  // Función crearOrden (se llama desde el modal del dashboard)
+  window.crearOrden = async function() {
+    var tipo = document.getElementById('tipoOrden').value;
+    var cantidad = parseFloat(document.getElementById('cantidadKBT').value);
+    var precio = parseFloat(document.getElementById('precioKBT').value);
+    if (!cantidad || !precio) { alert('completa todos los campos'); return; }
+    try {
+      var r = await ui.api.post('/marketplace/crear', {
+        tipo: tipo,
+        cantidad_kbt: cantidad,
+        precio_pen: precio
+      });
+      if (r.exito !== false) {
+        ui._showSuccess('orden creada exitosamente');
+        cerrarModal('modalCrearOrden');
+        cargarMarketplace();
+      } else {
+        ui._showError(r.mensaje || r.detail || 'error al crear orden');
+      }
+    } catch (e) { ui._showError('error: ' + e.message); }
+  };
+  </script>
+</body>
+</html>

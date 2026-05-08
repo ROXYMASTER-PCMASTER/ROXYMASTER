@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>panel del granjero - dashboard</title>
+  <script>
+  (function() {
+    if (window.top === window.self) {
+      window.location.replace('/publico/dashboard_publico.html?tab=dashboard');
+    }
+  })();
+  </script>
+  <!-- estos estilos son extraídos por extraerContenido() del spa -->
+  <style>
+  .panel-dashboard-wrapper {
+    padding: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* header del dashboard */
+  .dashboard-header {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem 1.25rem;
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.06), rgba(124, 58, 237, 0.1));
+    border-radius: 16px;
+    border: 1px solid rgba(124, 58, 237, 0.12);
+  }
+  .dashboard-title {
+    font-size: 1.7rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #00ff88, #7c3aed, #ff6b35);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+    margin-bottom: 0.5rem;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+  }
+  .dashboard-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    font-style: italic;
+    letter-spacing: 0.2px;
+    margin-top: 0.3rem;
+  }
+  /* grid de kpi */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .kpi-card {
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 14px;
+    padding: 1rem 0.9rem;
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(124, 58, 237, 0.35);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+  .kpi-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .kpi-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .kpi-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+    font-weight: 600;
+  }
+  .kpi-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    word-break: break-all;
+  }
+  /* fidelidad */
+  .fidelidad-card {
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    margin-bottom: 1rem;
+  }
+  .fidelidad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.6rem;
+  }
+  .fidelidad-titulo {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+  }
+  .fidelidad-nivel {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #a78bfa;
+    text-transform: capitalize;
+  }
+  .fidelidad-pct {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #a78bfa;
+  }
+  .fidelidad-bar-container {
+    height: 8px;
+    background: rgba(124, 58, 237, 0.12);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  .fidelidad-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #7c3aed);
+    border-radius: 10px;
+    transition: width 0.6s ease;
+    min-width: 2%;
+  }
+  .fidelidad-texto {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-style: italic;
+  }
+  /* acciones grid */
+  .acciones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .modo-card {
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid rgba(124, 58, 237, 0.15);
+  }
+  .modo-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+  .modo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .modo-dot.activo {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  }
+  .modo-dot.inactivo {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+  .modo-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .modo-btn {
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    background: rgba(124, 58, 237, 0.1);
+    color: #94a3b8;
+    font-size: 0.65rem;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.25s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+  }
+  .modo-btn:hover {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+  }
+  .comprar-card {
+    background: linear-gradient(145deg, #111133, #0f0f25);
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .comprar-text {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .comprar-btn {
+    padding: 0.55rem 1.25rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #00ff88, #7c3aed);
+    color: #0a0a1a;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+    animation: pulseBtn 2s ease-in-out infinite;
+  }
+  .comprar-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+  }
+  @keyframes pulseBtn {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2); }
+    50% { box-shadow: 0 4px 25px rgba(0, 255, 136, 0.5); }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid, .acciones-grid {
+      grid-template-columns: 1fr;
+    }
+    .panel-dashboard-wrapper {
+      padding: 1rem;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="panel-dashboard-wrapper">
+    <!-- header mejorado -->
+    <div class="dashboard-header">
+      <h2 class="dashboard-title">panel del granjero</h2>
+      <p class="dashboard-desc">estas construyendo tu imperio digital. cada perfil conectado te acerca a la libertad financiera.</p>
+    </div>
+
+    <!-- tarjetas kpi -->
+    <div class="kpi-grid">
+
+      <!-- saldo kbt -->
+      <div class="kpi-card" onclick="cargarPanel('wallet',document.querySelector('[data-panel=wallet]'))" style="cursor:pointer">
+        <div class="kpi-icon"><span style="font-size:1.5rem">₿</span></div>
+        <div class="kpi-info">
+          <div class="kpi-label">saldo kbt</div>
+          <div class="kpi-value" id="kpi-saldo">0.00</div>
+        </div>
+      </div>
+
+      <!-- precio token -->
+      <div class="kpi-card" onclick="cargarPanel('marketplace',document.querySelector('[data-panel=marketplace]'))" style="cursor:pointer">
+        <div class="kpi-icon"><span style="font-size:1.5rem">S/</span></div>
+        <div class="kpi-info">
+          <div class="kpi-label">precio token</div>
+          <div class="kpi-value" style="font-size:0.8rem">
+            <span style="color:#22c55e" id="kpi-precio-max">s/ 0.00</span> /
+            <span style="color:#ef4444" id="kpi-precio-min">s/ 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- referidos activos/totales -->
+      <div class="kpi-card" onclick="cargarPanel('referidos',document.querySelector('[data-panel=referidos]'))" style="cursor:pointer">
+        <div class="kpi-icon"><span style="font-size:1.5rem">✦</span></div>
+        <div class="kpi-info">
+          <div class="kpi-label">referidos</div>
+          <div class="kpi-value" style="font-size:0.9rem">
+            <span style="color:#22c55e" id="kpi-ref-activos">0</span>
+            <span style="color:#64748b">/</span>
+            <span style="color:#ef4444" id="kpi-ref-totales">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- perfiles activos/totales -->
+      <div class="kpi-card" onclick="cargarPanel('perfiles',document.querySelector('[data-panel=perfiles]'))" style="cursor:pointer">
+        <div class="kpi-icon"><span style="font-size:1.5rem">●</span></div>
+        <div class="kpi-info">
+          <div class="kpi-label">perfiles</div>
+          <div class="kpi-value" style="font-size:0.9rem">
+            <span style="color:#22c55e" id="kpi-perfiles-activos">0</span>
+            <span style="color:#64748b">/</span>
+            <span style="color:#ef4444" id="kpi-perfiles-totales">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- kbt ganados hoy / total -->
+      <div class="kpi-card" onclick="cargarPanel('wallet',document.querySelector('[data-panel=wallet]'))" style="cursor:pointer">
+        <div class="kpi-icon"><span style="font-size:1.5rem">⚡</span></div>
+        <div class="kpi-info">
+          <div class="kpi-label">kbt minados</div>
+          <div class="kpi-value" style="font-size:0.9rem">
+            <span style="color:#22c55e" id="kpi-kbt-hoy">0.00</span>
+            <span style="color:#64748b">/</span>
+            <span style="color:#a78bfa" id="kpi-kbt-total">0.00</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- nivel fidelidad -->
+    <div class="fidelidad-card" onclick="cargarPanel('ayuda',document.querySelector('[data-panel=ayuda]'))" style="cursor:pointer">
+      <div class="fidelidad-header">
+        <div>
+          <div class="fidelidad-titulo">nivel de fidelidad</div>
+          <div class="fidelidad-nivel" id="fidelidad-nivel">bronce</div>
+        </div>
+        <div class="fidelidad-pct" id="fidelidad-pct">25%</div>
+      </div>
+      <div class="fidelidad-bar-container">
+        <div class="fidelidad-bar" id="fidelidad-barra" style="width:25%"></div>
+      </div>
+      <div class="fidelidad-texto" id="fidelidad-texto">conecta mas dispositivos para subir de nivel</div>
+    </div>
+
+    <!-- modo actual + boton comprar -->
+    <div class="acciones-grid">
+      <div class="modo-card" id="modo-card">
+        <div class="modo-header">
+          <span class="modo-dot activo" id="modo-dot"></span>
+          <span class="modo-text" id="modo-text" style="color:#22c55e">pidiendo ordenes</span>
+        </div>
+        <button class="modo-btn" onclick="toggleModo()">cambiar modo</button>
+      </div>
+      <div class="comprar-card">
+        <div class="comprar-text">adquiere tokens kbt al precio oficial</div>
+        <button class="comprar-btn" onclick="abrirModalComprar()">+ comprar tokens</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // panel_dashboard.html - actualizacion de dashboard delegada al spa
+  // la clase UI.dashboard.cargarPanel() ya se ejecuta via el spa
+  // esta funcion es un fallback seguro si ui no esta disponible
+  (function(panel) {
+    setTimeout(function() {
+      // si el spa global existe, el ya se encarga de actualizar
+      if (window.ui && typeof window.ui.cargarPanel === 'function') {
+        return; // el spa actualizara automaticamente
+      }
+      // fallback: si no hay ui, hacer fetch directo y actualizar DOM
+      var token = localStorage.getItem('token');
+      if (!token) return;
+      var apiBase = '/api';
+      var headers = {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      };
+      fetch(apiBase + '/dashboard', { headers: headers })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.exito) return;
+          // actualizar kpis directamente
+          var el = document.getElementById('kpi-saldo');
+          if (el) el.textContent = parseFloat(d.balance || 0).toFixed(2);
+          el = document.getElementById('kpi-saldo-pen');
+          if (el) el.textContent = 's/ ' + parseFloat(d.saldo_pen || 0).toFixed(2);
+          el = document.getElementById('kpi-ref-activos');
+          if (el) el.textContent = d.referidos_activos || 0;
+          el = document.getElementById('kpi-ref-totales');
+          if (el) el.textContent = d.referidos_totales || 0;
+          el = document.getElementById('kpi-perfiles-activos');
+          if (el) el.textContent = d.perfiles_activos || 0;
+          el = document.getElementById('kpi-perfiles-totales');
+          if (el) el.textContent = d.perfiles_totales || 0;
+          el = document.getElementById('kpi-kbt-hoy');
+          if (el) el.textContent = parseFloat(d.kbt_hoy || 0).toFixed(2);
+          el = document.getElementById('kpi-kbt-total');
+          if (el) el.textContent = parseFloat(d.kbt_total_minado || 0).toFixed(2);
+          // fidelidad
+          var nivel = d.usuario && d.usuario.nivel_fiabilidad ? d.usuario.nivel_fiabilidad.toString().toLowerCase() : 'bronce';
+          var niveles = {
+            'bronce': { pct: 25, texto: 'conecta mas dispositivos para subir de nivel' },
+            'plata': { pct: 50, texto: 'vas por buen camino. sigue asi para alcanzar oro' },
+            'oro': { pct: 75, texto: 'excelente nivel. casi llegas a diamante' },
+            'diamante': { pct: 100, texto: 'nivel maximo alcanzado. eres un maestro granjero' }
+          };
+          var cfg = niveles[nivel] || niveles['bronce'];
+          el = document.getElementById('fidelidad-nivel');
+          if (el) el.textContent = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+          el = document.getElementById('fidelidad-pct');
+          if (el) el.textContent = cfg.pct + '%';
+          el = document.getElementById('fidelidad-barra');
+          if (el) el.style.width = cfg.pct + '%';
+          el = document.getElementById('fidelidad-texto');
+          if (el) el.textContent = cfg.texto;
+          // modo
+          var modo = d.modo_actual || 'conectado';
+          var esActivo = modo === 'pidiendo_ordenes' || modo === 'conectado';
+          var dot = document.getElementById('modo-dot');
+          var text = document.getElementById('modo-text');
+          if (dot) dot.className = 'modo-dot' + (esActivo ? ' activo' : ' inactivo');
+          if (text) {
+            text.textContent = esActivo ? 'pidiendo ordenes' : 'uso personal';
+            text.style.color = esActivo ? '#22c55e' : '#ef4444';
+          }
+          // badge sidebar
+          var bRef = document.getElementById('badge-ref');
+          if (bRef) bRef.textContent = d.referidos_activos || 0;
+          var bPf = document.getElementById('badge-pf');
+          if (bPf) bPf.textContent = d.perfiles_activos || 0;
+          // cargar precios marketplace
+          fetch(apiBase + '/precios_marketplace', { headers: headers })
+            .then(function(r) { return r.json(); })
+            .then(function(p) {
+              if (p.exito) {
+                el = document.getElementById('kpi-precio-max');
+                if (el) el.textContent = 's/ ' + (p.precio_max_venta || 0).toFixed(2);
+                el = document.getElementById('kpi-precio-min');
+                if (el) el.textContent = 's/ ' + (p.precio_min_compra || 0).toFixed(2);
+              }
+            })
+            .catch(function(e) { console.error('fallback: error cargando precios:', e); });
+        })
+        .catch(function(e) {
+          console.error('fallback: error cargando dashboard:', e);
+        });
+    }, 100);
+  })('dashboard');
+  </script>
+</body>
+</html>
