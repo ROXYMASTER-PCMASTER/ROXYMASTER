@@ -38,9 +38,11 @@
 - si una búsqueda de archivo o texto no devuelve resultados, no asumas que el recurso no existe. prueba con rutas alternativas o busca en directorios padre antes de declararlo ausente.
 
 ## regla de oro
-- la solución más simple que cumple todos los requisitos es la correcta. no sobre-diseñar.
-- toda conexion de pcbot a pcmaster usa exclusivamente la ip tailscale 100.111.179.65 puerto 5006. nunca uses localhost, 127.0.0.1, ni 192.168.x.x para conectar pcbot con pcmaster. la ip tailscale se lee de config_loader.py y debe ser la unica utilizada para ws_client.
-- el unico comando de push permitido es: `git add pcbot/ .gitignore && git commit --allow-empty -m "backup automatico antes de push" && git commit -m "push automatico pcbot" && git push --force origin main`. bajo ningun concepto se hace `git add .`, `git add -A`, ni se agregan archivos fuera de `pcbot/`. el repositorio solo debe contener la carpeta pcbot (y .gitignore en la raiz). cualquier archivo suelto en roxymaster/ (como .clinerules, reglas, leeme) jamas debe ser agregado al stage ni al commit. como seguridad extra, antes del commit de push se ejecuta un commit de backup con `git commit --allow-empty -m "backup automatico antes de push"` para garantizar que haya un snapshot previo en el historial. esta regla protege cualquier carpeta o archivo fuera de pcbot/ de ser eliminado, modificado o subido al repositorio remoto.
+- prohibido hacer `git pull`. nunca traer cambios del remoto. solo se permite push.
+- prohibido hacer `git push --force` porque elimina carpetas/archivos del remoto. el push debe ser normal: `git push origin main`. si hay conflicto, detenerse y pedir instrucciones.
+- prohibido deducir, suponer o asumir lo que el usuario no dijo explicitamente. si hay duda, preguntar antes de ejecutar.
+- prohibido borrar, modificar o crear archivos fuera de `pcbot/`. no tocar ninguna otra carpeta.
+- el unico comando de push permitido es: `git add pcbot/ .gitignore && git commit --allow-empty -m "backup automatico antes de push" && git commit -m "push automatico pcbot" && git push origin main`. bajo ningun concepto se hace `git add .`, `git add -A`, ni se agregan archivos fuera de `pcbot/`. el repositorio puede contener otras carpetas (como pcmaster/). cualquier archivo suelto en roxymaster/ jamas debe ser agregado al stage ni al commit. como seguridad extra, antes del push se ejecuta un commit de backup con `git commit --allow-empty -m "backup automatico antes de push"`.
 antes de escribir codigo nuevo para cualquier tarea, ejecuta este diagnostico en 3 pasos (max 4 lineas de respuesta):
 1. busca en C:\Users\PCMASTER\Desktop\herramientas\toolkit\indices\indice_general.json piezas que resuelvan la tarea total o parcialmente.
 2. estima: (a) lineas de codigo nuevo sin toolkit, (b) lineas a adaptar si usas las piezas encontradas.
