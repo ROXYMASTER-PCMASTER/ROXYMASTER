@@ -1,0 +1,11 @@
+2026-05-08 06:09:11,023 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version
+2026-05-08 06:09:11,023 [roxymaster.server] INFO: iniciando servidor en 0.0.0.0:8086
+2026-05-08 06:09:11,143 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version
+2026-05-08 06:09:11,146 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
+2026-05-08 06:09:11,146 [roxymaster.server] INFO: configuracion cargada: puerto=8086
+2026-05-08 06:09:11,146 [roxymaster.server] INFO: base de datos inicializada: C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
+2026-05-08 06:09:11,159 [roxymaster.tasks] INFO: registros de tareas inicializados
+2026-05-08 06:09:11,190 [roxymaster.server] INFO: tokens genesis emitidos para admin
+2026-05-08 06:09:11,190 [roxymaster.server] INFO: tareas periodicas iniciadas
+2026-05-08 06:09:11,190 [roxymaster.tasks] INFO: iniciando tareas periodicas...
+2026-05-08 06:09:11,190 [roxymaster.server] INFO: deteniendo servidor...

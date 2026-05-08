@@ -8,6 +8,11 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+# asegurar que scripts/ esta en el path (para imports como config_loader)
+_scripts_dir = os.path.dirname(os.path.abspath(__file__))
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
@@ -58,6 +63,9 @@ from api_encriptacion import router as router_encriptacion
 from api_monitoreo import router as router_monitoreo
 from api_pedidos import router as router_pedidos
 from api_version import router as router_version
+
+# router para computadoras
+from api_computadoras import router as router_computadoras
 
 from pydantic import BaseModel
 from api_auth import LoginRequest, RegisterRequest
@@ -178,12 +186,14 @@ app.include_router(router_monitoreo)
 app.include_router(router_pedidos)
 app.include_router(router_version)
 app.include_router(heartbeat_router)
+app.include_router(router_computadoras)
 
 logger.info(
     "routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, "
     "comandos, admin, superadmin, tokenomics, roxykey, mensajes, "
     "public_perfiles, public_finanzas, public_referidos, public_sistema, "
-    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version"
+    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, "
+    "computadoras"
 )
 
 
@@ -279,12 +289,16 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
     await websocket.accept()
     logger.info(f"pcbot conectado via ws: {pcbot_id}")
 
-    # registrar en gestor
+    # registrar en gestor legacy
     gestor_websockets[pcbot_id] = {
         "ws": websocket,
         "conectado_desde": datetime.now().isoformat(),
         "ultimo_heartbeat": datetime.now().isoformat(),
     }
+
+    # registrar en ws_manager (nuevo sistema por usuario)
+    from ws_manager import registrar_conexion
+    _usuario_registrado_ws = None
 
     # actualizar estado del usuario en db
     try:
@@ -342,6 +356,20 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
                 await websocket.send_json({"tipo": "identify_ok", "pcbot_id": pcbot_id})
                 logger.info(f"identify_ok enviado a {pcbot_id}")
 
+                # registrar en ws_manager por usuario
+                try:
+                    from db import ejecutar_sql_unico as _sql_unico
+                    _user = _sql_unico(
+                        "select id from usuarios where pcbot_id = ?", (pcbot_id,)
+                    )
+                    if _user:
+                        _usuario_registrado_ws = _user["id"]
+                        from ws_manager import registrar_conexion
+                        registrar_conexion(_user["id"], pcbot_id, websocket)
+                        logger.info(f"usuario {_user['id']} registrado en ws_manager via pcbot {pcbot_id}")
+                except Exception:
+                    pass
+
                 # actualizar heartbeat
                 gestor_websockets[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()
                 continue
@@ -366,9 +394,21 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
             )
         except Exception:
             pass
+        # limpiar ws_manager
+        try:
+            from ws_manager import eliminar_conexion
+            eliminar_conexion(pcbot_id=pcbot_id)
+        except Exception:
+            pass
     except Exception as e:
         logger.error(f"error en ws de {pcbot_id}: {e}")
         gestor_websockets.pop(pcbot_id, None)
+        # limpiar ws_manager
+        try:
+            from ws_manager import eliminar_conexion
+            eliminar_conexion(pcbot_id=pcbot_id)
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------

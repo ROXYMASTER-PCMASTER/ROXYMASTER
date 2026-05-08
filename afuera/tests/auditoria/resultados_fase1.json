@@ -1,0 +1,121 @@
+{
+  "fase": 1,
+  "resultados": [
+    {
+      "paso": "usuario real verificado",
+      "estado": "ok",
+      "detalle": "id=29, saldo=17.0, nivel=bronce"
+    },
+    {
+      "paso": "carga portada",
+      "estado": "fallo",
+      "detalle": "faltan: ['mis perfiles', 'marketplace']"
+    },
+    {
+      "paso": "login real",
+      "estado": "ok",
+      "detalle": "dashboard cargado"
+    },
+    {
+      "paso": "db persistencia",
+      "estado": "ok",
+      "detalle": "id=29, hash_len=191, modo=conectado, saldo=17.0"
+    },
+    {
+      "paso": "password hash valido",
+      "estado": "ok",
+      "detalle": "hash pbkdf2"
+    },
+    {
+      "paso": "pestana panel",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "pestana mis_perfiles",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "pestana ordenar",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "pestana marketplace",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "pestana referidos",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "pestana ayuda",
+      "estado": "ok",
+      "detalle": "contenido cargado"
+    },
+    {
+      "paso": "switch modo clic",
+      "estado": "ok",
+      "detalle": "clic ejecutado"
+    },
+    {
+      "paso": "switch modo persistencia",
+      "estado": "aviso",
+      "detalle": "no cambio en db: conectado"
+    },
+    {
+      "paso": "actualizar perfiles",
+      "estado": "ok",
+      "detalle": "clic ok, perfiles actualizados"
+    },
+    {
+      "paso": "perfiles en db",
+      "estado": "ok",
+      "detalle": "tiene 0 perfiles"
+    },
+    {
+      "paso": "crear orden",
+      "estado": "fallo",
+      "detalle": "excepcion: ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"5\")\n  - attempting fill action\n    2 \u00d7 waiting for element to be visible, enabled and editable\n      - element is not visible\n    - retrying fill action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and editable\n      - element is not visible\n    - retrying fill action\n      - waiting 100ms\n    58 \u00d7 waiting for element to be visible, enabled and editable\n       - element is not visible\n     - retrying fill action\n       - waiting 500ms\n"
+    },
+    {
+      "paso": "marketplace",
+      "estado": "fallo",
+      "detalle": "excepcion: ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"10\")\n  - attempting fill action\n    2 \u00d7 waiting for element to be visible, enabled and editable\n      - element is not visible\n    - retrying fill action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and editable\n      - element is not visible\n    - retrying fill action\n      - waiting 100ms\n    58 \u00d7 waiting for element to be visible, enabled and editable\n       - element is not visible\n     - retrying fill action\n       - waiting 500ms\n"
+    },
+    {
+      "paso": "referidos",
+      "estado": "ok",
+      "detalle": "codigo: None"
+    },
+    {
+      "paso": "codigo referido db",
+      "estado": "ok",
+      "detalle": "coincide: 6wgh1e16"
+    },
+    {
+      "paso": "arbol referidos",
+      "estado": "aviso",
+      "detalle": "arbol vacio (esperado)"
+    },
+    {
+      "paso": "cerrar sesion",
+      "estado": "ok",
+      "detalle": "clic ejecutado"
+    },
+    {
+      "paso": "login fallido",
+      "estado": "ok",
+      "detalle": "intentado"
+    },
+    {
+      "paso": "login correcto",
+      "estado": "ok",
+      "detalle": "dashboard cargado"
+    }
+  ],
+  "timestamp": "2026-05-05T22:03:33.898493"
+}

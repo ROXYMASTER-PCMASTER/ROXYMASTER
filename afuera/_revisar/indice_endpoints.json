@@ -1,0 +1,245 @@
+{
+    "documentacion": {
+        "titulo": "indice completo de endpoints de la api roxymaster v8.3",
+        "descripcion": "catalogo de todos los endpoints disponibles organizados por categoria para que un agente ia entienda la estructura completa del sistema.",
+        "base_url": "http://0.0.0.0:8086",
+        "auth": "jwt bearer token excepto donde se indique",
+        "db": "data/roxymaster.db (sqlite3 con row_factory = sqlite3.Row)",
+        "encoding": "utf-8 sin bom",
+        "idioma": "todo en minusculas: variables, funciones, rutas, comentarios",
+        "reglas": [
+            "todo endpoint protegido requiere header: 'authorization: bearer <token>'",
+            "los tokens expiran en 7 dias",
+            "refresh token: POST /api/refresh",
+            "parametros de entrada validados y sanitizados",
+            "logs sin datos sensibles",
+            "maximo 400 lineas por archivo",
+            "async/await para todas las operaciones db"
+        ]
+    },
+    "categorias": [
+        {
+            "categoria": "autenticacion",
+            "archivo": "api_auth.py",
+            "routers": [
+                "/api/auth"
+            ],
+            "endpoints": [
+                {"metodo": "POST", "ruta": "/api/auth/register", "auth": false, "descripcion": "registro de nuevo usuario. body: email, password, username, codigo_referido(opcional), pcbot_id(opcional)"},
+                {"metodo": "POST", "ruta": "/api/auth/login", "auth": false, "descripcion": "inicio de sesion. devuelve token jwt. body: email, password"},
+                {"metodo": "GET", "ruta": "/api/auth/verify", "auth": true, "descripcion": "verifica que el token sea valido"},
+                {"metodo": "POST", "ruta": "/api/refresh", "auth": true, "descripcion": "refresca un token jwt. genera uno nuevo si el actual es valido. archivo: api_refresh.py"},
+                {"metodo": "POST", "ruta": "/api/logout", "auth": true, "descripcion": "cierra sesion. invalida el token actual"},
+                {"metodo": "POST", "ruta": "/api/registro", "auth": false, "descripcion": "alias de compatibilidad para registro (redirige a /api/register). archivo: server.py"}
+            ]
+        },
+        {
+            "categoria": "dashboard publico de usuario",
+            "archivo": "varios (api_dashboard_core.py, api_dashboard_ext.py, api_public_*.py)",
+            "routers": [
+                "/api/dashboard"
+            ],
+            "endpoints": [
+                {"metodo": "GET", "ruta": "/api/dashboard", "auth": true, "descripcion": "dashboard principal del usuario: balance, ultimas transacciones, estado perfiles"},
+                {"metodo": "GET", "ruta": "/api/perfiles", "auth": true, "descripcion": "listar todos los perfiles (pcbots) del usuario. devuelve id, nombre_perfil, estado, ip_wan, horas_conexion, horas_en_uso, horas_hh"},
+                {"metodo": "POST", "ruta": "/api/perfiles/crear", "auth": true, "descripcion": "crear un nuevo perfil. body: nombre, tipo='local'. devuelve id"},
+                {"metodo": "PUT", "ruta": "/api/perfiles/{id}", "auth": true, "descripcion": "actualizar nombre o estado de un perfil"},
+                {"metodo": "DELETE", "ruta": "/api/perfiles/{id}", "auth": true, "descripcion": "eliminar perfil (solo si inactivo)"},
+                {"metodo": "POST", "ruta": "/api/perfiles/{id}/iniciar", "auth": true, "descripcion": "enviar orden a pcbot para iniciar bot en ese perfil. body: url, streamer(opcional)"},
+                {"metodo": "POST", "ruta": "/api/perfiles/{id}/detener", "auth": true, "descripcion": "detener el bot en ese perfil"},
+                {"metodo": "GET", "ruta": "/api/transacciones", "auth": true, "descripcion": "historial de transacciones del usuario. query: tipo, fecha"},
+                {"metodo": "GET", "ruta": "/api/referidos", "auth": true, "descripcion": "lista de referidos directos e indirectos con nivel"},
+                {"metodo": "GET", "ruta": "/api/referidos/estadisticas", "auth": true, "descripcion": "resumen: numero de referidos por nivel, total comisiones ganadas"},
+                {"metodo": "GET", "ruta": "/api/codigo_referido", "auth": true, "descripcion": "obtener el codigo de referido del usuario (genera uno nuevo si no tiene)"},
+                {"metodo": "POST", "ruta": "/api/codigo_referido/regenerar", "auth": true, "descripcion": "regenerar codigo de referido (solo si no ha sido usado)"},
+                {"metodo": "POST", "ruta": "/api/retiros/solicitar", "auth": true, "descripcion": "solicitar retiro de kbt a pen. body: cantidad, wallet_destino. devuelve id_solicitud"},
+                {"metodo": "GET", "ruta": "/api/retiros", "auth": true, "descripcion": "historial de solicitudes de retiro (estado, cantidad, comision, fechas)"},
+                {"metodo": "GET", "ruta": "/api/retiros/{id}", "auth": true, "descripcion": "consultar estado de una solicitud especifica"},
+                {"metodo": "GET", "ruta": "/api/happy_hour/actual", "auth": true, "descripcion": "obtener el multiplicador activo y tiempo restante"},
+                {"metodo": "GET", "ruta": "/api/happy_hour/historial", "auth": true, "descripcion": "lista de happy hours pasadas (fechas, multiplicador)"},
+                {"metodo": "GET", "ruta": "/api/genesis", "auth": true, "descripcion": "informacion de genesis: etapa actual, porcentaje liberado, tokens restantes, fecha proxima liberacion"},
+                {"metodo": "GET", "ruta": "/api/kbt/tasa", "auth": true, "descripcion": "consultar tasa de conversion actual kbt a pen"},
+                {"metodo": "GET", "ruta": "/api/kbt/minado", "auth": true, "descripcion": "estadisticas de minado personal: total minado, tasa actual por hora"},
+                {"metodo": "GET", "ruta": "/api/kbt/recoleccion", "auth": true, "descripcion": "estadisticas de recoleccion (participacion en comisiones)"},
+                {"metodo": "POST", "ruta": "/api/kbt/reclamar", "auth": true, "descripcion": "reclamar tokens pendientes (staking, comisiones no distribuidas)"},
+                {"metodo": "GET", "ruta": "/api/marketplace/mis_ordenes", "auth": true, "descripcion": "listar ordenes propias (compra/venta) con estado"},
+                {"metodo": "GET", "ruta": "/api/marketplace/libro", "auth": true, "descripcion": "ver ordenes abiertas de otros usuarios para comprar/vender kbt"},
+                {"metodo": "POST", "ruta": "/api/marketplace/ejecutar/{orden_id}", "auth": true, "descripcion": "ejecutar una orden (comprar/vender al precio publicado)"},
+                {"metodo": "GET", "ruta": "/api/metrics/uptime", "auth": true, "descripcion": "ver tiempo total conectado (suma de horas_conexion de todos sus perfiles)"},
+                {"metodo": "GET", "ruta": "/api/notificaciones", "auth": true, "descripcion": "listar notificaciones del sistema (eventos, alertas, cambios de estado)"},
+                {"metodo": "POST", "ruta": "/api/notificaciones/marcar_leida/{id}", "auth": true, "descripcion": "marcar una notificacion como leida"},
+                {"metodo": "PUT", "ruta": "/api/usuario", "auth": true, "descripcion": "actualizar datos del usuario (username, email, password previa validacion)"},
+                {"metodo": "GET", "ruta": "/api/usuario/configuracion", "auth": true, "descripcion": "obtener configuracion personal (idioma, notificaciones)"},
+                {"metodo": "GET", "ruta": "/api/mi_estado", "auth": true, "descripcion": "estado actual del usuario (perfiles activos, kbt, etc)"}
+            ]
+        },
+        {
+            "categoria": "endpoint publico (sin auth)",
+            "archivo": "api_auth.py",
+            "routers": [],
+            "endpoints": [
+                {"metodo": "POST", "ruta": "/api/register", "auth": false, "descripcion": "registro de usuario. body: email, password, username"},
+                {"metodo": "POST", "ruta": "/api/login", "auth": false, "descripcion": "login. devuelve token jwt y datos del usuario. body: email, password"}
+            ]
+        },
+        {
+            "categoria": "kbt / tokenomics",
+            "archivo": "api_kbt.py, public_finanzas.py",
+            "routers": [
+                "/api/kbt"
+            ],
+            "endpoints": [
+                {"metodo": "GET", "ruta": "/api/kbt/balance", "auth": true, "descripcion": "balance actual del usuario en kbt"},
+                {"metodo": "GET", "ruta": "/api/kbt/estadisticas", "auth": true, "descripcion": "estadisticas completas de kbt del usuario"},
+                {"metodo": "GET", "ruta": "/api/estadisticas_globales", "auth": false, "descripcion": "resumen publico: total usuarios activos, total kbt minados, reserva actual"},
+                {"metodo": "GET", "ruta": "/api/ranking", "auth": false, "descripcion": "top usuarios por minado, referidos o comisiones. query: tipo, pagina, limite"},
+                {"metodo": "GET", "ruta": "/api/sistema/version", "auth": false, "descripcion": "version actual del servidor y estado de servicios"}
+            ]
+        },
+        {
+            "categoria": "mercado (marketplace)",
+            "archivo": "api_marketplace.py, api_public_marketplace_ext.py",
+            "routers": [
+                "/api/marketplace"
+            ],
+            "endpoints": [
+                {"metodo": "POST", "ruta": "/api/marketplace/crear", "auth": true, "descripcion": "crear una orden de compra/venta. body: tipo, cantidad, precio"},
+                {"metodo": "POST", "ruta": "/api/marketplace/cancelar/{orden_id}", "auth": true, "descripcion": "cancelar una orden propia"},
+                {"metodo": "GET", "ruta": "/api/marketplace/ordenes", "auth": true, "descripcion": "listar ordenes disponibles en el mercado"},
+                {"metodo": "POST", "ruta": "/api/marketplace/ejecutar/{orden_id}", "auth": true, "descripcion": "ejecutar una orden existente (comprar/vender)"},
+                {"metodo": "GET", "ruta": "/api/marketplace/mis_ordenes", "auth": true, "descripcion": "listar ordenes propias"},
+                {"metodo": "GET", "ruta": "/api/marketplace/libro", "auth": true, "descripcion": "ver libro de ordenes abiertas"}
+            ]
+        },
+        {
+            "categoria": "comandos / orchestrator",
+            "archivo": "api_comandos.py",
+            "routers": [
+                "/api/comando"
+            ],
+            "endpoints": [
+                {"metodo": "POST", "ruta": "/api/comando", "auth": true, "descripcion": "enviar un comando a un pcbot. body: tipo, parametros, pcbot_id"},
+                {"metodo": "GET", "ruta": "/api/comando/{comando_id}", "auth": true, "descripcion": "consultar estado de un comando especifico"},
+                {"metodo": "GET", "ruta": "/api/comandos", "auth": true, "descripcion": "listar comandos del usuario"},
+                {"metodo": "GET", "ruta": "/api/urls", "auth": true, "descripcion": "listar urls asignadas"}
+            ]
+        },
+        {
+            "categoria": "administracion (admin)",
+            "archivo": "api_admin.py, api_admin_ext.py, api_superadmin.py, api_tokenomics.py",
+            "routers": [
+                "/api/admin",
+                "/api/superadmin",
+                "/api/admin/tokenomics"
+            ],
+            "endpoints": [
+                {"metodo": "POST", "ruta": "/api/admin/login", "auth": false, "descripcion": "login de administrador. devuelve token admin. body: email, password"},
+                {"metodo": "GET", "ruta": "/api/admin/verificar", "auth": true, "descripcion": "verificar que el token tiene rol admin"},
+                {"metodo": "GET", "ruta": "/api/admin/health", "auth": false, "descripcion": "health check del servidor"},
+                {"metodo": "GET", "ruta": "/api/admin/usuarios", "auth": true, "descripcion": "listar todos los usuarios. query: q, rol, estado"},
+                {"metodo": "GET", "ruta": "/api/admin/usuarios/{id}", "auth": true, "descripcion": "detalle completo de un usuario con perfiles y transacciones"},
+                {"metodo": "POST", "ruta": "/api/admin/usuarios/{id}/toggle", "auth": true, "descripcion": "activar/desactivar un usuario. body: activo (1/0)"},
+                {"metodo": "GET", "ruta": "/api/admin/dashboard", "auth": true, "descripcion": "dashboard admin: total usuarios, activos, perfiles, wallet"},
+                {"metodo": "GET", "ruta": "/api/admin/variables", "auth": true, "descripcion": "listar todas las variables economicas del sistema"},
+                {"metodo": "PUT", "ruta": "/api/admin/variables/{clave}", "auth": true, "descripcion": "actualizar una variable economica. body: valor"},
+                {"metodo": "POST", "ruta": "/api/admin/variables/restablecer", "auth": true, "descripcion": "restablecer todas las variables a valores predeterminados"},
+                {"metodo": "POST", "ruta": "/api/admin/kbt/emitir", "auth": true, "descripcion": "emitir kbt administrativamente a un usuario. body: usuario_id, cantidad, concepto"},
+                {"metodo": "GET", "ruta": "/api/admin/estadisticas_globales", "auth": true, "descripcion": "resumen global admin: usuarios, kbt, reserva"},
+                {"metodo": "GET", "ruta": "/api/admin/retiros", "auth": true, "descripcion": "listar retiros. query: estado (pendiente/aprobado/rechazado)"},
+                {"metodo": "GET", "ruta": "/api/admin/transacciones", "auth": true, "descripcion": "listar transacciones del sistema. query: tipo, limite"},
+                {"metodo": "GET", "ruta": "/api/admin/reserva", "auth": true, "descripcion": "estado actual de la reserva de tokens"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/variables", "auth": true, "descripcion": "lista variables tokenomics agrupadas"},
+                {"metodo": "PUT", "ruta": "/api/admin/tokenomics/variables/{clave}", "auth": true, "descripcion": "actualizar variable tokenomics"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/variables/grupo/{grupo}", "auth": true, "descripcion": "filtrar variables por grupo: economicas, comisiones, limites, genesis"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/genesis", "auth": true, "descripcion": "listar todas las etapas de genesis"},
+                {"metodo": "PUT", "ruta": "/api/admin/tokenomics/genesis/{id}/liberar", "auth": true, "descripcion": "liberar una etapa genesis manualmente"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/happyhour", "auth": true, "descripcion": "estado actual del happy hour e historial"},
+                {"metodo": "POST", "ruta": "/api/admin/tokenomics/happyhour", "auth": true, "descripcion": "iniciar happy hour. body: multiplicador, duracion_horas"},
+                {"metodo": "DELETE", "ruta": "/api/admin/tokenomics/happyhour/{id}", "auth": true, "descripcion": "cancelar un happy hour activo"},
+                {"metodo": "POST", "ruta": "/api/admin/tokenomics/emitir", "auth": true, "descripcion": "emitir kbt via tokenomics. body: usuario_id, cantidad, concepto"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/reserva", "auth": true, "descripcion": "estado del fondo de reserva"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/staking", "auth": true, "descripcion": "estadisticas globales de staking"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/proyecciones", "auth": true, "descripcion": "proyecciones economicas a 3, 9 y 18 meses"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/estadisticas", "auth": true, "descripcion": "estadisticas detalladas del ecosistema kbt"},
+                {"metodo": "POST", "ruta": "/api/admin/tokenomics/simular_recompensa", "auth": true, "descripcion": "simular calculo de recompensa (debug). body: usuario_id, horas_normales, horas_hh"},
+                {"metodo": "GET", "ruta": "/api/admin/tokenomics/esquema", "auth": true, "descripcion": "listar tablas de la base de datos"},
+                {"metodo": "GET", "ruta": "/api/superadmin/proyecciones", "auth": true, "descripcion": "escenarios de proyecciones kbt a 3, 9, 18 meses"},
+                {"metodo": "POST", "ruta": "/api/superadmin/retiros/procesar", "auth": true, "descripcion": "aprobar o rechazar un retiro. body: retiro_id, accion"},
+                {"metodo": "POST", "ruta": "/api/superadmin/mensajes/enviar", "auth": true, "descripcion": "enviar mensaje a un usuario. body: email_destino, texto"},
+                {"metodo": "GET", "ruta": "/api/superadmin/mensajes/historial", "auth": true, "descripcion": "historial de mensajes enviados por admin"},
+                {"metodo": "GET", "ruta": "/api/superadmin/sesiones", "auth": true, "descripcion": "listar todas las sesiones activas (tokens enmascarados)"},
+                {"metodo": "DELETE", "ruta": "/api/superadmin/sesiones/{token}", "auth": true, "descripcion": "cerrar una sesion especifica por token"},
+                {"metodo": "GET", "ruta": "/api/superadmin/perfiles", "auth": true, "descripcion": "listar todos los perfiles. query: estado"},
+                {"metodo": "GET", "ruta": "/api/superadmin/pcs", "auth": true, "descripcion": "listar todas las computadoras (pcbots) registradas"},
+                {"metodo": "POST", "ruta": "/api/superadmin/happy_hour/activar", "auth": true, "descripcion": "activar happy hour. body: multiplicador, fecha_inicio, fecha_fin"},
+                {"metodo": "POST", "ruta": "/api/superadmin/happy_hour/desactivar", "auth": true, "descripcion": "desactivar happy hour actual"},
+                {"metodo": "GET", "ruta": "/api/superadmin/happy_hour/historial", "auth": true, "descripcion": "historial completo de happy hours"},
+                {"metodo": "GET", "ruta": "/api/superadmin/kpi", "auth": true, "descripcion": "kpis completos del sistema (dashboard admin)"},
+                {"metodo": "GET", "ruta": "/api/superadmin/seguridad", "auth": true, "descripcion": "eventos de seguridad. query: tipo, pagina, limite"}
+            ]
+        },
+        {
+            "categoria": "websocket",
+            "archivo": "server.py",
+            "routers": [],
+            "endpoints": [
+                {"metodo": "WS", "ruta": "/ws/{pcbot_id}", "auth": false, "descripcion": "websocket para comunicacion con pcbots. autenticacion via tailscale. sin hmac. mensajes: identify, heartbeat, respuesta, alerta"}
+            ]
+        },
+        {
+            "categoria": "otros routers adicionales",
+            "archivo": "varios",
+            "routers": [],
+            "endpoints": [
+                {"metodo": "GET", "ruta": "/", "auth": false, "descripcion": "portal principal wafabot coorporation. sirve publico/index.html"},
+                {"metodo": "GET", "ruta": "/login", "auth": false, "descripcion": "pagina de inicio de sesion"},
+                {"metodo": "GET", "ruta": "/registro", "auth": false, "descripcion": "pagina de registro"},
+                {"metodo": "GET", "ruta": "/api/health", "auth": false, "descripcion": "health check del servidor"},
+                {"metodo": "GET", "ruta": "/api/endpoints", "auth": false, "descripcion": "indice maestro de endpoints para dashboards"},
+                {"metodo": "", "ruta": "/static/*", "auth": false, "descripcion": "archivos estaticos (css, js)"},
+                {"metodo": "", "ruta": "/publico/*", "auth": false, "descripcion": "archivos publicos del portal"},
+                {"metodo": "", "ruta": "/privado/*", "auth": false, "descripcion": "archivos privados del portal"}
+            ]
+        }
+    ],
+    "resumen": {
+        "total_endpoints_mapeados": null,
+        "archivos_routers": [
+            "api_auth.py",
+            "api_kbt.py",
+            "api_dashboard_core.py",
+            "api_dashboard_ext.py",
+            "api_marketplace.py",
+            "api_comandos.py",
+            "api_admin.py",
+            "api_admin_ext.py",
+            "api_superadmin.py",
+            "api_tokenomics.py",
+            "api_roxykey.py",
+            "api_mensajes.py",
+            "api_refresh.py",
+            "api_public_perfiles.py",
+            "api_public_finanzas.py",
+            "api_public_referidos.py",
+            "api_public_sistema.py",
+            "api_public_marketplace_ext.py",
+            "api_dashboard.py",
+            "api_encriptacion.py",
+            "api_monitoreo.py",
+            "api_pedidos.py",
+            "api_version.py"
+        ],
+        "modulos_core": [
+            "server.py (punto de entrada fastapi + ws + lifespan)",
+            "config_loader.py (carga config.json)",
+            "db.py (init_db + get_db + ejecutar_sql + ejecutar_sql_unico + ejecutar_insercion)",
+            "auth.py (registro, login, verificar_token, roles, encriptacion)",
+            "tokenomics.py (logica economica: genesis, minado, quema, referidos, retiros, happy hour)",
+            "marketplace.py (ordenes p2p, escrow, comision 15%)",
+            "orchestrator.py (cola de comandos, comunicacion con pcbots via ws)",
+            "shs.py (firma y verificacion hmac)",
+            "variables_globales.py (constantes del sistema, parametros economicos)",
+            "tasks.py (tareas periodicas: quema diaria, limpieza)"
+        ]
+    }
+}

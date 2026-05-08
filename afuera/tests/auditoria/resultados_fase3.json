@@ -1,0 +1,156 @@
+{
+  "fase": 3,
+  "resultados": [
+    {
+      "paso": "count usuarios",
+      "estado": "ok",
+      "detalle": "registros: 49"
+    },
+    {
+      "paso": "count sesiones",
+      "estado": "ok",
+      "detalle": "registros: 51"
+    },
+    {
+      "paso": "count perfiles",
+      "estado": "ok",
+      "detalle": "registros: 80"
+    },
+    {
+      "paso": "count ordenes_p2p",
+      "estado": "ok",
+      "detalle": "registros: 30"
+    },
+    {
+      "paso": "count retiros",
+      "estado": "ok",
+      "detalle": "registros: 8"
+    },
+    {
+      "paso": "count transacciones",
+      "estado": "ok",
+      "detalle": "registros: 41"
+    },
+    {
+      "paso": "count mensajes",
+      "estado": "ok",
+      "detalle": "registros: 323"
+    },
+    {
+      "paso": "count wallets",
+      "estado": "ok",
+      "detalle": "registros: 51"
+    },
+    {
+      "paso": "count eventos_seguridad",
+      "estado": "ok",
+      "detalle": "registros: 0"
+    },
+    {
+      "paso": "sesiones huerfanas",
+      "estado": "ok",
+      "detalle": "encontradas: 0"
+    },
+    {
+      "paso": "perfiles huerfanos",
+      "estado": "ok",
+      "detalle": "encontrados: 0"
+    },
+    {
+      "paso": "ordenes huerfanas",
+      "estado": "ok",
+      "detalle": "encontradas: 0"
+    },
+    {
+      "paso": "retiros huerfanos",
+      "estado": "ok",
+      "detalle": "encontrados: 0"
+    },
+    {
+      "paso": "transacciones origen huerfano",
+      "estado": "ok",
+      "detalle": "encontradas: 0"
+    },
+    {
+      "paso": "wallets huerfanas",
+      "estado": "fail",
+      "detalle": "encontradas: 2"
+    },
+    {
+      "paso": "usuarios sin wallet",
+      "estado": "ok",
+      "detalle": "encontrados: 0"
+    },
+    {
+      "paso": "passwords texto plano",
+      "estado": "ok",
+      "detalle": "posibles en texto plano: 0"
+    },
+    {
+      "paso": "sesiones expiradas",
+      "estado": "ok",
+      "detalle": "expiradas: 0"
+    },
+    {
+      "paso": "retiros sin estado",
+      "estado": "ok",
+      "detalle": "sin estado: 0"
+    },
+    {
+      "paso": "codigos referido duplicados",
+      "estado": "ok",
+      "detalle": "duplicados: 0"
+    },
+    {
+      "paso": "wallets valores default",
+      "estado": "ok",
+      "detalle": "wallets con defaults: 17"
+    },
+    {
+      "paso": "esquema usuarios",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema sesiones",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema wallets",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema perfiles",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema ordenes_p2p",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema retiros",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema transacciones",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema mensajes",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    },
+    {
+      "paso": "esquema eventos_seguridad",
+      "estado": "ok",
+      "detalle": "coincide con documentacion"
+    }
+  ],
+  "timestamp": "2026-05-05T22:05:30.952258"
+}

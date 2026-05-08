@@ -1,0 +1,16 @@
+﻿ROXYMASTER - ESTRUCTURA DEL SISTEMA
+=================================
+
+Carpetas principales:
+- archived_tools
+- pcbot
+- pcmaster
+
+Descripción:
+- pcmaster: código del servidor (FastAPI, WebSocket, APIs, portal público).
+- pcbot: código del agente zombie (detección, heartbeat, cliente WS).
+- copias: respaldos antiguos y versiones de desarrollo.
+- archived_tools: scripts de diagnóstico (no producción).
+
+Archivos raíz importantes: .gitignore, .clinerules, push_sync.ps1
+

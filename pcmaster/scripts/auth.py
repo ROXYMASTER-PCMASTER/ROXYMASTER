@@ -366,3 +366,12 @@ def verificar_admin_dependencia(
         raise HTTPException(status_code=403, detail="acceso solo para administradores")
     return sesion
 
+
+async def obtener_usuario_desde_request(request: Request = None) -> Optional[dict]:
+    """obtiene el usuario autenticado desde un request.
+    revisa headers, query params o cookies.
+    devuelve dict con sesion o None si no autenticado."""
+    if request is None:
+        return None
+    return verificar_token_opcional(request)
+

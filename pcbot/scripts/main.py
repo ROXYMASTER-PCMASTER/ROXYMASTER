@@ -25,7 +25,7 @@ from api.roxybrowser_api import RoxyBrowserAPI
 from core.profile_manager import ProfileManager, ProfileState
 from core.state_tracker import StateTracker
 from core.token_engine import TokenEngine
-from api.ws_client import WSClient
+from ws_client import WSClient
 import aiohttp
 from orchestrator_local import OrchestratorLocal
 

@@ -9,14 +9,25 @@ from contextlib import contextmanager
 _db_path = ruta_db
 
 # ---------------------------------------------------------------------------
-# esquema unificado (20 tablas)
+# esquema unificado (26 tablas - agregadas: personas, computadoras, apikeys_roxybrowser, perfiles_roxy_ext, billeteras, retiros_billetera)
 # ---------------------------------------------------------------------------
 esquema_sql = """
 pragma journal_mode=WAL;
 pragma foreign_keys=ON;
 
+-- tabla 0: personas fisicas (1 persona real -> N cuentas)
+create table if not exists personas (
+    id integer primary key autoincrement,
+    nombre_real text default '',
+    dni text default '',
+    telefono text default '',
+    pais text default '',
+    fecha_registro text default (datetime('now','localtime'))
+);
+
 create table if not exists usuarios (
     id integer primary key autoincrement,
+    persona_id integer references personas(id),
     email text unique not null,
     password_hash text not null,
     username text,
@@ -46,9 +57,11 @@ create table if not exists sesiones (
     foreign key (usuario_id) references usuarios(id)
 );
 
-create table if not exists wallets (
+-- tabla: billeteras (cada usuario puede tener varias billeteras de distintos tipos)
+create table if not exists billeteras (
     id integer primary key autoincrement,
-    usuario_id integer unique not null,
+    usuario_id integer not null,
+    tipo text default 'kbt',  -- kbt, sol, usdt
     balance real default 0,
     minado_total real default 0,
     recolectado_total real default 0,
@@ -98,6 +111,11 @@ create table if not exists perfiles (
     horas_en_uso real default 0,
     horas_hh real default 0,
     ultimo_heartbeat text,
+    workspace_id text default '',
+    hash_id text default '',
+    name_id text default '',
+    total_perfiles_roxy integer default 0,
+    computadora_id integer,
     foreign key (usuario_id) references usuarios(id)
 );
 
@@ -134,16 +152,18 @@ create table if not exists ordenes_p2p (
     foreign key (comprador_id) references usuarios(id)
 );
 
-create table if not exists retiros (
+create table if not exists retiros_wallet (
     id integer primary key autoincrement,
     usuario_id integer not null,
+    billetera_id integer not null,
     cantidad_kbt real not null,
     cantidad_pen real not null,
     comision real not null,
     estado text default 'pendiente',
     fecha_solicitud text default (datetime('now','localtime')),
     fecha_procesado text,
-    foreign key (usuario_id) references usuarios(id)
+    foreign key (usuario_id) references usuarios(id),
+    foreign key (billetera_id) references billeteras(id)
 );
 
 create table if not exists happy_hour (
@@ -210,11 +230,65 @@ create table if not exists mensajes (
     destino_id integer not null,
     texto text not null,
     leido integer default 0,
+    asunto text default '',
     fecha text default (datetime('now','localtime')),
     foreign key (origen_id) references usuarios(id),
     foreign key (destino_id) references usuarios(id)
 );
 
+-- tabla: computadoras (cada PC del usuario, registrada antes o despues del login)
+create table if not exists computadoras (
+    id integer primary key autoincrement,
+    pcbot_id text unique not null,
+    usuario_id integer,
+    hostname text,
+    ip_wan text,
+    ip_local text,
+    mac text default '',
+    sistema_operativo text,
+    pais text default '',
+    api_key_roxy text default '',
+    workspace_id text default '',
+    estado text default 'pendiente',
+    instalado_el text default (datetime('now','localtime')),
+    ultimo_heartbeat text,
+    ultima_conexion text,
+    fecha_vinculacion text,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+-- tabla: apikeys_roxybrowser (api keys separadas por computadora)
+create table if not exists apikeys_roxybrowser (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    computadora_id integer,
+    api_key text not null,
+    workspace_id text default '',
+    estado text default 'activa',
+    fecha_agregada text default (datetime('now','localtime')),
+    fecha_vencimiento text,
+    foreign key (usuario_id) references usuarios(id),
+    foreign key (computadora_id) references computadoras(id)
+);
+
+-- tabla: perfiles_roxy_ext (perfiles reales sincronizados desde roxybrowser)
+create table if not exists perfiles_roxy_ext (
+    id integer primary key autoincrement,
+    computadora_id integer not null,
+    usuario_id integer not null,
+    apikey_id integer,
+    hash_id text,
+    name_id text,
+    workspace_id text,
+    nombre text,
+    estado text default 'activo',
+    ultima_sincronizacion text,
+    foreign key (computadora_id) references computadoras(id),
+    foreign key (usuario_id) references usuarios(id),
+    foreign key (apikey_id) references apikeys_roxybrowser(id)
+);
+
+-- tabla: pcbots_registrados (mantenida para compatibilidad, ahora con FK)
 create table if not exists pcbots_registrados (
     id integer primary key autoincrement,
     pcbot_id text unique not null,
@@ -242,7 +316,7 @@ create table if not exists pcbots_registrados (
     secreto_shs text default ''
 );
 
--- indice para busquedas frecuentes
+-- indices para busquedas frecuentes
 create index if not exists idx_mensajes_destino on mensajes(destino_id);
 create index if not exists idx_sesiones_usuario on sesiones(usuario_id);
 create index if not exists idx_transacciones_origen on transacciones(origen_id);
@@ -250,8 +324,8 @@ create index if not exists idx_transacciones_destino on transacciones(destino_id
 create index if not exists idx_transacciones_fecha on transacciones(fecha);
 create index if not exists idx_referidos_referidor on referidos(referidor_id);
 create index if not exists idx_referidos_referido on referidos(referido_id);
-create index if not exists idx_retiros_usuario on retiros(usuario_id);
-create index if not exists idx_retiros_estado on retiros(estado);
+create index if not exists idx_retiros_usuario on retiros_wallet(usuario_id);
+create index if not exists idx_retiros_estado on retiros_wallet(estado);
 create index if not exists idx_perfiles_usuario on perfiles(usuario_id);
 create index if not exists idx_comandos_estado on comandos(estado);
 create index if not exists idx_comandos_pcbot on comandos(pcbot_id);
@@ -259,6 +333,12 @@ create index if not exists idx_urls_streamer on urls_asignadas(streamer);
 create index if not exists idx_urls_estado on urls_asignadas(estado);
 create index if not exists idx_sesiones_activas_perfil on sesiones_activas(perfil_id);
 create index if not exists idx_eventos_pcbot on eventos_seguridad(pcbot_id);
+create index if not exists idx_computadoras_usuario on computadoras(usuario_id);
+create index if not exists idx_computadoras_pcbot on computadoras(pcbot_id);
+create index if not exists idx_apikeys_usuario on apikeys_roxybrowser(usuario_id);
+create index if not exists idx_apikeys_computadora on apikeys_roxybrowser(computadora_id);
+create index if not exists idx_perfiles_ext_computadora on perfiles_roxy_ext(computadora_id);
+create index if not exists idx_personas_dni on personas(dni);
 """
 
 
@@ -272,7 +352,13 @@ def init_db():
     migraciones = [
         ("usuarios", "roxy_api_key", "text default ''"),
         ("usuarios", "roxy_workspace_id", "text default ''"),
+        ("usuarios", "persona_id", "integer references personas(id)"),
         ("mensajes", "asunto", "text default ''"),
+        ("perfiles", "workspace_id", "text default ''"),
+        ("perfiles", "hash_id", "text default ''"),
+        ("perfiles", "name_id", "text default ''"),
+        ("perfiles", "total_perfiles_roxy", "integer default 0"),
+        ("perfiles", "computadora_id", "integer"),
     ]
     for tabla, columna, tipo in migraciones:
         try:
@@ -291,9 +377,9 @@ def init_db():
     )
     # insertar etapas genesis si no existen (15M tokens)
     etapas_genesis = [
-        (1, 1, 0.100, 0, "2026-06-01"),   # 10% etapa 1
-        (2, 2, 0.070, 0, "2026-09-01"),   # 7%
-        (3, 3, 0.060, 0, "2026-12-01"),   # 6%
+        (1, 1, 0.100, 0, "2026-06-01"),
+        (2, 2, 0.070, 0, "2026-09-01"),
+        (3, 3, 0.060, 0, "2026-12-01"),
         (4, 4, 0.060, 0, "2027-03-01"),
         (5, 5, 0.050, 0, "2027-06-01"),
         (6, 6, 0.050, 0, "2027-09-01"),
@@ -361,42 +447,10 @@ def ejecutar_insercion(sql: str, params: tuple = ()) -> int:
     last_id = cursor.lastrowid
     conn.close()
     return last_id
+
+
 def obtener_todas_variables():
     conn = get_db()
     rows = conn.execute("SELECT clave, valor FROM variables_globales").fetchall()
     conn.close()
     return {row["clave"]: row["valor"] for row in rows}
-
-# Agregar columnas para roxybrowser (si no existen)
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN workspace_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN hash_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN name_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN total_perfiles_roxy INTEGER DEFAULT 0")
-except: pass
-try:
-    db.execute("CREATE TABLE IF NOT EXISTS perfiles_roxy (id INTEGER PRIMARY KEY AUTOINCREMENT, perfil_id INTEGER, nombre TEXT, estado TEXT)")
-except: pass
-
-# Agregar columnas para roxybrowser (si no existen)
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN workspace_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN hash_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN name_id TEXT DEFAULT ''")
-except: pass
-try:
-    db.execute("ALTER TABLE perfiles ADD COLUMN total_perfiles_roxy INTEGER DEFAULT 0")
-except: pass
-try:
-    db.execute("CREATE TABLE IF NOT EXISTS perfiles_roxy (id INTEGER PRIMARY KEY AUTOINCREMENT, perfil_id INTEGER, nombre TEXT, estado TEXT)")
-except: pass

@@ -20,11 +20,12 @@ except ImportError:
 
 # rutas: scripts/ para shs, raiz pcbot_clon/ para cargador_secretos
 _script_dir = os.path.dirname(os.path.abspath(__file__))
-_root_dir = os.path.abspath(os.path.join(_script_dir, ".."))
+_api_dir = os.path.abspath(os.path.join(_script_dir, ".."))
+_root_dir = os.path.abspath(os.path.join(_api_dir, ".."))
 if _root_dir not in sys.path:
     sys.path.insert(0, _root_dir)
-if _script_dir not in sys.path:
-    sys.path.insert(0, _script_dir)
+if _api_dir not in sys.path:
+    sys.path.insert(0, _api_dir)
 
 import cargador_secretos
 
@@ -59,11 +60,6 @@ class WSClient:
         self._reconnect_task = None
         self._intentos_ws = 0
         self._max_intentos_ws = 999999
-
-    def configurar_secreto(self, secreto: str):
-        """almacena el secreto shs (no usado en conexiones planas pero necesario para compatibilidad)."""
-        self._secreto_shs = secreto
-        logger.info("secreto shs configurado para autenticacion")
 
     def set_handshake(self, data: dict):
         self.handshake_data = data
@@ -178,10 +174,10 @@ class WSClient:
             "perfiles_roxy": hd.get("perfiles_roxy", []),
             "perfiles_vip": hd.get("perfiles_vip", []),
             "navegadores": hd.get("navegadores", []),
-            "modo": hd.get("modo", self.modo),
+            "modo": hd.get("modo", self.modo), "workspace_id": hd.get("workspace_id", self.pcbot_id),
         }
         await self._send_plano(payload)
-        logger.info("identify enviado a pcmaster")
+        logger.info("handshake enviado (plano)")
 
     # --------------------------------------------------------------
     # loop: heartbeat + recv
@@ -225,7 +221,9 @@ class WSClient:
                 "modo": self.modo,
                 "conectado_desde": _utc_now(),
             }
-            payload.update(self._hb_extra)
+            payload["perfiles_roxy"] = self.handshake_data.get("perfiles_roxy", [])
+        payload["navegadores"] = self.handshake_data.get("navegadores", [])
+        payload.update(self._hb_extra)
             await self._send_plano(payload)
         except Exception as e:
             logger.debug(f"error enviando heartbeat: {e}")
@@ -240,20 +238,27 @@ class WSClient:
             logger.warning("mensaje json invalido recibido")
             return
 
-        tipo = data.get("tipo", "")
-
+                tipo = data.get("tipo", "")
         if tipo == "identify_ok":
             logger.info("identify_ok recibido de pcmaster")
             return
-
         if tipo == "error":
             logger.warning(f"error del servidor: {data.get('mensaje', 'sin detalle')}")
             return
-
         if tipo == "ack":
             logger.debug("ack recibido del servidor")
             return
-
+        if tipo == "nueva_api_key":
+            api_key = data.get("api_key", "")
+            if api_key and self.on_command:
+                await self.on_command(data)
+            return
+        if tipo == "heartbeat_ack":
+            api_keys = data.get("api_keys_pendientes", [])
+            for ak in api_keys:
+                if self.on_command:
+                    await self.on_command({"tipo": "nueva_api_key", "api_key": ak})
+            return
         if self.on_command:
             try:
                 await self.on_command(data)

@@ -15,8 +15,9 @@ router = APIRouter(prefix="/api", tags=["public_perfiles"])
 # modelos
 # ---------------------------------------------------------------------------
 class CrearPerfilRequest(BaseModel):
-    nombre: str
+    nombre: Optional[str] = None
     tipo: str = "local"
+    api_key: Optional[str] = None
 
 
 class ActualizarPerfilRequest(BaseModel):
@@ -56,18 +57,20 @@ async def api_crear_perfil(
     """crea un nuevo perfil para el usuario."""
     usuario_id = sesion["usuario_id"]
 
-    if not req.nombre or not req.nombre.strip():
-        return {"exito": False, "mensaje": "nombre es requerido"}
+    # si viene api_key usarla como nombre (compatibilidad con modal roxybrowser)
+    nombre_perfil = (req.nombre or req.api_key or "").strip()
+    if not nombre_perfil:
+        return {"exito": False, "mensaje": "nombre o api_key es requerido"}
 
     id_nuevo = ejecutar_insercion(
         "insert into perfiles (usuario_id, nombre_perfil, tipo, estado) "
         "values (?, ?, ?, 'inactivo')",
-        (usuario_id, req.nombre.strip(), req.tipo),
+        (usuario_id, nombre_perfil, req.tipo),
     )
     return {
         "exito": True,
         "id": id_nuevo,
-        "mensaje": f"perfil '{req.nombre}' creado",
+        "mensaje": f"perfil '{nombre_perfil}' creado",
     }
 
 
@@ -128,6 +131,15 @@ async def api_eliminar_perfil(
         (perfil_id, usuario_id),
     )
     return {"exito": True, "mensaje": "perfil eliminado"}
+
+
+@router.post("/perfiles/{perfil_id}/eliminar")
+async def api_eliminar_perfil_post(
+    perfil_id: int,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """alias POST para eliminar perfil (compatibilidad frontend)."""
+    return await api_eliminar_perfil(perfil_id, sesion)
 
 
 @router.post("/perfiles/{perfil_id}/iniciar")

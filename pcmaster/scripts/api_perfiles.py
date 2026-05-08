@@ -10,7 +10,7 @@ from orchestrator import enviar_comando_pcbot  # se creará después
 router = APIRouter(prefix="/api/perfiles", tags=["perfiles"])
 
 class CrearPerfilRequest(BaseModel):
-    api_key_roxy: str
+    api_key: str
 
 class ActualizarDesdeRoxyRequest(BaseModel):
     usuario_id: int
@@ -28,7 +28,7 @@ async def api_crear_perfil(req: CrearPerfilRequest, sesion: dict = Depends(verif
     # Insertar registro temporal en tabla perfiles
     db.execute(
         "INSERT INTO perfiles (usuario_id, nombre_perfil, tipo, estado) VALUES (?, ?, ?, ?)",
-        (usuario_id, req.api_key_roxy, "roxybrowser", "consultando")
+        (usuario_id, req.api_key, "roxybrowser", "consultando")
     )
     perfil_id = db.lastrowid
     db.commit()
@@ -36,7 +36,7 @@ async def api_crear_perfil(req: CrearPerfilRequest, sesion: dict = Depends(verif
     # Enviar comando al pcbot del usuario
     comando = {
         "accion": "consultar_roxybrowser",
-        "api_key": req.api_key_roxy,
+        "api_key": req.api_key,
         "perfil_id": perfil_id,
         "usuario_id": usuario_id
     }

@@ -1,0 +1,116 @@
+{
+  "fase": 2,
+  "resultados": [
+    {
+      "paso": "admin encontrado",
+      "estado": "ok",
+      "detalle": "id=1, rol=admin"
+    },
+    {
+      "paso": "login admin",
+      "estado": "ok",
+      "detalle": "dashboard admin cargado: bienvenido de vuelta"
+    },
+    {
+      "paso": "kpi usuarios",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi pcbots",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi tokens",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi pedidos",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi perfiles",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi ingresos",
+      "estado": "fallo",
+      "detalle": "tarjeta no encontrada"
+    },
+    {
+      "paso": "kpi interactivas",
+      "estado": "ok",
+      "detalle": "todas las tarjetas probadas"
+    },
+    {
+      "paso": "filtro usuarios",
+      "estado": "fallo",
+      "detalle": "input filtro no encontrado"
+    },
+    {
+      "paso": "boton nuevo usuario",
+      "estado": "ok",
+      "detalle": "visible"
+    },
+    {
+      "paso": "forzar desconexion",
+      "estado": "aviso",
+      "detalle": "sin perfiles activos, boton no presente"
+    },
+    {
+      "paso": "pcs",
+      "estado": "ok",
+      "detalle": "tabla pcs visible: False"
+    },
+    {
+      "paso": "sesiones",
+      "estado": "ok",
+      "detalle": "sin sesiones que cerrar (solo admin activo)"
+    },
+    {
+      "paso": "botones retiros",
+      "estado": "aviso",
+      "detalle": "sin retiros pendientes"
+    },
+    {
+      "paso": "enviar mensaje",
+      "estado": "ok",
+      "detalle": "intento de envio ejecutado"
+    },
+    {
+      "paso": "tokenomia",
+      "estado": "ok",
+      "detalle": "tab tokenomia cargada"
+    },
+    {
+      "paso": "seguridad",
+      "estado": "ok",
+      "detalle": "tab seguridad cargada"
+    },
+    {
+      "paso": "monitoreo",
+      "estado": "ok",
+      "detalle": "tab monitoreo cargada"
+    },
+    {
+      "paso": "cerrar sesion admin",
+      "estado": "aviso",
+      "detalle": "boton Salir no encontrado (navegacion lateral?)"
+    },
+    {
+      "paso": "limpieza",
+      "estado": "aviso",
+      "detalle": "admin original no se elimina, solo se revierte"
+    },
+    {
+      "paso": "limpiar mensajes",
+      "estado": "ok",
+      "detalle": "mensajes de prueba eliminados"
+    }
+  ],
+  "timestamp": "2026-05-05T22:05:09.868912"
+}

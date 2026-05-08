@@ -1,0 +1,7 @@
+[20260508_072243] ACTUALIZACIÓN ws_client.py
+- Se añadió heartbeat periódico cada s.
+- Se agregó manejo de 'nueva_api_key' y 'heartbeat_ack'.
+- Se delegó la consulta a RoxyBrowserAPI (roxybrowser_api.py).
+- Archivo validado: 120 líneas.
+- Backup guardado en: C:\Users\PCMASTER\Desktop\roxymaster\_backups\ws_client_backup_20260508_072243.py
+- Índice actualizado: C:\Users\PCMASTER\Desktop\roxymaster\pcbot\scripts\api\INDICE.txt

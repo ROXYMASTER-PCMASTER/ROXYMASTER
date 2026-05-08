@@ -46,6 +46,38 @@ antes de escribir codigo nuevo para cualquier tarea, ejecuta este diagnostico en
 3. responde solo: "toolkit: [n] piezas | adaptar: [b] lineas | desde cero: [a] lineas | decision: [usar toolkit / codificar nuevo]".
 si la tarea es trivial (1 endpoint simple, 1 script <30 lineas), omite el diagnostico y codifica directo.
 
+# ROXYMASTER RULESET
+
+# arquitectura
+system = async_only
+forbidden = threading_core
+max_file_lines = 400
+
+# seguridad cambios
+before_edit_server = snapshot_required
+before_edit_db = snapshot_required
+before_edit_ws = snapshot_required
+
+# async control
+create_task = must_be_tracked
+while_true = must_have_break_condition
+
+# websocket
+ws_timeout_required = true
+ws_cleanup_required = true
+
+# base de datos
+sqlite_single_writer = true
+
+# auditoria obligatoria
+before_deploy = run_toolkit
+
+# errores
+error_repeat_3 = stop_and_report
+
+# estructura
+split_large_files = core/ext
+
 ## git push - unica y exclusivamente pcmaster/
 - cualquier operacion git push sobre el repositorio remoto (origin) solo debe incluir archivos dentro de C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\.
 - nunca trackear, committear ni pushear archivos fuera de pcmaster/ (como afuera/, REGLAS_ROXYMASTER.md de la raiz, ni ningun otro).
@@ -58,3 +90,27 @@ si la tarea es trivial (1 endpoint simple, 1 script <30 lineas), omite el diagno
   2. git commit -m "backup automatico antes de push" (primer commit backup)
   3. git push origin main (segundo paso, envio al remoto)
 - el commit backup SIEMPRE va primero, el push va despues. nunca se pushea sin haber hecho el commit backup primero.
+async=true
+no_threading=true
+
+rule: before_modify_server.py -> snapshot_required=true
+rule: file_lines>400 -> split(core/ext)
+
+websocket:
+- timeout_required=true
+- cleanup_required=true
+
+async_tasks:
+- create_task_must_be_tracked=true
+
+loops:
+- while_true_requires_guard=true
+
+db:
+- sqlite_single_entry_control=true
+
+deploy:
+- run_audit_required=true
+
+error_control:
+- repeat_error_3x -> stop_and_report=true
