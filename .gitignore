@@ -1,0 +1,13 @@
+# secretos y configuraciones locales
+pcbot/data/secrets/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+
+# logs y temporales
+*.log
+*.bak
+*.tmp
+*.temp

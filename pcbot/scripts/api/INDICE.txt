@@ -1,0 +1,10 @@
+﻿MÓDULOS DE API EN PCBOT
+========================
+- roxybrowser_api.py : Cliente HTTP para la API local de RoxyBrowser (RoxyBrowserAPI).
+- ws_client.py       : Cliente WebSocket con heartbeat y manejo de API keys.
+  Funciones clave:
+    conectar_ws(loop)  -> inicia la conexión y el bucle de mensajes.
+    heartbeat_loop     -> envía heartbeat cada HEARTBEAT_INTERVAL.
+    procesar_mensaje   -> maneja 'nueva_api_key' y 'heartbeat_ack'.
+    procesar_api_key   -> obtiene perfiles de RoxyBrowser y los registra.
+- __init__.py : Inicialización del paquete.

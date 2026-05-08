@@ -1,0 +1,15 @@
+﻿ROXYMASTER - Repositorio PCBot (CYBER)
+======================================
+Esta carpeta contiene solo los archivos del agente PCBot.
+
+Estructura:
+- pcbot/                   → código fuente y configuración del agente
+- .gitignore               → exclusiones de Git
+- .clinerules              → reglas para el asistente de desarrollo
+- LEEME.txt                → este archivo
+
+Las reglas completas del proyecto se encuentran en el repositorio:
+https://github.com/ROXYMASTER-PCMASTER/ROXYMASTER/blob/main/REGLAS_ROXYMASTER.md
+
+Carpetas de respaldo y bitácoras están en:
+C:\Users\CYBER\Desktop\backups_pcbot
