@@ -35,17 +35,53 @@ class IniciarPerfilRequest(BaseModel):
 # ---------------------------------------------------------------------------
 @router.get("/perfiles")
 async def api_listar_perfiles(sesion: dict = Depends(verificar_token_dependencia)):
-    """lista todos los perfiles del usuario autenticado."""
+    """lista todos los perfiles del usuario autenticado, agrupados por computadora."""
     usuario_id = sesion["usuario_id"]
-    perfiles = ejecutar_sql(
-        "select id, nombre_perfil, tipo, estado, ip_wan, "
-        "horas_conexion, horas_en_uso, horas_hh "
-        "from perfiles where usuario_id = ? order by id",
+
+    # validar que el usuario existe
+    usuario = ejecutar_sql_unico(
+        "select id from usuarios where id = ?", (usuario_id,)
+    )
+    if not usuario:
+        return {"exito": False, "mensaje": "usuario no encontrado"}
+
+    # obtener todas las computadoras del usuario
+    computadoras = ejecutar_sql(
+        "select pcbot_id, hostname, ip_wan, ip_local, estado "
+        "from computadoras where usuario_id = ?",
         (usuario_id,),
     )
+
+    # agrupar perfiles por pcbot_id
+    resultado = []
+    for pc in computadoras:
+        pcbot_id = pc["pcbot_id"]
+        perfiles = ejecutar_sql(
+            "select id, nombre_perfil, tipo, estado, ip_wan, "
+            "horas_conexion, horas_en_uso, horas_hh, hash_id, workspace_id "
+            "from perfiles where usuario_id = ? and pcbot_id = ? order by id",
+            (usuario_id, pcbot_id),
+        )
+        total = len(perfiles)
+        activos = sum(1 for p in perfiles if p["estado"] == "activo")
+        inactivos = total - activos
+
+        resultado.append({
+            "pcbot_id": pcbot_id,
+            "hostname": pc["hostname"] or pcbot_id,
+            "ip_wan": pc["ip_wan"] or "",
+            "ip_local": pc["ip_local"] or "",
+            "estado_pc": pc["estado"] or "desconocido",
+            "total_perfiles": total,
+            "activos": activos,
+            "inactivos": inactivos,
+            "perfiles": [dict(p) for p in perfiles],
+        })
+
     return {
         "exito": True,
-        "perfiles": [dict(p) for p in perfiles],
+        "computadoras": resultado,
+        "total_global": sum(pc["total_perfiles"] for pc in resultado),
     }
 
 

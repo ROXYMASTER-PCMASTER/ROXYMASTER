@@ -7,7 +7,7 @@ from api_auth import verificar_token_dependencia
 from db import get_db
 from orchestrator import enviar_comando_pcbot  # se creará después
 
-router = APIRouter(prefix="/api/perfiles", tags=["perfiles"])
+router = APIRouter(prefix="/api/admin", tags=["admin_perfiles"])
 
 class CrearPerfilRequest(BaseModel):
     api_key: str

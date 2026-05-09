@@ -26,11 +26,22 @@ async def api_actualizar_roxy_key(
     """actualiza la roxy_api_key y roxy_workspace_id del usuario autenticado."""
     try:
         usuario_id = sesion["usuario_id"]
+        pcbot_id = sesion.get("pcbot_id", "")
         ejecutar_sql(
             "update usuarios set roxy_api_key = ?, roxy_workspace_id = ? where id = ?",
             (req.roxy_api_key, req.roxy_workspace_id, usuario_id),
         )
-        logger.info(f"roxy_api_key actualizada para usuario {usuario_id}")
+        # actualizar tambien en tabla computadoras
+        if pcbot_id:
+            ejecutar_sql(
+                "insert into computadoras (pcbot_id, usuario_id, api_key_roxy, workspace_id, estado, ultima_conexion) "
+                "values (?, ?, ?, ?, 'activa', datetime('now','localtime')) "
+                "on conflict(pcbot_id) do update set "
+                "api_key_roxy=excluded.api_key_roxy, workspace_id=excluded.workspace_id, "
+                "estado='activa', ultima_conexion=excluded.ultima_conexion, usuario_id=excluded.usuario_id",
+                (pcbot_id, usuario_id, req.roxy_api_key, req.roxy_workspace_id),
+            )
+        logger.info(f"roxy_api_key actualizada para usuario {usuario_id}, pcbot_id={pcbot_id}")
         return {"exito": True, "mensaje": "roxy api key actualizada"}
     except Exception as e:
         logger.error(f"error al actualizar roxy_key: {e}")

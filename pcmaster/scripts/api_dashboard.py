@@ -197,64 +197,87 @@ async def api_mis_pcs(sesion: dict = Depends(verificar_token_dependencia)):
 
 @router.get("/mis_perfiles")
 async def api_mis_perfiles(sesion: dict = Depends(verificar_token_dependencia)):
-    """lista los perfiles del usuario autenticado con progreso de 62 min y sus pcs."""
+    """lista los perfiles del usuario autenticado agrupados por computadora, con progreso de 62 min."""
     usuario_id = sesion["usuario_id"]
 
-    perfiles = ejecutar_sql(
-        "select id, nombre_perfil, tipo, estado, horas_conexion, horas_en_uso, "
-        "ultimo_heartbeat from perfiles where usuario_id = ?",
+    # validar que el usuario existe
+    usuario = ejecutar_sql_unico(
+        "select id from usuarios where id = ?", (usuario_id,)
+    )
+    if not usuario:
+        return {"exito": False, "mensaje": "usuario no encontrado"}
+
+    # obtener todas las computadoras del usuario
+    computadoras = ejecutar_sql(
+        "select pcbot_id, hostname, ip_wan, ip_local, estado "
+        "from computadoras where usuario_id = ?",
         (usuario_id,),
     )
 
     resultado = []
+    total_global = 0
     ciclo_minutos = 62
 
-    for p in perfiles:
-        progreso = 0
-        if p["ultimo_heartbeat"] and p["estado"] == "activo":
-            try:
-                from datetime import datetime
-                last = datetime.strptime(p["ultimo_heartbeat"], "%Y-%m-%d %H:%M:%S")
-                ahora = datetime.now()
-                diff_min = (ahora - last).total_seconds() / 60.0
-                if diff_min < ciclo_minutos:
-                    progreso = round((diff_min / ciclo_minutos) * 100, 1)
-                else:
-                    progreso = 100.0
-            except (ValueError, TypeError):
-                progreso = 0
+    for pc in computadoras:
+        pcbot_id = pc["pcbot_id"]
+        perfiles = ejecutar_sql(
+            "select id, nombre_perfil, tipo, estado, horas_conexion, horas_en_uso, "
+            "ultimo_heartbeat, hash_id, workspace_id "
+            "from perfiles where usuario_id = ? and pcbot_id = ? order by id",
+            (usuario_id, pcbot_id),
+        )
+
+        perfiles_procesados = []
+        for p in perfiles:
+            progreso = 0
+            if p["ultimo_heartbeat"] and p["estado"] == "activo":
+                try:
+                    from datetime import datetime
+                    last = datetime.strptime(p["ultimo_heartbeat"], "%Y-%m-%d %H:%M:%S")
+                    ahora = datetime.now()
+                    diff_min = (ahora - last).total_seconds() / 60.0
+                    if diff_min < ciclo_minutos:
+                        progreso = round((diff_min / ciclo_minutos) * 100, 1)
+                    else:
+                        progreso = 100.0
+                except (ValueError, TypeError):
+                    progreso = 0
+
+            perfiles_procesados.append({
+                "id": p["id"],
+                "nombre_perfil": p["nombre_perfil"],
+                "tipo": p["tipo"],
+                "estado": p["estado"],
+                "horas_conexion": p["horas_conexion"] or 0,
+                "horas_en_uso": p["horas_en_uso"] or 0,
+                "ultimo_heartbeat": p["ultimo_heartbeat"] or "",
+                "progreso_62min": progreso,
+                "hash_id": p["hash_id"] or "",
+                "workspace_id": p["workspace_id"] or "",
+            })
+
+        total = len(perfiles_procesados)
+        activos = sum(1 for p in perfiles_procesados if p["estado"] == "activo")
+        inactivos = total - activos
+        total_global += total
 
         resultado.append({
-            "id": p["id"],
-            "nombre_perfil": p["nombre_perfil"],
-            "tipo": p["tipo"],
-            "estado": p["estado"],
-            "horas_conexion": p["horas_conexion"] or 0,
-            "horas_en_uso": p["horas_en_uso"] or 0,
-            "ultimo_heartbeat": p["ultimo_heartbeat"] or "",
-            "progreso_62min": progreso,
+            "pcbot_id": pcbot_id,
+            "hostname": pc["hostname"] or pcbot_id,
+            "ip_wan": pc["ip_wan"] or "",
+            "ip_local": pc["ip_local"] or "",
+            "estado_pc": pc["estado"] or "desconocido",
+            "total_perfiles": total,
+            "activos": activos,
+            "inactivos": inactivos,
+            "perfiles": perfiles_procesados,
         })
 
-    # obtener pcs del usuario desde la tabla usuarios
-    pcs = []
-    usuario = ejecutar_sql_unico(
-        "select id, pcbot_id, modo, uptime_horas from usuarios where id = ?",
-        (usuario_id,),
-    )
-    if usuario and usuario["pcbot_id"]:
-        rows = ejecutar_sql(
-            "select count(*) as total from perfiles where usuario_id = ?",
-            (usuario_id,),
-        )
-        total = rows[0]["total"] if rows else 0
-        pcs.append({
-            "pcbot_id": usuario["pcbot_id"],
-            "modo": usuario["modo"],
-            "perfiles_activos": total,
-            "uptime_horas": usuario["uptime_horas"] or 0,
-        })
-
-    return {"exito": True, "perfiles": resultado, "pcs": pcs}
+    return {
+        "exito": True,
+        "computadoras": resultado,
+        "total_global": total_global,
+    }
 
 
 @router.get("/mis_referidos")

@@ -359,6 +359,7 @@ def init_db():
         ("perfiles", "name_id", "text default ''"),
         ("perfiles", "total_perfiles_roxy", "integer default 0"),
         ("perfiles", "computadora_id", "integer"),
+        ("perfiles", "pcbot_id", "text default ''"),
     ]
     for tabla, columna, tipo in migraciones:
         try:

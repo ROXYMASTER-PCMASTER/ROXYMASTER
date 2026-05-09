@@ -6,3 +6,5 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8086 (Press CTRL+C to quit)
 INFO:     100.85.100.109:57195 - "WebSocket /ws/desconocido" [accepted]
 INFO:     connection open
+INFO:     100.85.100.109:57988 - "WebSocket /ws/desconocido" [accepted]
+INFO:     connection open
