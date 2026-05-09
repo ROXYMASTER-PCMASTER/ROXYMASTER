@@ -10,3 +10,16 @@
 2026-05-09 11:39:58,849 [roxymaster.server] INFO: pcbot conectado via ws: desconocido
 INFO:     127.0.0.1:54643 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54644 - "POST /api/recargar_perfiles HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54872 - "GET /publico/dashboard_publico.html?tab=perfiles HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54872 - "GET /publico/perfiles.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54872 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54872 - "GET /api/perfiles HTTP/1.1" 200 OK
+INFO:     181.176.72.212:0 - "GET /publico/dashboard_publico.html?tab=perfiles HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /publico/perfiles.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.212:0 - "GET /api/perfiles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55282 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55338 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55339 - "GET /dashboard/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55378 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55379 - "GET /dashboard/ HTTP/1.1" 404 Not Found
