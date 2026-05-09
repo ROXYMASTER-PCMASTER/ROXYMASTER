@@ -1,8 +1,8 @@
-Traceback (most recent call last):
-  File "C:\Users\PCMASTER\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "C:\Users\PCMASTER\AppData\Local\Programs\Python\Python310\lib\runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\scripts\server.py", line 18, in <module>
-    from config_loader import cargar_configuracion
-ModuleNotFoundError: No module named 'config_loader'
+c:\Users\PCMASTER\Desktop\roxymaster\pcmaster\scripts\api_monitoreo.py:83: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  nivel: str = Query(None, regex="^(info|warn|error|debug)$"),
+INFO:     Started server process [13180]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8086 (Press CTRL+C to quit)
+INFO:     100.85.100.109:57195 - "WebSocket /ws/desconocido" [accepted]
+INFO:     connection open

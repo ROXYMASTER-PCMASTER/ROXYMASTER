@@ -681,3 +681,24 @@ async def enviar_comando_pcbot(usuario_id: int, comando: dict) -> bool:
     except:
         return False
 
+
+async def enviar_recargar_perfiles(pcbot_id: str, roxy_api_key: str) -> dict:
+    """envia comando recargar_perfiles a un pcbot especifico.
+    devuelve dict con exito y comando_id si se pudo enviar."""
+    if pcbot_id not in _conexiones_ws:
+        return {"exito": False, "error": "pcbot no conectado", "pcbot_id": pcbot_id}
+    comando_id = str(uuid.uuid4())[:12]
+    comando = {
+        "comando_id": comando_id,
+        "tipo": "recargar_perfiles",
+        "parametros": {"roxy_api_key": roxy_api_key},
+        "pcbot_id": pcbot_id,
+        "estado": "pendiente",
+    }
+    _cola_comandos[comando_id] = comando
+    try:
+        ok = await _enviar_a_pcbot(pcbot_id, comando)
+        return {"exito": ok, "comando_id": comando_id, "pcbot_id": pcbot_id}
+    except Exception as e:
+        return {"exito": False, "error": str(e), "pcbot_id": pcbot_id}
+

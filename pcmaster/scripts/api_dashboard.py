@@ -8,7 +8,8 @@ from api_auth import verificar_token_dependencia
 from auth import verificar_token
 from db import ejecutar_sql_unico, ejecutar_sql
 from tokenomics import obtener_balance as consultar_balance
-from orchestrator import listar_pcbots_conectados, listar_comandos_pendientes
+from orchestrator import listar_pcbots_conectados, listar_comandos_pendientes, enviar_recargar_perfiles
+from db import obtener_computadoras_por_usuario, guardar_perfiles
 from variables_globales import obtener_variables
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
@@ -402,4 +403,66 @@ async def api_modo_toggle(
         "modo_anterior": modo_actual,
         "modo_nuevo": nuevo_modo,
         "mensaje": f"modo cambiado a {nuevo_modo}",
+    }
+
+
+# ---- recargar perfiles desde roxybrowser ----
+class RecargarPerfilesRequest(BaseModel):
+    pcbot_id: str = ""
+
+
+@router.post("/recargar_perfiles")
+async def api_recargar_perfiles(
+    req: RecargarPerfilesRequest,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """solicita recarga de perfiles roxybrowser a las computadoras del usuario."""
+    usuario_id = sesion["usuario_id"]
+
+    # obtener computadoras del usuario
+    if req.pcbot_id:
+        # filtrar por pc especifica
+        computadoras = ejecutar_sql(
+            "select pcbot_id, api_key_roxy, estado from computadoras where usuario_id = ? and pcbot_id = ?",
+            (usuario_id, req.pcbot_id),
+        )
+    else:
+        # todas las computadoras del usuario
+        computadoras = obtener_computadoras_por_usuario(usuario_id)
+
+    if not computadoras:
+        return {"exito": False, "mensaje": "no tienes computadoras registradas", "computadoras": []}
+
+    resultados = []
+    for pc in computadoras:
+        pcbot_id = pc["pcbot_id"]
+        api_key = pc.get("api_key_roxy", "")
+
+        if not api_key:
+            resultados.append({
+                "pcbot_id": pcbot_id,
+                "estado": "sin_api_key",
+                "mensaje": "no hay api key configurada para esta computadora",
+            })
+            continue
+
+        envio = await enviar_recargar_perfiles(pcbot_id, api_key)
+        if envio.get("exito"):
+            resultados.append({
+                "pcbot_id": pcbot_id,
+                "estado": "enviado",
+                "comando_id": envio.get("comando_id", ""),
+                "mensaje": "comando enviado, esperando respuesta del agente",
+            })
+        else:
+            resultados.append({
+                "pcbot_id": pcbot_id,
+                "estado": "offline",
+                "mensaje": envio.get("error", "pcbot no conectado"),
+            })
+
+    return {
+        "exito": True,
+        "mensaje": f"comando enviado a {len(resultados)} computadora(s)",
+        "resultados": resultados,
     }

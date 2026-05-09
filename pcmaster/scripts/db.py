@@ -454,3 +454,43 @@ def obtener_todas_variables():
     rows = conn.execute("SELECT clave, valor FROM variables_globales").fetchall()
     conn.close()
     return {row["clave"]: row["valor"] for row in rows}
+
+
+def obtener_computadoras_por_usuario(usuario_id: int) -> list:
+    """devuelve todas las computadoras asociadas a un usuario."""
+    return ejecutar_sql(
+        "select pcbot_id, hostname, ip_wan, ip_local, api_key_roxy, estado "
+        "from computadoras where usuario_id = ?",
+        (usuario_id,),
+    )
+
+
+def guardar_perfiles(usuario_id: int, pcbot_id: str, perfiles: list, workspace_id: str = "") -> int:
+    """inserta o actualiza perfiles de roxybrowser.
+    devuelve cantidad de perfiles procesados."""
+    contador = 0
+    for perfil in perfiles:
+        hash_id = perfil.get("hash_id", perfil.get("dirId", ""))
+        nombre = perfil.get("nombre", perfil.get("name", ""))
+        username = perfil.get("userName", "")
+        estado = perfil.get("estado", perfil.get("state", "desconocido"))
+        horas = perfil.get("horas_conectado", 0) or 0
+
+        existente = ejecutar_sql_unico(
+            "select id from perfiles_roxy_ext where usuario_id = ? and hash_id = ?",
+            (usuario_id, hash_id),
+        )
+        if existente:
+            ejecutar_sql(
+                "update perfiles_roxy_ext set nombre=?, estado=?, ultima_sincronizacion=datetime('now','localtime') "
+                "where id=?",
+                (nombre, estado, existente["id"]),
+            )
+        else:
+            ejecutar_insercion(
+                "insert into perfiles_roxy_ext (usuario_id, hash_id, name_id, workspace_id, nombre, estado, "
+                "ultima_sincronizacion) values (?, ?, ?, ?, ?, ?, datetime('now','localtime'))",
+                (usuario_id, hash_id, username, workspace_id, nombre, estado),
+            )
+        contador += 1
+    return contador

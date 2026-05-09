@@ -1,0 +1,12 @@
+2026-05-09 11:39:57,483 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, computadoras
+2026-05-09 11:39:57,499 [roxymaster.server] INFO: iniciando servidor en 0.0.0.0:8086
+2026-05-09 11:39:57,683 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, computadoras
+2026-05-09 11:39:57,700 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
+2026-05-09 11:39:57,700 [roxymaster.server] INFO: configuracion cargada: puerto=8086
+2026-05-09 11:39:57,700 [roxymaster.server] INFO: base de datos inicializada: c:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
+2026-05-09 11:39:57,715 [roxymaster.tasks] INFO: registros de tareas inicializados
+2026-05-09 11:39:57,752 [roxymaster.server] INFO: tareas periodicas iniciadas
+2026-05-09 11:39:57,753 [roxymaster.tasks] INFO: iniciando tareas periodicas...
+2026-05-09 11:39:58,849 [roxymaster.server] INFO: pcbot conectado via ws: desconocido
+INFO:     127.0.0.1:54643 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54644 - "POST /api/recargar_perfiles HTTP/1.1" 401 Unauthorized
