@@ -1,10 +1,9 @@
 """
 roxymaster v8.3 - roxybrowser api (pcbot)
 cliente http para interactuar con la api interna de roxybrowser.
-el workspace_id se obtiene de config.json o se autodetecta.
+ahora soporta autenticacion por apikey (x-api-key header).
+el workspace_id se autodetecta o se recibe via api.
 con estrategia multi-endpoint por compatibilidad.
-roxybrowser v8.3 requiere workspaceId como query param en todos los endpoints,
-ademas del header X-Workspace-Id para compatibilidad.
 todo en minusculas, utf-8 sin bom.
 """
 
@@ -41,16 +40,33 @@ def find_workspace_id() -> str:
 
 class RoxyBrowserAPI:
     """cliente http sincrono para la api de roxybrowser (127.0.0.1:50000).
-    soporta X-Workspace-Id header y workspaceId como query param.
+    soporta x-api-key para autenticacion, X-Workspace-Id header y workspaceId como query param.
     roxybrowser v8.3 requiere query param workspaceId en todos los endpoints."""
 
-    def __init__(self, api_url: str = "http://127.0.0.1:50000", workspace_id: str = ""):
+    def __init__(self, api_url: str = "http://127.0.0.1:50000", workspace_id: str = "", api_key: str = ""):
         self.base = api_url.rstrip("/")
         self.timeout = 5
         self._workspace_id = workspace_id or find_workspace_id()
+        self._api_key = api_key
+        self._last_raw_profiles = []  # cache del ultimo get_profiles
+
+    def set_api_key(self, api_key: str):
+        """configura la apikey de roxybrowser."""
+        self._api_key = api_key
+        logger.info("apikey de roxybrowser configurada")
+
+    def set_workspace_id(self, workspace_id: str):
+        """configura el workspace_id manualmente."""
+        self._workspace_id = workspace_id
+        logger.info(f"workspace_id configurado: {workspace_id}")
+
+    def get_api_key(self) -> str:
+        return self._api_key
 
     def _headers(self) -> dict:
         h = {}
+        if self._api_key:
+            h["x-api-key"] = self._api_key
         if self._workspace_id:
             h["X-Workspace-Id"] = self._workspace_id
         return h
@@ -93,6 +109,7 @@ class RoxyBrowserAPI:
         if self._workspace_id:
             resp, data = self._try_path(f"/api/browsers?workspaceId={self._workspace_id}")
             if resp and data:
+                self._last_raw_profiles = data
                 return data
 
         for path, desc in rutas:
@@ -101,11 +118,13 @@ class RoxyBrowserAPI:
             resp, data = self._try_path(path)
             if resp and data:
                 logger.info(f"perfiles obtenidos via {desc}: {len(data)}")
+                self._last_raw_profiles = data
                 return data
             elif resp is not None:
                 continue
 
         logger.warning("no se pudieron obtener perfiles de roxybrowser")
+        self._last_raw_profiles = []
         return []
 
     def _try_path(self, path: str) -> tuple:
@@ -145,6 +164,21 @@ class RoxyBrowserAPI:
         # error 400/404/500
         logger.debug(f"roxybrowser {path} -> status {resp.status_code}")
         return resp, []
+
+    def get_profiles_detallados(self) -> list:
+        """obtiene perfiles con campos completos: id, name, hash_interno, workspace, status.
+        utl para enviar al servidor cuando se configura la apikey."""
+        perfiles = self.get_profiles()
+        result = []
+        for p in perfiles:
+            result.append({
+                "id": str(p.get("id", "")),
+                "name": p.get("name", p.get("nombre", "")),
+                "hash_interno": p.get("hash_interno", p.get("hash", "")),
+                "workspace": p.get("workspace", p.get("workspace_id", self._workspace_id)),
+                "status": p.get("status", p.get("estado", "unknown")),
+            })
+        return result
 
     def get_profile_by_id(self, profile_id: str) -> dict | None:
         """obtiene un perfil por su id."""

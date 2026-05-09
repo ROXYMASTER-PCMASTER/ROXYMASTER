@@ -2,6 +2,7 @@
 roxymaster v8.3 - orchestrator local (pcbot)
 ejecuta comandos recibidos de pcmaster via websocket.
 maneja open_url, detener, comentar, estado y comandos de sistema.
+include comando configurar_apikey para recibir apikey de roxybrowser desde pcmaster.
 todo en minusculas, utf-8 sin bom.
 """
 
@@ -27,6 +28,7 @@ class OrchestratorLocal:
         self._running_commands = {}
         self._command_history = []
         self._max_history = 50
+        self.ws_client = None  # se asigna desde main.py
 
     async def process_command(self, cmd: dict) -> dict:
         """procesa un comando entrante y devuelve resultado."""
@@ -54,6 +56,10 @@ class OrchestratorLocal:
             result = await self._cmd_cambiar_modo(params, cmd_id)
         elif cmd_type == "recargar_perfiles":
             result = await self._cmd_recargar(params, cmd_id)
+        elif cmd_type == "configurar_apikey":
+            result = await self._cmd_configurar_apikey(params, cmd_id)
+        elif cmd_type == "conexion":
+            result = await self._cmd_conexion(params, cmd_id)
         elif cmd_type == "ping":
             result = {"ok": True, "tipo": "pong", "ts": time.time()}
         else:
@@ -89,7 +95,6 @@ class OrchestratorLocal:
         resultados = []
         for pid in asignados:
             try:
-                # usar navigate_to que es el metodo real de profilemanager
                 success = await self.pm.navigate_to(pid, url)
                 if success:
                     p = self.pm.get_profile(pid)
@@ -182,12 +187,83 @@ class OrchestratorLocal:
             "mensaje": "comentarios activados (pendiente implementacion playwright)",
         }
 
+    async def _cmd_configurar_apikey(self, params: dict, cmd_id: str) -> dict:
+        """recibe apikey de roxybrowser desde pcmaster, configura la api
+        y devuelve los perfiles detectados con hash_interno, workspace, status."""
+        apikey = params.get("apikey", params.get("api_key", ""))
+        if not apikey:
+            return {"ok": False, "error": "apikey requerida"}
+
+        if self.roxy is None:
+            return {"ok": False, "error": "no hay api de roxybrowser configurada en el sistema"}
+
+        # configurar la apikey en roxybrowser api
+        self.roxy.set_api_key(apikey)
+
+        # probar conexion con la apikey
+        ping_ok = self.roxy.ping()
+        if not ping_ok:
+            return {
+                "ok": False,
+                "error": f"roxybrowser no responde con la apikey en {self.roxy.base}",
+                "apikey_configurada": True,
+                "roxy_ping": False,
+            }
+
+        # obtener perfiles detallados (id, name, hash_interno, workspace, status)
+        version = self.roxy.get_version()
+        workspace_id = self.roxy._workspace_id
+        perfiles_detallados = []
+        try:
+            perfiles_detallados = self.roxy.get_profiles_detallados()
+        except Exception as e:
+            logger.error(f"error obteniendo perfiles detallados: {e}")
+
+        resultado = {
+            "ok": True,
+            "tipo": "configurar_apikey",
+            "apikey_configurada": True,
+            "datos": {
+                "roxy_version": version,
+                "workspace_id": workspace_id,
+                "roxy_ping": True,
+                "perfiles_count": len(perfiles_detallados),
+                "perfiles": perfiles_detallados,
+                "base_url": self.roxy.base,
+            },
+        }
+
+        logger.info(f"apikey configurada: {len(perfiles_detallados)} perfiles detectados")
+
+        # registrar perfiles en profile manager
+        if perfiles_detallados and self.pm is not None:
+            try:
+                self.pm.register_profiles(perfiles_detallados)
+                logger.info(f"perfiles registrados en profilemanager: {len(perfiles_detallados)}")
+            except Exception as e:
+                logger.error(f"error registrando perfiles en pm: {e}")
+
+        return resultado
+
     async def _cmd_estado(self, params: dict, cmd_id: str) -> dict:
-        """devuelve estado completo del pcbot."""
+        """devuelve estado completo del pcbot, incluyendo heartbeat."""
         states = self.pm.get_all_states() if self.pm else {}
+        conexion_info = {}
+        if self.ws_client is not None:
+            try:
+                if hasattr(self.ws_client, 'get_conexion_status'):
+                    conexion_info = self.ws_client.get_conexion_status()
+                elif hasattr(self.ws_client, 'get_heartbeat_status'):
+                    conexion_info = {
+                        "pcbot_id": getattr(self.ws_client, 'pcbot_id', 'unknown'),
+                        "heartbeat": self.ws_client.get_heartbeat_status(),
+                    }
+            except Exception as e:
+                conexion_info = {"error": str(e)}
         return {
             "ok": True,
             "estado": {
+                "conexion": conexion_info,
                 "perfiles": {
                     "counts": states.get("counts", {}),
                     "profiles": {
@@ -200,6 +276,62 @@ class OrchestratorLocal:
                         for pid, p in self.pm.profiles.items()
                     } if self.pm else {},
                 },
+            },
+        }
+
+    async def _cmd_conexion(self, params: dict, cmd_id: str) -> dict:
+        """devuelve datos de roxybrowser y conexion para pcmaster."""
+        datos_roxy = {}
+        ping_ok = False
+        perfiles = []
+        version = "unknown"
+
+        if self.roxy is not None:
+            try:
+                ping_ok = self.roxy.ping()
+                if ping_ok:
+                    perfiles = self.roxy.get_profiles()
+                    version = self.roxy.get_version()
+                    datos_roxy = {
+                        "ping": ping_ok,
+                        "version": version,
+                        "perfiles_count": len(perfiles),
+                        "perfiles": [
+                            {
+                                "id": p.get("id", ""),
+                                "name": p.get("name", p.get("id", "")),
+                                "status": p.get("status", p.get("estado", "unknown")),
+                            }
+                            for p in perfiles[:50]
+                        ],
+                    }
+                else:
+                    datos_roxy = {"ping": False, "error": f"roxybrowser no responde en {self.roxy.base}"}
+            except Exception as e:
+                datos_roxy = {"ping": False, "error": str(e)}
+        else:
+            datos_roxy = {"ping": False, "error": "no hay api de roxybrowser configurada"}
+
+        estado_ws = {}
+        if self.ws_client is not None:
+            try:
+                if hasattr(self.ws_client, 'get_conexion_status'):
+                    estado_ws = self.ws_client.get_conexion_status()
+                elif hasattr(self.ws_client, 'get_heartbeat_status'):
+                    estado_ws = {
+                        "pcbot_id": getattr(self.ws_client, 'pcbot_id', 'unknown'),
+                        "heartbeat": self.ws_client.get_heartbeat_status(),
+                    }
+            except Exception as e:
+                estado_ws = {"error": str(e)}
+
+        return {
+            "ok": True,
+            "tipo": "conexion",
+            "datos": {
+                "roxybrowser": datos_roxy,
+                "ws": estado_ws,
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             },
         }
 
@@ -222,7 +354,6 @@ class OrchestratorLocal:
     async def _cmd_cambiar_modo(self, params: dict, cmd_id: str) -> dict:
         """cambia modo de operacion del pcbot."""
         modo = params.get("modo", "pidiendo_ordenes")
-        # el modo se maneja en ws_client, solo registrar
         logger.info(f"cambio de modo solicitado: {modo}")
         return {"ok": True, "modo": modo}
 

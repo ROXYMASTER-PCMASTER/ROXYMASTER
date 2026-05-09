@@ -25,7 +25,7 @@ from api.roxybrowser_api import RoxyBrowserAPI
 from core.profile_manager import ProfileManager, ProfileState
 from core.state_tracker import StateTracker
 from core.token_engine import TokenEngine
-from ws_client import WSClient
+from api.ws_client import WSClient
 import aiohttp
 from orchestrator_local import OrchestratorLocal
 
@@ -181,7 +181,6 @@ async def async_main():
         pcmaster_port=ws_puerto,
         pcbot_id=NOMBRE_PC,
     )
-    ws.configurar_secreto(secreto)
 
     ws.set_handshake({
         "pcbot_id": NOMBRE_PC,
@@ -218,10 +217,6 @@ async def async_main():
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     })
 
-    ws.token_engine_ref = te
-    ws.perfiles_roxy = roxy_profiles
-    ws.perfiles_vip = perfiles_vip
-
     # delegar todos los comandos al orchestrator
     async def on_command(cmd):
         global _modo_actual
@@ -236,6 +231,9 @@ async def async_main():
         return result
 
     ws.set_command_handler(on_command)
+
+    # pasar referencia ws al orchestrator para estado de heartbeat
+    orchestrator.ws_client = ws
 
     # iniciar ws en background
     ws_task = asyncio.create_task(ws.connect())
