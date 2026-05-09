@@ -16,7 +16,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 @keyframes avatarPulse{0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.4),0 0 40px rgba(0,255,136,0.2)}50%{box-shadow:0 0 30px rgba(124,58,237,0.6),0 0 60px rgba(0,255,136,0.3)}}
 .header-text{text-align:left}
 .header h1{font-size:1.85rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,#00ff88,#7c3aed,#ff6b35);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradientShift 4s ease-in-out infinite}
-.header h1::after{content:'\u25c6';font-size:0.5rem;vertical-align:super;margin-left:4px;-webkit-text-fill-color:#ff6b35}
 @keyframes gradientShift{0%,100%{background-position:0% center}50%{background-position:100% center}}
 .header .subtitle{font-size:0.9rem;color:#94a3b8;margin-top:0.3rem;max-width:500px;line-height:1.5;letter-spacing:0.3px}
 .header .subtitle span{color:#00ff88;font-weight:600}
@@ -43,26 +42,35 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .perfiles-section{max-width:1200px;margin:0 auto 2rem;padding:0 1.5rem}
 .perfiles-section h2{font-size:1.15rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem;background:linear-gradient(90deg,#00ff88,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .perfiles-table{width:100%;background:linear-gradient(145deg,#111133,#0f0f25);border-radius:16px;border:1px solid rgba(124,58,237,0.2);overflow:hidden}
-.pf-row{display:grid;grid-template-columns:0.8fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 1.5fr;padding:0.85rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.08);font-size:0.85rem;transition:background 0.3s;align-items:center}
+.pf-group{background:rgba(124,58,237,0.06);padding:0.75rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.15);display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 1.5rem;font-size:0.8rem}
+.pf-group .pcbot-id{font-weight:700;color:#a78bfa;font-size:0.9rem}
+.pf-group .stats{color:#94a3b8;font-size:0.75rem}
+.pf-group .stats span{color:#00ff88;font-weight:600}
+.pf-group .stats .inactive{color:#ff3366}
+.pf-row{display:grid;grid-template-columns:0.6fr 1fr 0.7fr 0.7fr 0.7fr 0.7fr 1.2fr;padding:0.7rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.08);font-size:0.82rem;transition:background 0.3s;align-items:center}
 .pf-row:hover{background:rgba(124,58,237,0.05)}
-.pf-row.header{color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.08);border-bottom:1px solid rgba(124,58,237,0.15)}
+.pf-row.header{color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.1);border-bottom:1px solid rgba(124,58,237,0.2);grid-template-columns:0.6fr 1fr 0.7fr 0.7fr 0.7fr 0.7fr 1.2fr}
+.pf-row.footer{color:#64748b;font-size:0.72rem;background:rgba(0,255,136,0.04);grid-template-columns:1fr;text-align:right;padding:0.5rem 1.25rem}
 .pf-estado{font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:8px;text-align:center;display:inline-block}
 .pf-estado.activo{background:rgba(0,255,136,0.1);color:#00ff88;border:1px solid rgba(0,255,136,0.2)}
 .pf-estado.inactivo{background:rgba(255,51,102,0.1);color:#ff3366;border:1px solid rgba(255,51,102,0.2)}
 .pf-tipo{color:#a78bfa;font-weight:600}
-.pf-nombre{color:#94a3b8}
+.pf-nombre{color:#94a3b8;word-break:break-all;font-family:'Courier New',monospace;font-size:0.75rem}
 .pf-horas{color:#94a3b8}
-.pf-ultimo{font-size:0.75rem;color:#64748b}
+.pf-ultimo{font-size:0.72rem;color:#64748b}
+.pf-hash{font-size:0.7rem;color:#484f58;font-family:'Courier New',monospace}
 @media(max-width:768px){
 .perfiles-summary{grid-template-columns:repeat(2,1fr);padding:1rem;gap:0.75rem}
-.pf-row{grid-template-columns:1fr 0.6fr 0.6fr 0.8fr 1fr;font-size:0.75rem;padding:0.7rem 1rem}
+.pf-row,.pf-row.header{grid-template-columns:1fr 0.8fr 0.6fr 0.6fr 0.8fr 1fr;font-size:0.72rem;padding:0.6rem 0.8rem}
+.pf-hash,.pf-ultimo{display:none}
 .header{padding:1.75rem 1rem 1.5rem}.header h1{font-size:1.45rem}.header-avatar{width:44px;height:44px;font-size:1.1rem}
 }
 @media(max-width:480px){
 .perfiles-summary{grid-template-columns:1fr}
 .header-content{flex-direction:column;text-align:center}.header-text{text-align:center}
-.pf-row{grid-template-columns:1fr 0.5fr 0.5fr 0.7fr 0.8fr;font-size:0.7rem;padding:0.6rem 0.75rem}
+.pf-row,.pf-row.header{grid-template-columns:1fr 0.6fr 0.5fr 0.5fr 0.7fr;font-size:0.68rem;padding:0.5rem 0.6rem}
 .pf-row.header{display:none}.perfiles-actions{flex-direction:column}
+.pf-hash,.pf-ultimo,.pf-tipo{display:none}
 }
 </style>
 </head>
@@ -97,9 +105,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 <div class="perfiles-section">
 <h2>lista de perfiles</h2>
 <div class="perfiles-table">
-<div class="pf-row header">
-<span>nombre</span><span>tipo</span><span>estado</span><span>horas</span><span>ultimo heartbeat</span>
-</div>
 <div id="pf-list">
 <div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">cargando perfiles...</div>
 </div>
@@ -198,34 +203,94 @@ async function cargarPerfiles() {
   try {
     const r = await ui.api.get('/perfiles');
     var list = document.getElementById('pf-list');
-    if (!r.exito || !r.perfiles || r.perfiles.length === 0) {
+    if (!r.exito || !r.computadoras || r.computadoras.length === 0) {
       list.innerHTML = '<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">no tienes perfiles vinculados. agrega uno para empezar a minar</div>';
       return;
     }
-    list.innerHTML = r.perfiles.map(function(pf) {
-      var est = (pf.estado || 'inactivo').toLowerCase();
-      var horas = parseFloat(pf.horas_conexion || 0).toFixed(1);
-      var ultimo = pf.ultimo_heartbeat || '---';
-      var id = pf.id;
-      var ws = pf.workspace_id || '---';
-      var hash = pf.hash_id || '---';
-      var name = pf.name_id || pf.nombre_perfil || '---';
-      var totalRoxy = pf.total_perfiles_roxy || 0;
-      return '<div class="pf-row">' +
-        '<span class="pf-nombre">' + name + '</span>' +
-        '<span class="pf-tipo">' + (pf.tipo || '---') + '</span>' +
-        '<span class="pf-estado ' + est + '">' + est + '</span>' +
-        '<span class="pf-horas">' + horas + 'h</span>' +
-        '<span class="pf-ultimo">' + ultimo + '</span>' +
-        '<span class="pf-ws">' + ws + '</span>' +
-        '<span class="pf-totroxy">' + totalRoxy + '</span>' +
-        '<span class="pf-acciones">' +
-          (est === 'inactivo' ? '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;margin-right:0.3rem;" onclick="iniciarPerfil(' + id + ')">iniciar</button>' : '') +
-          (est === 'activo' ? '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;margin-right:0.3rem;background:#ff3366;" onclick="detenerPerfil(' + id + ')">detener</button>' : '') +
-          '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;background:#ef4444;" onclick="eliminarPerfil(' + id + ')">eliminar</button>' +
-        '</span>' +
-        '</div>';
-    }).join('');
+
+    var totalActivosGlobal = 0;
+    var totalPerfilesGlobal = 0;
+    var totalHorasGlobal = 0;
+    var htmlPiezas = [];
+
+    r.computadoras.forEach(function(pc, idx) {
+      var pcId = pc.pcbot_id || 'pc-' + idx;
+      var activos = pc.activos || 0;
+      var inactivos = pc.inactivos || 0;
+      var totalPf = pc.total_perfiles || 0;
+      var horas = parseFloat(pc.horas_conectado || 0).toFixed(1);
+
+      totalActivosGlobal += activos;
+      totalPerfilesGlobal += totalPf;
+      totalHorasGlobal += parseFloat(pc.horas_conectado || 0);
+
+      // bloque visual de grupo pc
+      htmlPiezas.push(
+        '<div class="pf-group">' +
+          '<span class="pcbot-id">' + pcId + '</span>' +
+          '<span class="stats">' + totalPf + ' perfiles | ' +
+            '<span>' + activos + ' activos</span>' +
+            ' / <span class="inactive">' + inactivos + ' inactivos</span>' +
+          '</span>' +
+          '<span class="stats">horas conectado: ' + horas + 'h</span>' +
+        '</div>'
+      );
+
+      // fila header
+      htmlPiezas.push(
+        '<div class="pf-row header">' +
+          '<span>hash_id</span><span>nombre</span><span>tipo</span><span>estado</span><span>horas</span><span>ultimo heartbeat</span><span>accion</span>' +
+        '</div>'
+      );
+
+      // perfiles de esta pc
+      if (!pc.perfiles || pc.perfiles.length === 0) {
+        htmlPiezas.push(
+          '<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:0.8rem;">sin perfiles en esta pc</div>'
+        );
+      } else {
+        pc.perfiles.forEach(function(pf) {
+          var est = (pf.estado || 'inactivo').toLowerCase();
+          var nombre = pf.nombre_perfil || pf.name_id || '---';
+          var hash = pf.hash_id || '---';
+          var horasPf = parseFloat(pf.horas_conexion || 0).toFixed(1);
+          var ultimo = pf.ultimo_heartbeat || '---';
+          var id = pf.id;
+
+          htmlPiezas.push(
+            '<div class="pf-row">' +
+              '<span class="pf-hash">' + hash.substring(0, 16) + '...</span>' +
+              '<span class="pf-nombre">' + nombre + '</span>' +
+              '<span class="pf-tipo">' + (pf.tipo || 'roxy') + '</span>' +
+              '<span class="pf-estado ' + est + '">' + est + '</span>' +
+              '<span class="pf-horas">' + horasPf + 'h</span>' +
+              '<span class="pf-ultimo">' + ultimo + '</span>' +
+              '<span class="pf-acciones">' +
+                (est === 'inactivo' ? '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;margin-right:0.25rem;" onclick="iniciarPerfil(' + id + ')">iniciar</button>' : '') +
+                (est === 'activo' ? '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;margin-right:0.25rem;background:#ff3366;" onclick="detenerPerfil(' + id + ')">detener</button>' : '') +
+                '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;background:#ef4444;" onclick="eliminarPerfil(' + id + ')">eliminar</button>' +
+              '</span>' +
+            '</div>'
+          );
+        });
+      }
+
+      // footer del grupo
+      htmlPiezas.push(
+        '<div class="pf-row footer">' +
+          'total activos: ' + activos + ' | total perfiles: ' + totalPf +
+        '</div>'
+      );
+    });
+
+    // resumen global al final
+    htmlPiezas.push(
+      '<div class="pf-row footer" style="background:rgba(124,58,237,0.08);font-weight:600;color:#c9d1d9;">' +
+        'total global - activos: ' + totalActivosGlobal + ' | total perfiles: ' + totalPerfilesGlobal + ' | horas: ' + totalHorasGlobal.toFixed(1) + 'h' +
+      '</div>'
+    );
+
+    list.innerHTML = htmlPiezas.join('');
   } catch(e) {
     console.error('error cargando lista perfiles:', e);
   }

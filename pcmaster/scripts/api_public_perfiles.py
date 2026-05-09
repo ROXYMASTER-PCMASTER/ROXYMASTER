@@ -58,13 +58,15 @@ async def api_listar_perfiles(sesion: dict = Depends(verificar_token_dependencia
         pcbot_id = pc["pcbot_id"]
         perfiles = ejecutar_sql(
             "select id, nombre_perfil, tipo, estado, ip_wan, "
-            "horas_conexion, horas_en_uso, horas_hh, hash_id, workspace_id "
+            "horas_conexion, horas_en_uso, horas_hh, hash_id, workspace_id, "
+            "ultimo_heartbeat "
             "from perfiles where usuario_id = ? and pcbot_id = ? order by id",
             (usuario_id, pcbot_id),
         )
         total = len(perfiles)
         activos = sum(1 for p in perfiles if p["estado"] == "activo")
         inactivos = total - activos
+        horas_conectado = sum(float(p["horas_conexion"] or 0) for p in perfiles)
 
         resultado.append({
             "pcbot_id": pcbot_id,
@@ -75,6 +77,7 @@ async def api_listar_perfiles(sesion: dict = Depends(verificar_token_dependencia
             "total_perfiles": total,
             "activos": activos,
             "inactivos": inactivos,
+            "horas_conectado": horas_conectado,
             "perfiles": [dict(p) for p in perfiles],
         })
 
@@ -95,8 +98,12 @@ async def api_crear_perfil(
 
     # si viene api_key usarla como nombre (compatibilidad con modal roxybrowser)
     nombre_perfil = (req.nombre or req.api_key or "").strip()
-    if not nombre_perfil:
-        return {"exito": False, "mensaje": "nombre o api_key es requerido"}
+    if not nombre_perfil or len(nombre_perfil) < 4:
+        return {"exito": False, "mensaje": "nombre demasiado corto (minimo 4 caracteres)"}
+    if nombre_perfil.isdigit():
+        return {"exito": False, "mensaje": "el nombre no puede ser solo numeros"}
+    if len(nombre_perfil) >= 32 and "-" not in nombre_perfil:
+        return {"exito": False, "mensaje": "no se permite usar una api key como nombre"}
 
     id_nuevo = ejecutar_insercion(
         "insert into perfiles (usuario_id, nombre_perfil, tipo, estado) "
