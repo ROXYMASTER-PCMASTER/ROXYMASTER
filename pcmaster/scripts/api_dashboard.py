@@ -1,4 +1,4 @@
-# api_dashboard.py - router fastapi para dashboard y mi_estado. roxymaster v8.3
+﻿# api_dashboard.py - router fastapi para dashboard y mi_estado. roxymaster v8.3
 # todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
 from fastapi import APIRouter, Depends
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from api_auth import verificar_token_dependencia
 from auth import verificar_token
 from db import ejecutar_sql_unico, ejecutar_sql
-from tokenomics import obtener_balance as consultar_balance
+from variables_globales import obtener_variables
 from orchestrator import listar_pcbots_conectados, listar_comandos_pendientes, enviar_recargar_perfiles
 from db import obtener_computadoras_por_usuario, guardar_perfiles
 from variables_globales import obtener_variables
@@ -32,11 +32,14 @@ async def api_dashboard(sesion: dict = Depends(verificar_token_dependencia)):
     # balance real desde wallets con coalesce
     row_wallet = ejecutar_sql_unico(
         "select coalesce(balance, 0) as balance, coalesce(minado_total, 0) as minado_total, "
-        "coalesce(comprado_total, 0) as comprado_total from wallets where usuario_id = ?",
+        "coalesce(comprado_total, 0) as comprado_total, coalesce(retirado_total, 0) as retirado_total, "
+        "coalesce(balance_fiat, 0) as balance_fiat from wallets where usuario_id = ?",
         (usuario_id,),
     )
     balance = float(row_wallet["balance"]) if row_wallet else 0.0
     minado_total = float(row_wallet["minado_total"]) if row_wallet else 0.0
+    balance_fiat = float(row_wallet["balance_fiat"]) if row_wallet else 0.0
+    retirado_total = float(row_wallet["retirado_total"]) if row_wallet else 0.0
 
     # precio token desde variables_globales
     vars_sistema = obtener_variables()
@@ -61,6 +64,10 @@ async def api_dashboard(sesion: dict = Depends(verificar_token_dependencia)):
         perfiles_totales = row_perfiles_totales["total"]
 
     # kbt minados hoy
+    comprado_total = float(row_wallet["comprado_total"]) if row_wallet else 0.0
+    total_tokens = balance + minado_total + comprado_total
+    precio_token = float(obtener_variables().get("p_token", 1.0))
+    total_fiat = round(total_tokens * precio_token, 2)
     kbt_hoy = 0.0
     row_kbt = ejecutar_sql_unico(
         "select coalesce(sum(monto), 0) as total from transacciones "
@@ -96,11 +103,16 @@ async def api_dashboard(sesion: dict = Depends(verificar_token_dependencia)):
         "exito": True,
         "usuario": dict(usuario),
         "balance": balance,
+        "balance_fiat": balance_fiat,
         "saldo_pen": saldo_pen,
+        "precio_token": precio_token,
+        "total_tokens": total_tokens,
+        "total_fiat": total_fiat,
         "perfiles_activos": perfiles_activos,
         "perfiles_totales": perfiles_totales,
         "kbt_hoy": kbt_hoy,
         "kbt_total_minado": minado_total,
+        "retirado_total": retirado_total,
         "referidos_activos": referidos_activos,
         "referidos_totales": referidos_totales,
         "modo_actual": modo_actual,

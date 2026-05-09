@@ -81,22 +81,35 @@ async def api_comprar_kbt(
             detail="el sistema no tiene suficientes tokens disponibles. contacta al administrador.",
         )
 
-    # verificar wallet del comprador
+    # verificar wallet del comprador (incluye balance_fiat)
     comprador_wallet = ejecutar_sql_unico(
-        "select id, balance from wallets where usuario_id = ?",
+        "select id, balance, coalesce(balance_fiat, 0) as balance_fiat from wallets where usuario_id = ?",
         (usuario_id,),
     )
+    balance_fiat_actual = float(comprador_wallet["balance_fiat"]) if comprador_wallet else 0.0
+
+    if balance_fiat_actual < total_fiat:
+        raise HTTPException(
+            status_code=400,
+            detail=f"saldo fiat insuficiente. tienes s/ {balance_fiat_actual:.2f}, necesitas s/ {total_fiat:.2f}",
+        )
 
     from datetime import datetime
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # debitar del admin
+    # debitar del admin (kbt)
     ejecutar_sql(
         "update wallets set balance = coalesce(balance, 0) - ? where usuario_id = ?",
         (req.cantidad_kbt, 1),
     )
 
-    # acreditar al comprador
+    # debitar balance_fiat del comprador
+    ejecutar_sql(
+        "update wallets set balance_fiat = coalesce(balance_fiat, 0) - ? where usuario_id = ?",
+        (total_fiat, usuario_id),
+    )
+
+    # acreditar kbt al comprador
     if not comprador_wallet:
         ejecutar_insercion(
             "insert into wallets (usuario_id, balance, comprado_total) values (?, ?, ?)",
@@ -110,6 +123,12 @@ async def api_comprar_kbt(
             (req.cantidad_kbt, req.cantidad_kbt, usuario_id),
         )
         balance_nuevo = float(comprador_wallet["balance"]) + req.cantidad_kbt
+
+    # actualizar balance_fiat del admin (se acredita el pago)
+    ejecutar_sql(
+        "update wallets set balance_fiat = coalesce(balance_fiat, 0) + ? where usuario_id = ?",
+        (total_fiat, 1),
+    )
 
     # registrar transaccion para el comprador
     ejecutar_insercion(
@@ -127,9 +146,16 @@ async def api_comprar_kbt(
          f"venta de {req.cantidad_kbt} kbt a usuario {usuario_id}", ahora),
     )
 
+    # obtener saldos actualizados del comprador
+    wallet_final = ejecutar_sql_unico(
+        "select balance, coalesce(balance_fiat, 0) as balance_fiat from wallets where usuario_id = ?",
+        (usuario_id,),
+    )
+
     return {
         "exito": True,
-        "balance_nuevo": balance_nuevo,
+        "balance_nuevo": wallet_final["balance"],
+        "balance_fiat_nuevo": float(wallet_final["balance_fiat"]),
         "cantidad_kbt": req.cantidad_kbt,
         "costo_fiat": costo_fiat,
         "comision": comision,
