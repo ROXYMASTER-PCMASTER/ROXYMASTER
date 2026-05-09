@@ -4,6 +4,7 @@ cliente http para interactuar con la api interna de roxybrowser.
 ahora soporta autenticacion por apikey (x-api-key header).
 el workspace_id se autodetecta o se recibe via api.
 con estrategia multi-endpoint por compatibilidad.
+incluye get_workspaces() para listar workspaces remotos.
 todo en minusculas, utf-8 sin bom.
 """
 
@@ -89,6 +90,68 @@ class RoxyBrowserAPI:
         except Exception as e:
             logger.error(f"error en request {method} {path}: {e}")
             return None
+
+    # ------------------------------------------------------------------
+    # workspaces - listar workspaces remotos asociados a una apikey
+    # ------------------------------------------------------------------
+    def get_workspaces(self, api_key: str = "") -> list:
+        """obtiene lista de workspaces asociados a una apikey.
+        si se pasa api_key, se usa temporalmente para la consulta.
+        devuelve lista de dicts con id y name."""
+        if api_key:
+            old_key = self._api_key
+            self._api_key = api_key
+            restored = False
+        else:
+            old_key = None
+            restored = True
+
+        try:
+            resp = self._request("GET", "/api/workspaces")
+            if resp is None:
+                logger.warning("roxybrowser no responde en get_workspaces")
+                return []
+
+            if resp.status_code == 200:
+                try:
+                    data = resp.json()
+                except Exception:
+                    logger.warning("respuesta json invalida en get_workspaces")
+                    return []
+
+                if isinstance(data, list):
+                    return self._normalizar_workspaces(data)
+
+                if isinstance(data, dict):
+                    for key in ("data", "workspaces", "items", "results"):
+                        inner = data.get(key, [])
+                        if isinstance(inner, list):
+                            return self._normalizar_workspaces(inner)
+                    # si el dict mismo tiene id, es un workspace unico
+                    if data.get("id") or data.get("workspace_id"):
+                        return self._normalizar_workspaces([data])
+
+                return []
+
+            logger.warning(f"get_workspaces status {resp.status_code}")
+            return []
+        finally:
+            if old_key is not None and not restored:
+                self._api_key = old_key
+
+    def _normalizar_workspaces(self, workspaces: list) -> list:
+        """normaliza la lista de workspaces a formato estandar."""
+        result = []
+        for w in workspaces:
+            if isinstance(w, dict):
+                wid = w.get("id", "") or w.get("workspace_id", "") or w.get("_id", "")
+                name = w.get("name", "") or w.get("nombre", "") or w.get("title", "")
+                if wid:
+                    result.append({
+                        "workspace_id": str(wid),
+                        "nombre": str(name),
+                    })
+        return result
 
     # ------------------------------------------------------------------
     # perfiles (browsers) - estrategia multi-endpoint

@@ -208,13 +208,12 @@ class WSClient:
         payload = {
             "tipo": "handshake",
             "pcbot_id": hd.get("pcbot_id", self.pcbot_id),
-            "usuario": hd.get("usuario", ""),
+            "hostname": hd.get("hostname", hd.get("pcbot_id", self.pcbot_id)),
             "ip_local": hd.get("ip_local", "0.0.0.0"),
             "ip_tailscale": hd.get("ip_tailscale", "0.0.0.0"),
             "ip_wan": hd.get("ip_wan", "0.0.0.0"),
-            "perfiles_roxy": hd.get("perfiles_roxy", []),
-            "perfiles_vip": hd.get("perfiles_vip", []),
-            "navegadores": hd.get("navegadores", []),
+            "sistema_operativo": hd.get("sistema_operativo", ""),
+            "version_agente": hd.get("version_agente", "8.3"),
             "modo": hd.get("modo", self.modo),
         }
         await self._send_plano(payload)

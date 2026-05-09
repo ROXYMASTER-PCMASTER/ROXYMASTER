@@ -2,7 +2,7 @@
 roxymaster v8.3 - orchestrator local (pcbot)
 ejecuta comandos recibidos de pcmaster via websocket.
 maneja open_url, detener, comentar, estado y comandos de sistema.
-include comando configurar_apikey para recibir apikey de roxybrowser desde pcmaster.
+incluye comando recargar_perfiles que consulta workspaces y perfiles via apikey.
 todo en minusculas, utf-8 sin bom.
 """
 
@@ -358,17 +358,113 @@ class OrchestratorLocal:
         return {"ok": True, "modo": modo}
 
     async def _cmd_recargar(self, params: dict, cmd_id: str) -> dict:
-        """recarga perfiles desde roxybrowser api."""
+        """recarga perfiles desde roxybrowser api usando apikey.
+        flujo:
+        1. recibe roxy_api_key del comando
+        2. consulta workspaces remotos asociados a esa apikey
+        3. para cada workspace, obtiene la lista de perfiles
+        4. envia respuesta estructurada al servidor"""
         if not self.roxy:
-            return {"ok": False, "error": "no hay api de roxybrowser configurada"}
-        try:
-            perfiles = self.roxy.get_profiles()
-            if perfiles:
-                self.pm.register_profiles(perfiles)
-                return {"ok": True, "perfiles_cargados": len(perfiles)}
-            return {"ok": False, "error": "no se obtuvieron perfiles"}
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
+            return await self._responder_error(cmd_id, "no hay api de roxybrowser configurada")
+
+        roxy_api_key = params.get("roxy_api_key", "")
+        if not roxy_api_key:
+            return await self._responder_error(cmd_id, "roxy_api_key requerida")
+        
+        # paso 1: obtener workspaces asociados a la apikey
+        logger.info("consultando workspaces remotos...")
+        workspaces = self.roxy.get_workspaces(roxy_api_key)
+        if not workspaces:
+            logger.warning("no se encontraron workspaces para la apikey")
+            return await self._responder_error(cmd_id, "no se encontraron workspaces para la apikey proporcionada")
+
+        logger.info(f"workspaces encontrados: {len(workspaces)}")
+
+        # paso 2: por cada workspace, obtener perfiles
+        resultado_workspaces = []
+        total_perfiles = 0
+        workspace_original = self.roxy._workspace_id
+
+        for ws in workspaces:
+            ws_id = ws.get("workspace_id", "")
+            ws_nombre = ws.get("nombre", ws_id)
+
+            # cambiar workspace activo temporalmente
+            self.roxy.set_workspace_id(ws_id)
+
+            try:
+                perfiles_crudos = self.roxy.get_profiles()
+                perfiles_normalizados = []
+                for p in perfiles_crudos:
+                    # extraer campos relevantes: dirId, name, userName, state, horas
+                    perfil = {
+                        "hash_id": str(p.get("dirId", p.get("id", p.get("hash_interno", "")))),
+                        "nombre": p.get("name", p.get("nombre", "")),
+                        "userName": p.get("userName", p.get("username", "")),
+                        "estado": p.get("state", p.get("status", p.get("estado", "unknown"))),
+                        "horas_conectado": float(p.get("horas_conectado", p.get("horas", 0)) or 0),
+                    }
+                    if perfil["hash_id"]:
+                        perfiles_normalizados.append(perfil)
+
+                resultado_workspaces.append({
+                    "workspace_id": ws_id,
+                    "nombre": ws_nombre,
+                    "perfiles": perfiles_normalizados,
+                })
+                total_perfiles += len(perfiles_normalizados)
+                logger.info(f"workspace {ws_nombre}: {len(perfiles_normalizados)} perfiles")
+            except Exception as e:
+                logger.error(f"error obteniendo perfiles para workspace {ws_id}: {e}")
+                resultado_workspaces.append({
+                    "workspace_id": ws_id,
+                    "nombre": ws_nombre,
+                    "error": str(e),
+                    "perfiles": [],
+                })
+
+        # restaurar workspace original
+        if workspace_original:
+            self.roxy.set_workspace_id(workspace_original)
+
+        # paso 3: construir respuesta final
+        respuesta = {
+            "ok": True,
+            "tipo": "respuesta_recargar_perfiles",
+            "pcbot_id": os.environ.get("COMPUTERNAME", "desconocido"),
+            "comando_id": cmd_id,
+            "roxy_api_key": roxy_api_key,
+            "total_workspaces": len(resultado_workspaces),
+            "total_perfiles": total_perfiles,
+            "workspaces": resultado_workspaces,
+        }
+
+        logger.info(f"recarga completada: {total_perfiles} perfiles en {len(resultado_workspaces)} workspaces")
+
+        # enviar respuesta al servidor via ws
+        if self.ws_client is not None:
+            try:
+                await self.ws_client.send_response(respuesta)
+            except Exception as e:
+                logger.error(f"error enviando respuesta recarga al servidor: {e}")
+
+        return respuesta
+
+    async def _responder_error(self, cmd_id: str, mensaje: str) -> dict:
+        """construye y envia respuesta de error para recargar_perfiles."""
+        error_resp = {
+            "ok": False,
+            "tipo": "error_recargar_perfiles",
+            "pcbot_id": os.environ.get("COMPUTERNAME", "desconocido"),
+            "comando_id": cmd_id,
+            "error": mensaje,
+        }
+        if self.ws_client is not None:
+            try:
+                await self.ws_client.send_response(error_resp)
+            except Exception:
+                pass
+        return error_resp
 
     def get_history(self, limit: int = 10) -> list:
         """devuelve historial de comandos ejecutados."""
