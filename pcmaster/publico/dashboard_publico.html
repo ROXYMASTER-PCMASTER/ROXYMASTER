@@ -628,18 +628,69 @@
     scripts.forEach(function(code) {
       if (code.indexOf('// script src:') === 0) return;
       try {
-        var codigoMod = code.replace(
-          /document\.addEventListener\(['"]DOMContentLoaded['"],\s*(function\s*\(\))/g,
-          '$1'
-        );
-        codigoMod = codigoMod.replace(
-          /document\.addEventListener\(['"]DOMContentLoaded['"],\s*async\s*(function\s*\(\))/g,
-          'async $1'
-        );
-        codigoMod = codigoMod.replace(
-          /window\.addEventListener\(['"](load|DOMContentLoaded)['"],/g,
-          '// '
-        );
+        // metodo simple: envolver todo en funcion que se ejecute inmediatamente
+        // esto evita syntax error por "function()" suelto y funciona con SPA
+        var lines = code.split('\n');
+        var processed = [];
+        var inDomListener = false;
+        var braceCount = 0;
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (!inDomListener) {
+            if (/document\.addEventListener\(['"]DOMContentLoaded['"],\s*(async\s+)?function\s*\(\)/.test(line)) {
+              inDomListener = true;
+              braceCount = 0;
+              // contar llaves para saltar todo el bloque
+              // la linea actual termina con {, empezamos braceCount = 1
+              var openIdx = line.indexOf('{');
+              if (openIdx > -1) {
+                braceCount = 1;
+                var afterBrace = line.substring(openIdx + 1);
+                // si hay cierre en la misma linea, restar
+                var closeIdx = afterBrace.indexOf('}');
+                if (closeIdx > -1) {
+                  braceCount--;
+                  if (braceCount === 0) {
+                    inDomListener = false;
+                    // extraer codigo entre { y } de esta linea
+                    var innerCode = afterBrace.substring(0, closeIdx).trim();
+                    if (innerCode) processed.push(innerCode);
+                    continue;
+                  }
+                }
+              }
+              // saltar lineas del callback
+              continue;
+            }
+            if (/window\.addEventListener\(['"](load|DOMContentLoaded)['"],/.test(line)) {
+              // comentar esta linea
+              processed.push('// ' + line);
+              continue;
+            }
+            processed.push(line);
+          } else {
+            // estamos dentro del callback DOMContentLoaded
+            // contar {} para saber cuando termina
+            for (var j = 0; j < line.length; j++) {
+              if (line[j] === '{') braceCount++;
+              if (line[j] === '}') braceCount--;
+            }
+            if (braceCount <= 0) {
+              inDomListener = false;
+              // extraer codigo util entre (despues de {) y (antes del })
+              var content = line;
+              // remover } final si braceCount llego a 0
+              var lastClose = content.lastIndexOf('}');
+              if (lastClose > -1) content = content.substring(0, lastClose);
+              var trimmed = content.trim();
+              if (trimmed.length > 0) processed.push(trimmed);
+            } else {
+              // linea interna del callback, agregarla normalmente
+              processed.push(line);
+            }
+          }
+        }
+        codigoMod = processed.join('\n');
         var fn = new Function('panel', codigoMod);
         fn(panel);
       } catch (e) {

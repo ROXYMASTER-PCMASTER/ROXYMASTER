@@ -123,14 +123,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 </div>
 
 <script>
-// carga inicial
-(function() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPerfiles);
-  } else {
-    cargarPerfiles();
-  }
-})();
+// ============================================================
+// funciones globales para perfiles (compatibles con SPA y standalone)
+// ============================================================
 
 // escapar html seguro
 function escapeHtml(str) {
@@ -202,13 +197,14 @@ async function cargarPerfiles() {
   }
 }
 
-// asignar eventos
-document.addEventListener('DOMContentLoaded', function() {
-  const agregarBtn = document.getElementById('agregarPerfilBtn');
-  if (agregarBtn) agregarBtn.onclick = agregarPerfil;
-  const recargarBtn = document.getElementById('recargarBtn');
-  if (recargarBtn) recargarBtn.onclick = sincronizarPerfiles;
-});
+// asignar eventos inmediatamente (funciona tanto standalone como via SPA)
+var _pf_agregarBtn = document.getElementById('agregarPerfilBtn');
+var _pf_recargarBtn = document.getElementById('recargarBtn');
+if (_pf_agregarBtn) _pf_agregarBtn.onclick = agregarPerfil;
+if (_pf_recargarBtn) _pf_recargarBtn.onclick = sincronizarPerfiles;
+
+// cargar perfiles al iniciar
+cargarPerfiles();
 </script>
 </body>
 </html>
