@@ -168,13 +168,13 @@ def iniciar_sesion(email: str, password: str) -> dict:
     # buscar por email primero, luego por username
     usuario = ejecutar_sql_unico(
         "select id, email, password_hash, rol, activo, codigo_referido, "
-        "referido_por, referido_cambiado, nivel_fiabilidad from usuarios where email = ?",
+        "referido_por, referido_cambiado, nivel_fiabilidad, pcbot_id from usuarios where email = ?",
         (credencial,),
     )
     if not usuario:
         usuario = ejecutar_sql_unico(
             "select id, email, password_hash, rol, activo, codigo_referido, "
-            "referido_por, referido_cambiado, nivel_fiabilidad from usuarios where username = ?",
+            "referido_por, referido_cambiado, nivel_fiabilidad, pcbot_id from usuarios where username = ?",
             (credencial,),
         )
 
@@ -218,6 +218,7 @@ def iniciar_sesion(email: str, password: str) -> dict:
         "referido_por": usuario.get("referido_por", ""),
         "referido_cambiado": usuario.get("referido_cambiado", 0),
         "nivel_fiabilidad": usuario.get("nivel_fiabilidad", "bronce"),
+        "pcbot_id": usuario.get("pcbot_id", ""),
     }
 
 
@@ -254,11 +255,19 @@ def verificar_token(token: str) -> dict:
         ejecutar_sql("delete from sesiones where token = ?", (token,))
         return None
 
+    # obtener pcbot_id del usuario si existe
+    usuario_info = ejecutar_sql_unico(
+        "select pcbot_id from usuarios where id = ?",
+        (sesion["usuario_id"],),
+    )
+    pcbot_id = usuario_info["pcbot_id"] if usuario_info else ""
+
     return {
         "usuario_id": sesion["usuario_id"],
         "email": sesion["email"],
         "rol": sesion["rol"],
         "token": token,
+        "pcbot_id": pcbot_id,
     }
 
 

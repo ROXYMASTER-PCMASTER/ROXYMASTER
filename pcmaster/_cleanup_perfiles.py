@@ -1,39 +1,36 @@
-import sqlite3, os
+import sqlite3
+conn = sqlite3.connect('pcmaster/data/roxymaster.db')
 
-db_path = os.path.join(os.path.dirname(__file__), 'data', 'roxymaster.db')
-if not os.path.exists(db_path):
-    print('DB NOT FOUND at ' + db_path)
-    exit(1)
+uid = 30  # prueba1@roxymaster.local
 
-conn = sqlite3.connect(db_path)
-c = conn.cursor()
+# listar basura
+basura = conn.execute(
+    "select id, nombre_perfil from perfiles where usuario_id=? "
+    "and (nombre_perfil='8ce112f7ebbb0fba6e9e290194f8e117' "
+    "or nombre_perfil='324' "
+    "or nombre_perfil='23' "
+    "or nombre_perfil='5345345' "
+    "or nombre_perfil='23424' "
+    "or length(nombre_perfil)<4)",
+    (uid,)
+).fetchall()
+print('Basura a eliminar:', [(b[0], b[1]) for b in basura])
 
-# contar basura antes
-c.execute("""
-    SELECT COUNT(*) FROM perfiles
-    WHERE nombre_perfil LIKE '%8ce112f7ebbb0fb%'
-       OR nombre_perfil GLOB '[0-9]*'
-       OR length(nombre_perfil) < 4
-""")
-count_before = c.fetchone()[0]
-print(f'Garbage rows found: {count_before}')
-
-# eliminar basura
-c.execute("""
-    DELETE FROM perfiles
-    WHERE nombre_perfil LIKE '%8ce112f7ebbb0fb%'
-       OR nombre_perfil GLOB '[0-9]*'
-       OR length(nombre_perfil) < 4
-""")
-deleted = c.rowcount
+conn.execute(
+    "delete from perfiles where usuario_id=? "
+    "and (nombre_perfil='8ce112f7ebbb0fba6e9e290194f8e117' "
+    "or nombre_perfil='324' "
+    "or nombre_perfil='23' "
+    "or nombre_perfil='5345345' "
+    "or nombre_perfil='23424' "
+    "or length(nombre_perfil)<4)",
+    (uid,)
+)
 conn.commit()
 
-print(f'Deleted {deleted} garbage rows')
-
-# verificar restantes
-c.execute('SELECT id, nombre_perfil, hash_id, pcbot_id, estado FROM perfiles ORDER BY pcbot_id, id')
-rows = c.fetchall()
+quedan = conn.execute(
+    "select id, nombre_perfil, estado, hash_id, tipo from perfiles where usuario_id=?",
+    (uid,)
+).fetchall()
+print('Perfiles restantes:', [(q[0], q[1], q[2], q[3]) for q in quedan])
 conn.close()
-print(f'Remaining profiles: {len(rows)}')
-for r in rows:
-    print(f'  id={r[0]} nombre={str(r[1])[:30]} hash={str(r[2])[:16]} pcbot={r[3]} estado={r[4]}')

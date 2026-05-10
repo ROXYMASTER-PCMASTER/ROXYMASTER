@@ -1,0 +1,22 @@
+﻿{
+    "pcbot": {
+        "nombre_pc": "",
+        "usuario": "",
+        "ip_local": "",
+        "ip_tailscale": ""
+    },
+    "pcmaster": {
+        "ip": "",
+        "ip_tailscale": "",
+        "ws_port": 5006,
+        "http_port": 8086
+    },
+    "roxybrowser": {
+        "api_url": "http://127.0.0.1:50000"
+    },
+    "version": "8.3",
+    "seguridad": {
+        "protocolo": "shs-hmac",
+        "version": "1.0"
+    }
+}

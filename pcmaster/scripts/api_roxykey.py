@@ -18,6 +18,15 @@ class RoxyKeyRequest(BaseModel):
     roxy_workspace_id: str = ""
 
 
+@router.post("/roxy/api_key")
+async def api_roxy_guardar_api_key(
+    req: RoxyKeyRequest,
+    sesion: dict = Depends(verificar_token_dependencia),
+):
+    """guarda la api key de roxybrowser (alias REST-friendly para actualizar_roxy_key)."""
+    return await api_actualizar_roxy_key(req, sesion)
+
+
 @router.post("/actualizar_roxy_key")
 async def api_actualizar_roxy_key(
     req: RoxyKeyRequest,

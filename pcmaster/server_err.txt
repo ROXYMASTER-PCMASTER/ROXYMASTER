@@ -1,10 +1,8 @@
-c:\Users\PCMASTER\Desktop\roxymaster\pcmaster\scripts\api_monitoreo.py:83: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\scripts\api_monitoreo.py:83: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
   nivel: str = Query(None, regex="^(info|warn|error|debug)$"),
-INFO:     Started server process [13180]
+INFO:     Started server process [10844]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8086 (Press CTRL+C to quit)
-INFO:     100.85.100.109:57195 - "WebSocket /ws/desconocido" [accepted]
-INFO:     connection open
-INFO:     100.85.100.109:57988 - "WebSocket /ws/desconocido" [accepted]
-INFO:     connection open
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8086): solo se permite un uso de cada dirección de socket (protocolo/dirección de red/puerto)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

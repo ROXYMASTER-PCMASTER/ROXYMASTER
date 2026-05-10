@@ -151,9 +151,16 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
         datos_raw = await asyncio.wait_for(websocket.receive_text(), timeout=10)
         datos = json.loads(datos_raw)
 
-        # verificar firma (el pcbot usa secreto_sistema global solo para el primer handshake)
-        payload_str = datos.get("payload", "")
-        firma_recibida = datos.get("firma", "")
+        # soportar mensajes planos (sin envelope {payload, firma})
+        # si el mensaje no tiene 'payload', se trata a si mismo como payload
+        if "payload" not in datos:
+            datos_con_envelope = datos
+            datos = {"payload": json.dumps(datos_con_envelope), "firma": ""}
+            payload_str = datos["payload"]
+            firma_recibida = ""
+        else:
+            payload_str = datos.get("payload", "")
+            firma_recibida = datos.get("firma", "")
 
         # paso 1: si la firma esta vacia, verificar si es handshake bootstrap (solicitar_secreto)
         if not firma_recibida:
@@ -337,7 +344,42 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                 # a partir de ahora el pcbot usa su secreto propio
                 _secreto_pcbot_actual = secreto_asignado
 
-            # persistir perfiles individuales en tabla perfiles
+            # vincular pcbot_id con usuario_id para tabla computadoras
+            usuario_info = ejecutar_sql_unico(
+                "select id from usuarios where pcbot_id = ?", (pcbot_id,)
+            )
+            usuario_id_from_pcbot = usuario_info["id"] if usuario_info else None
+
+            # persistir tambien en tabla computadoras (registro automatico)
+            try:
+                ejecutar_sql(
+                    """insert into computadoras (pcbot_id, usuario_id, hostname, ip_local, ip_tailscale, ip_wan,
+                       sistema_operativo, estado, ultima_conexion)
+                       values (?, ?, ?, ?, ?, ?, ?, 'activa', ?)
+                       on conflict(pcbot_id) do update set
+                       usuario_id = coalesce(excluded.usuario_id, computadoras.usuario_id),
+                       hostname = excluded.hostname,
+                       ip_local = excluded.ip_local,
+                       ip_tailscale = excluded.ip_tailscale,
+                       ip_wan = excluded.ip_wan,
+                       sistema_operativo = excluded.sistema_operativo,
+                       ultima_conexion = excluded.ultima_conexion""",
+                    (
+                        pcbot_id,
+                        usuario_id_from_pcbot,
+                        info_sistema.get("hostname", pcbot_id),
+                        info_sistema.get("ip_local", ""),
+                        info_sistema.get("ip_tailscale", ""),
+                        info_sistema.get("ip_wan", ""),
+                        info_sistema.get("sistema_operativo", "Windows"),
+                        _ahora_str(),
+                    ),
+                )
+                print(f"[orchestrator] computadora registrada: {pcbot_id}, usuario_id={usuario_id_from_pcbot}")
+            except Exception as e:
+                print(f"[orchestrator] error al persistir computadoras: {e}")
+
+            # persistir perfiles individuales en tabla perfiles (con usuario_id y pcbot_id)
             for perfil in info_sistema.get("perfiles", []):
                 if isinstance(perfil, dict):
                     perfil_id = perfil.get("id", "") or perfil.get("nombre_perfil", "")
@@ -347,18 +389,23 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                     perfil_tipo = perfil.get("tipo", "local")
 
                     existente_perfil = ejecutar_sql_unico(
-                        "select id from perfiles where nombre_perfil = ? and usuario_id is null",
-                        (perfil_nombre,),
+                        "select id from perfiles where nombre_perfil = ? and usuario_id = ?",
+                        (perfil_nombre, usuario_id_from_pcbot) if usuario_id_from_pcbot else ("select id from perfiles where nombre_perfil = ? and usuario_id is null", perfil_nombre),
                     )
+                    if not existente_perfil and not usuario_id_from_pcbot:
+                        existente_perfil = ejecutar_sql_unico(
+                            "select id from perfiles where nombre_perfil = ? and usuario_id is null",
+                            (perfil_nombre,),
+                        )
                     if existente_perfil:
                         ejecutar_sql(
-                            "update perfiles set estado = ?, ultimo_heartbeat = ? where nombre_perfil = ?",
-                            (perfil_estado, _ahora_str(), perfil_nombre),
+                            "update perfiles set estado = ?, ultimo_heartbeat = ?, pcbot_id = ? where id = ?",
+                            (perfil_estado, _ahora_str(), pcbot_id, existente_perfil["id"]),
                         )
                     else:
                         ejecutar_insercion(
-                            "insert into perfiles (nombre_perfil, tipo, estado, ultimo_heartbeat) values (?, ?, ?, ?)",
-                            (perfil_nombre, perfil_tipo, perfil_estado, _ahora_str()),
+                            "insert into perfiles (nombre_perfil, tipo, estado, ultimo_heartbeat, usuario_id, pcbot_id) values (?, ?, ?, ?, ?, ?)",
+                            (perfil_nombre, perfil_tipo, perfil_estado, _ahora_str(), usuario_id_from_pcbot, pcbot_id),
                         )
         except Exception as _e:
             print(f"[orchestrator] error persistiendo handshake: {_e}")

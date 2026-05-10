@@ -360,6 +360,8 @@ def init_db():
         ("perfiles", "total_perfiles_roxy", "integer default 0"),
         ("perfiles", "computadora_id", "integer"),
         ("perfiles", "pcbot_id", "text default ''"),
+        ("computadoras", "ip_tailscale", "text default ''"),
+        ("computadoras", "sistema_operativo", "text default 'Windows'"),
     ]
     for tabla, columna, tipo in migraciones:
         try:

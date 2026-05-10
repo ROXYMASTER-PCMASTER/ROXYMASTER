@@ -1,0 +1,18 @@
+﻿=== BITACORA: 2026-05-09 19:19 ===
+ESTADO: TUNNEL RESTAURADO + CAMBIOS EN PERFILES
+
+1. TUNNEL CLOUDFLARED - PROBLEMA 530/404
+   - Causa: config.yml tenia catch-all http_status:404 que bloqueaba tunnels efimeros.
+   - Solucion: Se movio config.yml para iniciar tunnel --url limpio.
+   - URL publica actual: https://apt-lakes-walls-thumbs.trycloudflare.com
+   - Estado: HTTP 200 OK en /api/health
+   - config.yml restaurado.
+
+2. CAMBIOS EN PERFILES (API)
+   - db.py: Migracion pcbot_id en tabla perfiles
+   - api_public_perfiles.py: endpoint unificado
+   - api_dashboard.py: estructura jerarquica
+
+3. ARCHIVOS MODIFICADOS: db.py, api_public_perfiles.py, api_dashboard.py
+
+4. TUNNEL EFIMERO ACTIVO en puerto 8086
