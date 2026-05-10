@@ -61,6 +61,7 @@ def _ts() -> str:
 _cola_comandos: dict = {}  # {comando_id: {tipo, parametros, pcbot_id, futuro}}
 _conexiones_ws: dict = {}  # {pcbot_id: websocket}
 _pcbot_info: dict = {}  # {pcbot_id: {hostname, ip, perfiles, ...}}
+_pending_commands: dict = {}  # {comando_id: asyncio.Future} para esperar respuestas
 _secreto_pcbot_actual: str = ""  # secreto shs del pcbot conectado actualmente
 
 
@@ -544,9 +545,12 @@ async def _procesar_respuesta(pcbot_id: str, datos: dict):
             ("completado" if exito else "fallido", json.dumps(resultado, ensure_ascii=False), _ahora_str(), comando_id),
         )
 
+    # resolver futuros pendientes para respuestas de recargar_perfiles
+    if comando_id in _pending_commands:
+        _pending_commands[comando_id].set_result(datos)
+
     # limpiar de cola si estaba
     _cola_comandos.pop(comando_id, None)
-
 
 # ---------------------------------------------------------------------------
 # procesar alerta del pcbot
@@ -749,3 +753,25 @@ async def enviar_recargar_perfiles(pcbot_id: str, roxy_api_key: str) -> dict:
     except Exception as e:
         return {"exito": False, "error": str(e), "pcbot_id": pcbot_id}
 
+
+async def enviar_comando_recargar_perfiles(pcbot_id: str, api_key: str) -> dict:
+    """envia comando recargar_perfiles al pcbot y espera respuesta."""
+    if pcbot_id not in _conexiones_ws:
+        return {"ok": False, "error": "pcbot no conectado"}
+    ws = _conexiones_ws[pcbot_id]
+    request_id = str(uuid.uuid4())
+    futuro = asyncio.Future()
+    _pending_commands[request_id] = futuro
+    try:
+        comando = {
+            "tipo": "recargar_perfiles",
+            "comando_id": request_id,
+            "parametros": {"roxy_api_key": api_key},
+        }
+        await ws.send_json(comando)
+        respuesta = await asyncio.wait_for(futuro, timeout=30)
+        return respuesta
+    except asyncio.TimeoutError:
+        return {"ok": False, "error": "timeout esperando respuesta del pcbot"}
+    finally:
+        _pending_commands.pop(request_id, None)

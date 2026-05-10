@@ -288,6 +288,18 @@ create table if not exists perfiles_roxy_ext (
     foreign key (apikey_id) references apikeys_roxybrowser(id)
 );
 
+-- tabla: perfiles_roxy (perfiles sincronizados desde pcbot por sync_profiles)
+create table if not exists perfiles_roxy (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    computadora_id text not null,
+    nombre text not null,
+    hash text not null,
+    workspace_id integer,
+    ultima_sincronizacion text default (datetime('now','localtime')),
+    foreign key (usuario_id) references usuarios(id)
+);
+
 -- tabla: pcbots_registrados (mantenida para compatibilidad, ahora con FK)
 create table if not exists pcbots_registrados (
     id integer primary key autoincrement,
@@ -497,3 +509,22 @@ def guardar_perfiles(usuario_id: int, pcbot_id: str, perfiles: list, workspace_i
             )
         contador += 1
     return contador
+
+
+def guardar_perfil_roxy(usuario_id: int, computadora_id: str, nombre: str, hash_perfil: str, workspace_id: int):
+    """guarda o reemplaza un perfil roxy en la tabla perfiles_roxy."""
+    with get_db() as conn:
+        conn.execute("""
+            insert or replace into perfiles_roxy (usuario_id, computadora_id, nombre, hash, workspace_id, ultima_sincronizacion)
+            values (?, ?, ?, ?, ?, current_timestamp)
+        """, (usuario_id, computadora_id, nombre, hash_perfil, workspace_id))
+
+
+def obtener_perfiles_roxy(usuario_id: int) -> list:
+    """obtiene los perfiles roxy sincronizados para un usuario."""
+    with get_db() as conn:
+        rows = conn.execute(
+            "select nombre, hash, workspace_id, ultima_sincronizacion from perfiles_roxy where usuario_id = ?",
+            (usuario_id,),
+        ).fetchall()
+        return [{"nombre": r[0], "hash": r[1], "workspace_id": r[2], "ultima_sincronizacion": r[3]} for r in rows]

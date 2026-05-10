@@ -98,16 +98,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 </div>
 
 <div class="perfiles-actions">
-<button id="btnAgregarPerfil" class="btn-action">✦ agregar perfil</button>
-<button class="btn-action btn-outline" onclick="cargarPerfiles()">↻ recargar</button>
+<input type="text" id="apiKeyInput" placeholder="ingresa tu api key de roxybrowser..." style="flex:2;padding:0.75rem 1rem;background:#111133;border:1px solid rgba(124,58,237,0.3);border-radius:12px;color:#e2e8f0;font-size:0.85rem;min-width:200px;">
+<button id="agregarPerfilBtn" class="btn-action">✦ agregar perfil</button>
+<button id="recargarBtn" class="btn-action btn-outline">↻ recargar</button>
 </div>
 
 <div class="perfiles-section">
-<h2>lista de perfiles</h2>
+<h2>lista de perfiles roxy</h2>
 <div class="perfiles-table">
-<div id="pf-list">
-<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">cargando perfiles...</div>
-</div>
+<table id="perfilesTabla" style="width:100%;border-collapse:collapse;">
+<thead>
+<tr style="color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.1);">
+<th style="padding:0.7rem 1rem;text-align:left;">nombre</th>
+<th style="padding:0.7rem 1rem;text-align:left;">hash</th>
+<th style="padding:0.7rem 1rem;text-align:left;">workspace id</th>
+<th style="padding:0.7rem 1rem;text-align:left;">ultima sincronizacion</th>
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="4" style="padding:2rem;text-align:center;color:#64748b;">cargando perfiles...</td></tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -121,180 +132,83 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
   }
 })();
 
-// funcion crear perfil (llamada desde el modal del dashboard)
-window.crearPerfil = async function() {
-  var apiKey = document.getElementById('apiKeyRoxy').value;
-  if (!apiKey || apiKey.trim() === '') {
-    if (typeof ui !== 'undefined' && ui._showError) {
-      ui._showError('ingresa una api key valida');
-    }
-    return;
-  }
-  try {
-    var r = await ui.api.post('/perfiles/crear', { api_key: apiKey.trim() });
-    if (r.exito !== false) {
-      ui._showSuccess('perfil creado exitosamente');
-      cerrarModal('modalAgregarPerfil');
-      document.getElementById('apiKeyRoxy').value = '';
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || r.detail || 'error al crear perfil');
-    }
-  } catch(e) {
-    if (typeof ui !== 'undefined' && ui._showError) {
-      ui._showError('error: ' + (e.message || 'desconocido'));
-    }
-  }
-};
+// escapar html seguro
+function escapeHtml(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&';
+    if (m === '<') return '<';
+    if (m === '>') return '>';
+    return m;
+  });
+}
 
-// funciones de accion sobre perfiles
-window.iniciarPerfil = async function(id) {
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/iniciar');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil iniciado');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al iniciar perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-window.detenerPerfil = async function(id) {
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/detener');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil detenido');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al detener perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-window.eliminarPerfil = async function(id) {
-  if (!confirm('confirmas eliminar este perfil?')) return;
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/eliminar');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil eliminado');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al eliminar perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-async function cargarPerfiles() {
-  try {
-    const d = await ui.api.get('/dashboard');
-    if (d.exito) {
-      document.getElementById('user-email').textContent = d.usuario?.email || '---';
-      document.getElementById('user-rol').textContent = d.usuario?.rol || '---';
-      document.getElementById('pf-activos').textContent = d.perfiles_activos || 0;
-      document.getElementById('pf-totales').textContent = d.perfiles_totales || 0;
-      var h = parseFloat(d.horas_conexion || 0);
-      document.getElementById('pf-horas').textContent = h.toFixed(1);
-      var total = parseInt(d.perfiles_totales || 0);
-      document.getElementById('pf-promedio').textContent = total > 0 ? (h/total).toFixed(1) + 'h' : '0h';
-    }
-  } catch(e) { console.error('error cargando perfiles dashboard:', e); }
-
-  try {
-    const r = await ui.api.get('/perfiles');
-    var list = document.getElementById('pf-list');
-    if (!r.exito || !r.computadoras || r.computadoras.length === 0) {
-      list.innerHTML = '<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">no tienes perfiles vinculados. agrega uno para empezar a minar</div>';
-      return;
-    }
-
-    var totalActivosGlobal = 0;
-    var totalPerfilesGlobal = 0;
-    var totalHorasGlobal = 0;
-    var htmlPiezas = [];
-
-    r.computadoras.forEach(function(pc, idx) {
-      var pcId = pc.pcbot_id || 'pc-' + idx;
-      var activos = pc.activos || 0;
-      var inactivos = pc.inactivos || 0;
-      var totalPf = pc.total_perfiles || 0;
-      var horas = parseFloat(pc.horas_conectado || 0).toFixed(1);
-
-      totalActivosGlobal += activos;
-      totalPerfilesGlobal += totalPf;
-      totalHorasGlobal += parseFloat(pc.horas_conectado || 0);
-
-      // bloque visual de grupo pc
-      htmlPiezas.push(
-        '<div class="pf-group">' +
-          '<span class="pcbot-id">' + pcId + '</span>' +
-          '<span class="stats">' + totalPf + ' perfiles | ' +
-            '<span>' + activos + ' activos</span>' +
-            ' / <span class="inactive">' + inactivos + ' inactivos</span>' +
-          '</span>' +
-          '<span class="stats">horas conectado: ' + horas + 'h</span>' +
-        '</div>'
-      );
-
-      // fila header
-      htmlPiezas.push(
-        '<div class="pf-row header">' +
-          '<span>hash_id</span><span>nombre</span><span>tipo</span><span>estado</span><span>horas</span><span>ultimo heartbeat</span><span>accion</span>' +
-        '</div>'
-      );
-
-      // perfiles de esta pc
-      if (!pc.perfiles || pc.perfiles.length === 0) {
-        htmlPiezas.push(
-          '<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:0.8rem;">sin perfiles en esta pc</div>'
-        );
-      } else {
-        pc.perfiles.forEach(function(pf) {
-          var est = (pf.estado || 'inactivo').toLowerCase();
-          var nombre = pf.nombre_perfil || pf.name_id || '---';
-          var hash = pf.hash_id || '---';
-          var horasPf = parseFloat(pf.horas_conexion || 0).toFixed(1);
-          var ultimo = pf.ultimo_heartbeat || '---';
-          var id = pf.id;
-
-          htmlPiezas.push(
-            '<div class="pf-row">' +
-              '<span class="pf-hash">' + hash.substring(0, 16) + '...</span>' +
-              '<span class="pf-nombre">' + nombre + '</span>' +
-              '<span class="pf-tipo">' + (pf.tipo || 'roxy') + '</span>' +
-              '<span class="pf-estado ' + est + '">' + est + '</span>' +
-              '<span class="pf-horas">' + horasPf + 'h</span>' +
-              '<span class="pf-ultimo">' + ultimo + '</span>' +
-              '<span class="pf-acciones">' +
-                (est === 'inactivo' ? '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;margin-right:0.25rem;" onclick="iniciarPerfil(' + id + ')">iniciar</button>' : '') +
-                (est === 'activo' ? '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;margin-right:0.25rem;background:#ff3366;" onclick="detenerPerfil(' + id + ')">detener</button>' : '') +
-                '<button class="btn-action" style="padding:0.25rem 0.7rem;font-size:0.7rem;background:#ef4444;" onclick="eliminarPerfil(' + id + ')">eliminar</button>' +
-              '</span>' +
-            '</div>'
-          );
-        });
-      }
-
-      // footer del grupo
-      htmlPiezas.push(
-        '<div class="pf-row footer">' +
-          'total activos: ' + activos + ' | total perfiles: ' + totalPf +
-        '</div>'
-      );
-    });
-
-    // resumen global al final
-    htmlPiezas.push(
-      '<div class="pf-row footer" style="background:rgba(124,58,237,0.08);font-weight:600;color:#c9d1d9;">' +
-        'total global - activos: ' + totalActivosGlobal + ' | total perfiles: ' + totalPerfilesGlobal + ' | horas: ' + totalHorasGlobal.toFixed(1) + 'h' +
-      '</div>'
-    );
-
-    list.innerHTML = htmlPiezas.join('');
-  } catch(e) {
-    console.error('error cargando lista perfiles:', e);
+// agregar perfil: guarda api key y sincroniza
+async function agregarPerfil() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('ingresa una api key'); return; }
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/roxy/api_key', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ roxy_api_key: apiKey })
+  });
+  const data = await res.json();
+  if (data.exito) {
+    alert('api key guardada. sincronizando...');
+    await sincronizarPerfiles();
+  } else {
+    alert('error: ' + (data.mensaje || 'desconocido'));
   }
 }
+
+// sincronizar perfiles con el pcbot
+async function sincronizarPerfiles() {
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/roxy/sync_profiles', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (data.ok) {
+    alert('sincronizacion completada: ' + data.perfiles_guardados + ' perfiles.');
+    await cargarPerfiles();
+  } else {
+    alert('error al sincronizar: ' + (data.error || 'desconocido'));
+  }
+}
+
+// cargar perfiles desde el backend
+async function cargarPerfiles() {
+  const token = localStorage.getItem('token');
+  try {
+    const d = await fetch('/api/roxy/profiles', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await d.json();
+    const tbody = document.querySelector('#perfilesTabla tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (data.perfiles && data.perfiles.length) {
+      data.perfiles.forEach(function(p) {
+        const row = '<tr><td>' + escapeHtml(p.nombre) + '</td><td>' + escapeHtml(p.hash) + '</td><td>' + (p.workspace_id || '') + '</td><td>' + new Date(p.ultima_sincronizacion).toLocaleString() + '</td></tr>';
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+    } else {
+      tbody.innerHTML = '<tr><td colspan="4">no hay perfiles sincronizados.</td></tr>';
+    }
+  } catch(e) {
+    console.error('error cargando perfiles:', e);
+  }
+}
+
+// asignar eventos
+document.addEventListener('DOMContentLoaded', function() {
+  const agregarBtn = document.getElementById('agregarPerfilBtn');
+  if (agregarBtn) agregarBtn.onclick = agregarPerfil;
+  const recargarBtn = document.getElementById('recargarBtn');
+  if (recargarBtn) recargarBtn.onclick = sincronizarPerfiles;
+});
 </script>
 </body>
 </html>

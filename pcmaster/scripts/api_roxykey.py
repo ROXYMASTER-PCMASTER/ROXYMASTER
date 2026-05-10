@@ -57,6 +57,54 @@ async def api_actualizar_roxy_key(
         raise HTTPException(status_code=500, detail=f"error interno: {str(e)}")
 
 
+@router.get("/roxy/profiles")
+async def obtener_perfiles_roxy_endpoint(
+    request: Request,
+    usuario=Depends(verificar_token_dependencia),
+):
+    """devuelve los perfiles roxy sincronizados del usuario."""
+    from db import obtener_perfiles_roxy
+    perfiles = obtener_perfiles_roxy(usuario["usuario_id"])
+    return {"perfiles": perfiles}
+
+
+@router.post("/roxy/sync_profiles")
+async def sincronizar_perfiles(
+    request: Request,
+    usuario=Depends(verificar_token_dependencia),
+):
+    """fuerza sincronizacion de perfiles con el pcbot y guarda resultado."""
+    pcbot_id = usuario.get("pcbot_id")
+    if not pcbot_id:
+        raise HTTPException(400, "no hay pcbot asociado a este usuario")
+    # obtener api key desde computadoras
+    from db import get_db, guardar_perfil_roxy
+    with get_db() as conn:
+        row = conn.execute(
+            "select api_key_roxy from computadoras where pcbot_id = ?",
+            (pcbot_id,),
+        ).fetchone()
+        if not row or not row[0]:
+            raise HTTPException(400, "no hay api key de roxybrowser guardada para esta computadora")
+        api_key = row[0]
+    # enviar comando al pcbot usando orchestrator
+    from orchestrator import enviar_comando_recargar_perfiles
+    resultado = await enviar_comando_recargar_perfiles(pcbot_id, api_key)
+    if not resultado.get("ok"):
+        raise HTTPException(500, resultado.get("error", "error al sincronizar con el pcbot"))
+    # guardar perfiles recibidos
+    workspace_id = resultado.get("workspace_id")
+    for perfil in resultado.get("perfiles", []):
+        guardar_perfil_roxy(
+            usuario["usuario_id"],
+            pcbot_id,
+            perfil["nombre"],
+            perfil["hash"],
+            workspace_id,
+        )
+    return {"ok": True, "perfiles_guardados": len(resultado.get("perfiles", []))}
+
+
 @router.get("/roxy_key")
 async def api_obtener_roxy_key(sesion: dict = Depends(verificar_token_dependencia)):
     """obtiene la roxy_api_key y roxy_workspace_id del usuario autenticado."""
