@@ -88,8 +88,12 @@ async def sincronizar_perfiles(
             raise HTTPException(400, "no hay api key de roxybrowser guardada para esta computadora")
         api_key = row[0]
     # enviar comando al pcbot usando orchestrator
+    logger.info("[DIAG-200] Sincronizando perfiles para pcbot=%s", pcbot_id)
+    logger.info(f"[SYNC] Enviando comando a {pcbot_id} con API key {api_key[:8]}...")
     from orchestrator import enviar_comando_recargar_perfiles
     resultado = await enviar_comando_recargar_perfiles(pcbot_id, api_key)
+    logger.info(f"[SYNC] Resultado del comando: {resultado}")
+    logger.info("[DIAG-201] Resultado del comando: %s", resultado)
     if not resultado.get("ok"):
         raise HTTPException(500, resultado.get("error", "error al sincronizar con el pcbot"))
     # guardar perfiles recibidos

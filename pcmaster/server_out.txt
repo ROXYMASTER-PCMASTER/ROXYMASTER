@@ -1,8 +1,245 @@
-2026-05-09 19:04:30,449 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, computadoras
-2026-05-09 19:04:30,449 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
-2026-05-09 19:04:30,449 [roxymaster.server] INFO: configuracion cargada: puerto=8086
-2026-05-09 19:04:30,449 [roxymaster.server] INFO: base de datos inicializada: C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
-2026-05-09 19:04:30,466 [roxymaster.tasks] INFO: registros de tareas inicializados
-2026-05-09 19:04:30,498 [roxymaster.server] INFO: tareas periodicas iniciadas
-2026-05-09 19:04:30,498 [roxymaster.tasks] INFO: iniciando tareas periodicas...
-2026-05-09 19:04:30,505 [roxymaster.server] INFO: deteniendo servidor...
+2026-05-10 03:14:48,511 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, computadoras
+2026-05-10 03:14:48,527 [roxymaster.server] INFO: iniciando servidor en 0.0.0.0:8086
+2026-05-10 03:14:48,667 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, computadoras
+2026-05-10 03:14:48,667 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
+2026-05-10 03:14:48,667 [roxymaster.server] INFO: configuracion cargada: puerto=8086
+2026-05-10 03:14:48,667 [roxymaster.server] INFO: base de datos inicializada: C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
+2026-05-10 03:14:48,683 [roxymaster.tasks] INFO: registros de tareas inicializados
+2026-05-10 03:14:48,698 [roxymaster.server] INFO: tareas periodicas iniciadas
+2026-05-10 03:14:48,698 [roxymaster.tasks] INFO: iniciando tareas periodicas...
+2026-05-10 03:14:51,082 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+INFO:     181.176.72.212:0 - "GET /publico/dashboard_publico.html?tab=perfiles HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /api/roxy/profiles HTTP/1.1" 200 OK
+2026-05-10 03:15:12,571 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:12,573 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:12,573 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:12,574 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:12,574 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:15,885 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:15:17,072 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:17,079 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:17,079 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:17,079 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:17,079 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:19,661 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:19,666 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:19,666 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:19,666 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:19,666 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:27,615 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:27,618 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:27,618 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:27,619 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:27,620 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:29,674 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:29,676 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:29,676 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:29,677 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:29,677 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:55613 - "POST /api/login HTTP/1.1" 200 OK
+2026-05-10 03:15:49,238 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     127.0.0.1:55613 - "POST /api/actualizar_roxy_key HTTP/1.1" 200 OK
+2026-05-10 03:15:49,268 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:49,269 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:49,269 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:49,269 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:49,269 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     127.0.0.1:55613 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:49,588 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:49,588 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:49,589 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:49,589 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:49,589 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:51,622 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:15:52,674 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:52,683 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:52,683 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:52,683 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:52,683 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:15:56,524 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:15:56,524 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:15:56,524 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:15:56,524 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:15:56,524 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:00,937 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:16:01,886 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:01,888 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:01,888 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:01,888 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:01,889 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:07,404 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:16:08,764 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:08,771 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:08,771 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:08,771 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:08,771 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:10,889 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:10,901 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:10,901 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:10,901 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:10,901 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:12,955 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:12,969 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:12,969 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:12,969 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:12,970 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:15,372 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:15,375 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:15,375 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:15,375 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:15,375 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:18,438 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:18,464 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:18,464 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:18,464 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:18,464 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:22,583 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:16:23,658 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:23,659 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:23,659 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:23,659 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:23,659 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+INFO:     181.176.72.212:0 - "GET /publico/dashboard_publico.html?tab=perfiles HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /publico/perfiles.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /api/roxy/profiles HTTP/1.1" 200 OK
+2026-05-10 03:16:31,488 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:16:32,530 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:32,537 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:32,538 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:32,538 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:32,538 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:35,035 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:35,038 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:35,038 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:35,038 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:35,039 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:39,668 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:39,671 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:39,672 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:39,672 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:39,672 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:49,716 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:16:49,719 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:16:49,719 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:16:49,719 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:16:49,719 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:16:53,165 [roxymaster.server] INFO: pcbot desconectado: PCWILMER
+2026-05-10 03:17:01,176 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+2026-05-10 03:17:04,784 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:17:05,733 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:05,739 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:05,740 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:05,740 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:05,740 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:07,892 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:07,892 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:07,893 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:07,893 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:07,893 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:16,409 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:16,413 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:16,413 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:16,414 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:16,414 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+INFO:     181.176.72.212:0 - "GET /publico/dashboard_publico.html?tab=perfiles HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.212:0 - "GET /api/roxy/profiles HTTP/1.1" 200 OK
+2026-05-10 03:17:22,324 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:17:23,328 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:23,332 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:23,332 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:23,332 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:23,332 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:25,175 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:25,189 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:25,190 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:25,191 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:25,191 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:33,414 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:33,415 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:33,415 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:33,415 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:33,415 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:38,237 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:17:39,247 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:39,250 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:39,250 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:39,250 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:39,250 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:47,744 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:17:48,852 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:48,853 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:48,853 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:48,854 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:48,854 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:50,709 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:50,711 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:50,711 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:50,712 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:50,712 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:54,498 [api_roxykey] INFO: roxy_api_key actualizada para usuario 30, pcbot_id=pcbot_prueba1
+INFO:     181.176.72.212:0 - "POST /api/roxy/api_key HTTP/1.1" 200 OK
+2026-05-10 03:17:55,274 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:55,276 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:55,277 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:55,277 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:55,278 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:17:57,181 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:17:57,183 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:17:57,183 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:17:57,183 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:17:57,183 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:18:02,341 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:18:02,342 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:18:02,342 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:18:02,342 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:18:02,342 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+2026-05-10 03:18:05,849 [api_roxykey] INFO: [DIAG-200] Sincronizando perfiles para pcbot=pcbot_prueba1
+2026-05-10 03:18:05,851 [api_roxykey] INFO: [SYNC] Enviando comando a pcbot_prueba1 con API key 8ce112f7...
+2026-05-10 03:18:05,852 [orchestrator] INFO: [DIAG-100] Enviando comando a pcbot_prueba1
+2026-05-10 03:18:05,852 [api_roxykey] INFO: [SYNC] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+2026-05-10 03:18:05,852 [api_roxykey] INFO: [DIAG-201] Resultado del comando: {'ok': False, 'error': 'pcbot no conectado'}
+INFO:     181.176.72.212:0 - "POST /api/roxy/sync_profiles HTTP/1.1" 500 Internal Server Error
+INFO:     43.165.195.234:0 - "GET / HTTP/1.1" 200 OK
+2026-05-10 03:20:43,621 [roxymaster.server] INFO: pcbot desconectado: PCWILMER
+2026-05-10 03:22:58,739 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
