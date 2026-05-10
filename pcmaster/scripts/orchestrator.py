@@ -225,7 +225,12 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
         # Bucle principal de recepción de mensajes
         while True:
             try:
-                raw = await asyncio.wait_for(websocket.receive_text(), timeout=60)
+                logger.info(f"[DEBUG] Ciclo vivo, websocket.closed={websocket.closed}")
+                if websocket.closed:
+                    logger.warning(f"[DEBUG] websocket cerrado para {pcbot_id}, saliendo del bucle")
+                    break
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=120)
+                logger.info(f"[DEBUG] Mensaje RAW recibido: {raw[:200]}")
                 logger.info(f"[WS-RECV] Mensaje recibido de {pcbot_id}: {raw[:200]}")
                 logger.info(f"[WS-STATE] websocket.closed = {websocket.closed}, remote_address = {websocket.remote_address}")
                 logger.info("[DIAG-003] Mensaje RECIBIDO (longitud %d): %s", len(raw), raw[:200])
@@ -522,9 +527,22 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
     wrapper de compatibilidad para server.py."""
     tipo = mensaje.get("tipo", "")
 
+    # DIAGNOSTICO: log de heartbeats
     if tipo == "heartbeat":
+        logger.info("[HB-DEBUG] Heartbeat recibido de %s, datos=%s", pcbot_id, str(mensaje)[:150])
+        logger.info("[HB] Heartbeat recibido de %s, enviando ack", pcbot_id)
         await _procesar_heartbeat(pcbot_id, mensaje)
         await _enviar_pendientes(pcbot_id)
+    elif tipo == "respuesta_recargar_perfiles":
+        req_id = mensaje.get("comando_id")
+        logger.info("[DIAG-005] !Respuesta recargar_perfiles detectada! request_id=%s", req_id)
+        logger.info(f"[WS-PEND] req_id={req_id}, presente en _pending_commands? {req_id in _pending_commands}")
+        if req_id and req_id in _pending_commands:
+            _pending_commands[req_id].set_result(mensaje)
+            logger.info("[DIAG-006] Futuro encontrado, resolviendo")
+        else:
+            logger.warning("[DIAG-007] request_id no encontrado en pendientes")
+        return {"tipo": "ack_recargar", "pcbot_id": pcbot_id, "timestamp": _ahora_str()}
     elif tipo == "respuesta":
         await _procesar_respuesta(pcbot_id, mensaje)
     elif tipo == "alerta":

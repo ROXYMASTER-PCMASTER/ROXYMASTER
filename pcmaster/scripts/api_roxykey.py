@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from api_auth import verificar_token_dependencia
-from db import ejecutar_sql
+from db import ejecutar_sql, get_db_context
+from orchestrator import _conexiones_ws
 
 logger = logging.getLogger(__name__)
 
@@ -32,26 +33,46 @@ async def api_actualizar_roxy_key(
     req: RoxyKeyRequest,
     sesion: dict = Depends(verificar_token_dependencia),
 ):
-    """actualiza la roxy_api_key y roxy_workspace_id del usuario autenticado."""
+    """actualiza la roxy_api_key y roxy_workspace_id del usuario autenticado.
+    asocia automaticamente el pcbot_id real desde la conexion websocket activa."""
     try:
         usuario_id = sesion["usuario_id"]
-        pcbot_id = sesion.get("pcbot_id", "")
+
+        # actualizar api key y workspace en usuarios
         ejecutar_sql(
             "update usuarios set roxy_api_key = ?, roxy_workspace_id = ? where id = ?",
             (req.roxy_api_key, req.roxy_workspace_id, usuario_id),
         )
-        # actualizar tambien en tabla computadoras
-        if pcbot_id:
-            ejecutar_sql(
+
+        # obtener el pcbot_id real desde las conexiones websocket activas
+        pcbot_id_real = None
+        for pid in _conexiones_ws:
+            pcbot_id_real = pid
+            break  # tomar el primero (se asume que es el mismo equipo)
+
+        if not pcbot_id_real:
+            logger.warning(f"usuario {usuario_id} guardo api key pero no hay pcbot conectado")
+            return {"exito": True, "mensaje": "roxy api key guardada, pero no hay pcbot conectado para asociar"}
+
+        # guardar o reemplazar la computadora con el pcbot real
+        with get_db_context() as conn:
+            conn.execute(
                 "insert into computadoras (pcbot_id, usuario_id, api_key_roxy, workspace_id, estado, ultima_conexion) "
                 "values (?, ?, ?, ?, 'activa', datetime('now','localtime')) "
                 "on conflict(pcbot_id) do update set "
                 "api_key_roxy=excluded.api_key_roxy, workspace_id=excluded.workspace_id, "
                 "estado='activa', ultima_conexion=excluded.ultima_conexion, usuario_id=excluded.usuario_id",
-                (pcbot_id, usuario_id, req.roxy_api_key, req.roxy_workspace_id),
+                (pcbot_id_real, usuario_id, req.roxy_api_key, req.roxy_workspace_id),
             )
-        logger.info(f"roxy_api_key actualizada para usuario {usuario_id}, pcbot_id={pcbot_id}")
-        return {"exito": True, "mensaje": "roxy api key actualizada"}
+            # actualizar el campo pcbot_id en usuarios
+            conn.execute(
+                "update usuarios set pcbot_id = ? where id = ?",
+                (pcbot_id_real, usuario_id),
+            )
+            conn.commit()
+
+        logger.info(f"api key guardada para usuario {usuario_id} con pcbot_id={pcbot_id_real}")
+        return {"exito": True, "pcbot_id": pcbot_id_real, "mensaje": "api key guardada y pcbot asociado"}
     except Exception as e:
         logger.error(f"error al actualizar roxy_key: {e}")
         raise HTTPException(status_code=500, detail=f"error interno: {str(e)}")
