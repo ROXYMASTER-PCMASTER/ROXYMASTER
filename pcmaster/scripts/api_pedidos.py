@@ -1,153 +1,210 @@
-# api_pedidos.py - flujo de pedidos con estados. roxymaster v8.3
-# utf-8 sin bom, nombres en minusculas, <= 400 lineas
+# api_pedidos.py - router de pedidos de servicios para streamers.
+# roxymaster v8.3 - utf-8 sin bom, nombres en minusculas, <= 400 lineas
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
+import uuid
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from auth import verificar_token
-from db import ejecutar_sql, ejecutar_sql_unico
+from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
+from tokenomics_core import (
+    calcular_costo_streamer,
+    _cargar_params,
+)
+from auth import verificar_token_opcional
+from ws_manager import enviar_comando_al_pcbot
 
 logger = logging.getLogger("roxymaster.api_pedidos")
+
 router = APIRouter(prefix="/api/pedidos", tags=["pedidos"])
 
 
-class PedidoCrear(BaseModel):
-    tipo: str  # "comando", "kbt", "servicio"
-    descripcion: str
-    metadata: Optional[dict] = None
+def _usuario_requerido(sesion: dict) -> int:
+    """valida que la sesion tenga usuario_id y lo devuelve."""
+    if not sesion:
+        raise HTTPException(status_code=401, detail="autenticacion requerida")
+    uid = sesion.get("usuario_id")
+    if not uid:
+        raise HTTPException(status_code=401, detail="token invalido")
+    return uid
 
 
-class PedidoActualizar(BaseModel):
-    estado: str  # "pendiente", "en_progreso", "completado", "cancelado"
-    notas: Optional[str] = None
+# ---------------------------------------------------------------------------
+# post /api/pedidos/calcular_costo
+# ---------------------------------------------------------------------------
+@router.post("/calcular_costo")
+async def calcular_costo_endpoint(request: Request, sesion: dict = Depends(verificar_token_opcional)):
+    """calcula el costo de un pedido en tokens."""
+    uid = _usuario_requerido(sesion)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="cuerpo invalido")
+
+    seguidores = int(body.get("seguidores", 0))
+    perfiles = int(body.get("perfiles", 0))
+    horas = float(body.get("horas", 0))
+    nivel_comentarios = body.get("nivel_comentarios", "basico")
+    tipo_pedido = body.get("tipo_pedido", "vistas")
+
+    if seguidores <= 0 or perfiles <= 0 or horas <= 0:
+        raise HTTPException(status_code=400, detail="seguidores, perfiles y horas deben ser > 0")
+
+    costo = calcular_costo_streamer(seguidores, perfiles, horas)
+    costo_tokens = costo["tokens"]
+
+    # aplicar multiplicador vip (x2.0)
+    multiplicador_vip = 2.0 if tipo_pedido == "vip" else 1.0
+    costo_tokens *= multiplicador_vip
+
+    return {
+        "exito": True,
+        "costo_usd": costo["usd"] * multiplicador_vip,
+        "costo_soles": costo["soles"] * multiplicador_vip,
+        "costo_tokens": costo_tokens,
+        "seguidores": seguidores,
+        "perfiles": perfiles,
+        "horas": horas,
+        "nivel_comentarios": nivel_comentarios,
+        "tipo_pedido": tipo_pedido,
+    }
 
 
+# ---------------------------------------------------------------------------
+# post /api/pedidos/crear
+# ---------------------------------------------------------------------------
 @router.post("/crear")
-async def crear_pedido(pedido: PedidoCrear, token: str = Depends(verificar_token)):
-    """crea un nuevo pedido."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    ahora = datetime.now().isoformat()
-    meta_str = json.dumps(pedido.metadata) if pedido.metadata else "{}"
+async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_opcional)):
+    """crea un pedido de servicio, descuenta tokens y envia comando al pcbot."""
+    uid = _usuario_requerido(sesion)
     try:
-        pid = ejecutar_sql(
-            """insert into pedidos (usuario_id, tipo, descripcion, metadata, estado, creado_en, actualizado_en)
-               values (?, ?, ?, ?, 'pendiente', ?, ?) returning id""",
-            (usuario["id"], pedido.tipo, pedido.descripcion, meta_str, ahora, ahora),
-        )
-        if isinstance(pid, (list, tuple)):
-            pid = pid[0]
-        elif hasattr(pid, "fetchone"):
-            row = pid.fetchone()
-            pid = row[0] if row else None
-        elif isinstance(pid, int):
-            pass
-        else:
-            pid = pid.get("id") if isinstance(pid, dict) else getattr(pid, "id", None)
-        logger.info(f"pedido creado: id={pid}, tipo={pedido.tipo}")
-        return {"exito": True, "pedido_id": pid, "mensaje": "pedido creado correctamente"}
-    except Exception as e:
-        logger.error(f"error al crear pedido: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="cuerpo invalido")
 
+    url = body.get("url", "").strip()
+    seguidores = int(body.get("seguidores", 0))
+    perfiles = int(body.get("perfiles", 0))
+    horas = float(body.get("horas", 0))
+    nivel_comentarios = body.get("nivel_comentarios", "basico")
+    tipo_pedido = body.get("tipo_pedido", "vistas")
 
-@router.get("/listar")
-async def listar_pedidos(
-    estado: Optional[str] = Query(None),
-    token: str = Depends(verificar_token),
-):
-    """lista pedidos, opcionalmente filtrados por estado."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    try:
-        if estado:
-            rows = ejecutar_sql(
-                "select id, tipo, descripcion, estado, creado_en from pedidos where usuario_id = ? and estado = ? order by creado_en desc",
-                (usuario["id"], estado),
-            )
-        else:
-            rows = ejecutar_sql(
-                "select id, tipo, descripcion, estado, creado_en from pedidos where usuario_id = ? order by creado_en desc",
-                (usuario["id"],),
-            )
-        pedidos = []
-        for r in rows:
-            pedidos.append({"id": r[0], "tipo": r[1], "descripcion": r[2], "estado": r[3], "creado_en": r[4]})
-        return {"exito": True, "pedidos": pedidos}
-    except Exception as e:
-        logger.error(f"error al listar pedidos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    if not url:
+        raise HTTPException(status_code=400, detail="url requerida")
+    if seguidores <= 0 or perfiles <= 0 or horas <= 0:
+        raise HTTPException(status_code=400, detail="seguidores, perfiles y horas deben ser > 0")
 
+    # calcular costo
+    costo = calcular_costo_streamer(seguidores, perfiles, horas)
+    costo_tokens = costo["tokens"]
 
-@router.put("/{pedido_id}")
-async def actualizar_pedido(pedido_id: int, datos: PedidoActualizar, token: str = Depends(verificar_token)):
-    """actualiza el estado de un pedido."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    estados_validos = ["pendiente", "en_progreso", "completado", "cancelado"]
-    if datos.estado not in estados_validos:
-        raise HTTPException(status_code=400, detail=f"estado invalido. usar: {', '.join(estados_validos)}")
-    ahora = datetime.now().isoformat()
-    try:
-        ejecutar_sql(
-            "update pedidos set estado = ?, notas = ?, actualizado_en = ? where id = ? and usuario_id = ?",
-            (datos.estado, datos.notas, ahora, pedido_id, usuario["id"]),
-        )
-        logger.info(f"pedido {pedido_id} actualizado a {datos.estado}")
-        return {"exito": True, "mensaje": f"pedido {pedido_id} actualizado a '{datos.estado}'"}
-    except Exception as e:
-        logger.error(f"error al actualizar pedido {pedido_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    # aplicar multiplicador vip (x2.0)
+    multiplicador_vip = 2.0 if tipo_pedido == "vip" else 1.0
+    costo_tokens *= multiplicador_vip
 
+    # verificar saldo
+    wallet = ejecutar_sql_unico("select balance from wallets where usuario_id = ?", (uid,))
+    if not wallet or float(wallet["balance"]) < costo_tokens:
+        raise HTTPException(status_code=400, detail="saldo insuficiente")
 
-@router.get("/{pedido_id}")
-async def obtener_pedido(pedido_id: int, token: str = Depends(verificar_token)):
-    """obtiene detalles de un pedido especifico."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    try:
-        row = ejecutar_sql_unico(
-            "select id, tipo, descripcion, metadata, estado, notas, creado_en, actualizado_en from pedidos where id = ? and usuario_id = ?",
-            (pedido_id, usuario["id"]),
-        )
-        if not row:
-            raise HTTPException(status_code=404, detail="pedido no encontrado")
+    # descuento de tokens
+    ejecutar_sql(
+        "update wallets set balance = balance - ? where usuario_id = ?",
+        (costo_tokens, uid),
+    )
+
+    # generar comando_id
+    comando_id = f"pedido_{uuid.uuid4().hex[:12]}"
+
+    # guardar pedido en bd
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pedido_id = ejecutar_insercion(
+        """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
+           duracion_horas, nivel_comentarios, tipo_pedido, costo_tokens, estado,
+           comando_id, fecha_creacion)
+           values (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?)""",
+        (uid, url, seguidores, perfiles, horas, nivel_comentarios, tipo_pedido,
+         costo_tokens, comando_id, ahora),
+    )
+
+    if not pedido_id:
+        # revertir descuento
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (costo_tokens, uid))
+        raise HTTPException(status_code=500, detail="error al crear pedido")
+
+    # registrar transaccion
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'pedido', ?, ?, ?)",
+        (uid, costo_tokens,
+         f"pedido #{pedido_id}: {perfiles} perfiles x {horas}h para {seguidores} seguidores",
+         ahora),
+    )
+
+    # enviar comando al pcbot
+    comando = {
+        "tipo": "asignar",
+        "accion": "asignar",
+        "comando_id": comando_id,
+        "parametros": {
+            "pedido_id": pedido_id,
+            "url": url,
+            "seguidores": seguidores,
+            "perfiles": perfiles,
+            "horas": horas,
+            "nivel_comentarios": nivel_comentarios,
+            "tipo_pedido": tipo_pedido,
+        },
+    }
+
+    resultado_envio = await enviar_comando_al_pcbot(uid, comando)
+    if not resultado_envio.get("exito"):
+        logger.warning(f"pedido {pedido_id}: no se pudo enviar comando al pcbot, queda pendiente")
         return {
             "exito": True,
-            "pedido": {
-                "id": row[0],
-                "tipo": row[1],
-                "descripcion": row[2],
-                "metadata": json.loads(row[3]) if row[3] else {},
-                "estado": row[4],
-                "notas": row[5],
-                "creado_en": row[6],
-                "actualizado_en": row[7],
-            },
+            "pedido_id": pedido_id,
+            "costo_tokens": costo_tokens,
+            "comando_id": comando_id,
+            "comando_enviado": False,
+            "mensaje": "pedido creado pero el pcbot no esta conectado. se procesara cuando se conecte.",
         }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"error al obtener pedido {pedido_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+    # actualizar estado a enviado
+    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
+
+    logger.info(f"pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} tokens")
+    return {
+        "exito": True,
+        "pedido_id": pedido_id,
+        "costo_tokens": costo_tokens,
+        "comando_id": comando_id,
+        "comando_enviado": True,
+        "mensaje": "pedido creado y comando enviado al pcbot",
+    }
 
 
-def obtener_usuario_por_token(token: str) -> Optional[dict]:
-    """obtiene datos del usuario desde un token de sesion."""
-    try:
-        from auth import verificar_token
-        resultado = verificar_token(token)
-        if resultado.get("exito") and resultado.get("usuario"):
-            return resultado["usuario"]
-        return None
-    except Exception:
-        return None
+# ---------------------------------------------------------------------------
+# get /api/pedidos/mis_pedidos
+# ---------------------------------------------------------------------------
+@router.get("/mis_pedidos")
+async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
+    """lista los pedidos del usuario autenticado."""
+    uid = _usuario_requerido(sesion)
+
+    pedidos = ejecutar_sql(
+        """select id, url, seguidores_streamer, cantidad_perfiles, duracion_horas,
+                  nivel_comentarios, tipo_pedido, costo_tokens, estado, comando_id,
+                  fecha_creacion
+           from pedidos
+           where usuario_id = ?
+           order by fecha_creacion desc""",
+        (uid,),
+    )
+
+    return {
+        "exito": True,
+        "pedidos": pedidos,
+    }

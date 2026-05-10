@@ -64,6 +64,10 @@ from api_monitoreo import router as router_monitoreo
 from api_pedidos import router as router_pedidos
 from api_version import router as router_version
 
+# routers nuevos para economia - retiros y referidos
+from api_retiros import router as router_retiros
+from api_referidos import router as router_referidos
+
 # router para computadoras
 from api_computadoras import router as router_computadoras
 
@@ -184,6 +188,8 @@ app.include_router(router_dashboard)
 app.include_router(router_encriptacion)
 app.include_router(router_monitoreo)
 app.include_router(router_pedidos)
+app.include_router(router_retiros)
+app.include_router(router_referidos)
 app.include_router(router_version)
 app.include_router(heartbeat_router)
 app.include_router(router_computadoras)
@@ -192,8 +198,8 @@ logger.info(
     "routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, "
     "comandos, admin, superadmin, tokenomics, roxykey, mensajes, "
     "public_perfiles, public_finanzas, public_referidos, public_sistema, "
-    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, "
-    "computadoras"
+    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, "
+    "retiros, referidos, version, computadoras"
 )
 
 

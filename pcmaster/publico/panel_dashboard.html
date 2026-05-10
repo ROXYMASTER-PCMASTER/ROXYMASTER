@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ decir se<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -23,37 +23,95 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  /* header del dashboard */
+  /* header del dashboard - estilo premium igual que marketplace */
   .dashboard-header {
+    background: linear-gradient(135deg, #0d0d2b 0%, #1a0533 30%, #0a1628 60%, #0d2137 100%);
+    padding: 2.5rem 1.5rem 2rem;
     margin-bottom: 1.5rem;
-    padding: 1.5rem 1.25rem;
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.06), rgba(124, 58, 237, 0.1));
-    border-radius: 16px;
-    border: 1px solid rgba(124, 58, 237, 0.12);
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    border-radius: 16px 16px 0 0;
+    position: relative;
+    overflow: hidden;
   }
+  .dashboard-header::before {
+    content: '';
+    position: absolute; top: -60%; left: -40%;
+    width: 180%; height: 180%;
+    background: radial-gradient(circle at 30% 40%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(0, 255, 136, 0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .dashboard-header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #7c3aed, #00ff88, #ff6b35, transparent);
+    animation: headerGlow 3s ease-in-out infinite;
+  }
+  @keyframes headerGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  .header-content {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.25rem; flex-wrap: wrap;
+  }
+  .header-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #00ff88);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.4rem; color: #fff;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(0, 255, 136, 0.2);
+    animation: avatarPulse 3s ease-in-out infinite;
+  }
+  @keyframes avatarPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(0, 255, 136, 0.2); }
+    50% { box-shadow: 0 0 30px rgba(124, 58, 237, 0.6), 0 0 60px rgba(0, 255, 136, 0.3); }
+  }
+  .header-text { text-align: left; }
   .dashboard-title {
-    font-size: 1.7rem;
-    font-weight: 900;
-    letter-spacing: 0.5px;
+    font-size: 1.85rem; font-weight: 900; letter-spacing: 1px;
+    text-transform: uppercase;
     background: linear-gradient(90deg, #00ff88, #7c3aed, #ff6b35);
     background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: gradientShift 4s ease-in-out infinite;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
+  }
+  .dashboard-title::after {
+    content: '◆';
+    font-size: 0.5rem; vertical-align: super; margin-left: 4px;
+    -webkit-text-fill-color: #ff6b35;
   }
   @keyframes gradientShift {
     0%, 100% { background-position: 0% center; }
     50% { background-position: 100% center; }
   }
   .dashboard-desc {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    line-height: 1.5;
+    font-size: 0.9rem; color: #94a3b8; margin-top: 0.3rem;
+    max-width: 500px; line-height: 1.5; letter-spacing: 0.3px;
     font-style: italic;
-    letter-spacing: 0.2px;
-    margin-top: 0.3rem;
+  }
+  .dashboard-desc span { color: #00ff88; font-weight: 600; }
+  .dashboard-user-info {
+    margin-top: 0.75rem; font-size: 0.8rem; color: #64748b;
+  }
+  .dashboard-user-info span { margin: 0 0.5rem; }
+  .dashboard-user-info .badge {
+    display: inline-block; padding: 0.15rem 0.6rem; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #7c3aed33, #00ff8822);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    -webkit-text-fill-color: #a78bfa; color: #a78bfa;
+  }
+  .header-no-box {
+    margin-bottom: 1.5rem;
+    border-bottom: none;
   }
   /* grid de kpi */
   .kpi-grid {
@@ -267,10 +325,20 @@
 </head>
 <body>
   <div class="panel-dashboard-wrapper">
-    <!-- header mejorado -->
+    <!-- header premium igual que marketplace -->
     <div class="dashboard-header">
-      <h2 class="dashboard-title">panel del granjero</h2>
-      <p class="dashboard-desc">estas construyendo tu imperio digital. cada perfil conectado te acerca a la libertad financiera.</p>
+      <div class="header-content">
+        <div class="header-avatar">g</div>
+        <div class="header-text">
+          <h2 class="dashboard-title">panel del granjero</h2>
+          <p class="dashboard-desc">estas construyendo tu <span>imperio digital</span>. cada perfil conectado te acerca a la libertad financiera.</p>
+          <div class="dashboard-user-info" id="header-user-info">
+            <span id="header-email">cargando...</span>
+            <span>|</span>
+            <span class="badge" id="header-rol">granjero</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- tarjetas kpi -->

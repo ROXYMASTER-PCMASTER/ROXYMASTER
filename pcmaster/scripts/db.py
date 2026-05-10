@@ -9,7 +9,7 @@ from contextlib import contextmanager
 _db_path = ruta_db
 
 # ---------------------------------------------------------------------------
-# esquema unificado (26 tablas - agregadas: personas, computadoras, apikeys_roxybrowser, perfiles_roxy_ext, billeteras, retiros_billetera)
+# esquema unificado (30 tablas - agregadas: pedidos, retiros_pendientes, codigos_referido, perfiles_referidos)
 # ---------------------------------------------------------------------------
 esquema_sql = """
 pragma journal_mode=WAL;
@@ -289,6 +289,7 @@ create table if not exists perfiles_roxy_ext (
 );
 
 -- tabla: perfiles_roxy (perfiles sincronizados desde pcbot por sync_profiles)
+-- columnas adicionales: activo, ultimo_heartbeat, tiempo_activo_seg, ultimo_pago, pcbot_id
 create table if not exists perfiles_roxy (
     id integer primary key autoincrement,
     usuario_id integer not null,
@@ -296,6 +297,11 @@ create table if not exists perfiles_roxy (
     nombre text not null,
     hash text not null,
     workspace_id integer,
+    activo integer default 0,
+    ultimo_heartbeat text,
+    tiempo_activo_seg integer default 0,
+    ultimo_pago text,
+    pcbot_id text default '',
     ultima_sincronizacion text default (datetime('now','localtime')),
     foreign key (usuario_id) references usuarios(id)
 );
@@ -328,6 +334,45 @@ create table if not exists pcbots_registrados (
     secreto_shs text default ''
 );
 
+-- tabla: pedidos (ordenes de servicio de streamers)
+create table if not exists pedidos (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    url text default '',
+    seguidores_streamer integer default 0,
+    cantidad_perfiles integer default 0,
+    duracion_horas real default 0,
+    nivel_comentarios integer default 0,
+    tipo_pedido text default 'normal',
+    costo_tokens real default 0,
+    estado text default 'pendiente',
+    comando_id text default '',
+    fecha_creacion text default (datetime('now','localtime')),
+    foreign key (usuario_id) references usuarios(id)
+);
+
+-- tabla: retiros_pendientes (solicitudes de retiro con plazo)
+create table if not exists retiros_pendientes (
+    id integer primary key autoincrement,
+    usuario_id integer not null,
+    tokens_bloqueados real not null,
+    fecha_solicitud text default (datetime('now','localtime')),
+    plazo_dias integer default 0,
+    estado text default 'pendiente',
+    fecha_ejecutado text,
+    foreign key (usuario_id) references usuarios(id)
+);
+
+-- tabla: perfiles_referidos (vincula perfiles con el codigo de referido que los creo)
+create table if not exists perfiles_referidos (
+    id integer primary key autoincrement,
+    perfil_id integer not null unique,
+    referido_por_usuario_id integer,
+    fecha_asociacion text default (datetime('now','localtime')),
+    foreign key (perfil_id) references perfiles_roxy(id),
+    foreign key (referido_por_usuario_id) references usuarios(id)
+);
+
 -- indices para busquedas frecuentes
 create index if not exists idx_mensajes_destino on mensajes(destino_id);
 create index if not exists idx_sesiones_usuario on sesiones(usuario_id);
@@ -351,6 +396,11 @@ create index if not exists idx_apikeys_usuario on apikeys_roxybrowser(usuario_id
 create index if not exists idx_apikeys_computadora on apikeys_roxybrowser(computadora_id);
 create index if not exists idx_perfiles_ext_computadora on perfiles_roxy_ext(computadora_id);
 create index if not exists idx_personas_dni on personas(dni);
+create index if not exists idx_pedidos_usuario on pedidos(usuario_id);
+create index if not exists idx_pedidos_estado on pedidos(estado);
+create index if not exists idx_retiros_pendientes_usuario on retiros_pendientes(usuario_id);
+create index if not exists idx_retiros_pendientes_estado on retiros_pendientes(estado);
+create index if not exists idx_perfiles_referidos_perfil on perfiles_referidos(perfil_id);
 """
 
 
@@ -374,7 +424,18 @@ def init_db():
         ("perfiles", "pcbot_id", "text default ''"),
         ("computadoras", "ip_tailscale", "text default ''"),
         ("computadoras", "sistema_operativo", "text default 'Windows'"),
+        ("perfiles_roxy", "activo", "integer default 0"),
+        ("perfiles_roxy", "ultimo_heartbeat", "text"),
+        ("perfiles_roxy", "tiempo_activo_seg", "integer default 0"),
+        ("perfiles_roxy", "ultimo_pago", "text"),
+        ("perfiles_roxy", "pcbot_id", "text default ''"),
     ]
+    # migracion: indice activo (debe ir despues de la columna)
+    try:
+        conn.execute("create index if not exists idx_perfiles_roxy_activo on perfiles_roxy(activo)")
+    except Exception:
+        pass  # la columna aun no existe, se creara despues
+
     for tabla, columna, tipo in migraciones:
         try:
             cursor = conn.execute(f"pragma table_info({tabla})")

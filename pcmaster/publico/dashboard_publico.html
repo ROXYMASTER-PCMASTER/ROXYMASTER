@@ -256,6 +256,9 @@
       <button class="sidebar-link" data-panel="marketplace" onclick="cargarPanel('marketplace',this)">
         <span class="icon">▲</span> marketplace
       </button>
+      <button class="sidebar-link" data-panel="pedidos" onclick="cargarPanel('pedidos',this)">
+        <span class="icon">★</span> pedidos
+      </button>
       <button class="sidebar-link" data-panel="referidos" onclick="cargarPanel('referidos',this)">
         <span class="icon">✦</span> referidos
         <span class="badge-nav" id="badge-ref">0</span>
@@ -548,6 +551,7 @@
     dashboard: '/publico/panel_dashboard.html',
     wallet: '/publico/wallet.html',
     marketplace: '/publico/marketplace.html',
+    pedidos: '/publico/pedidos.html',
     referidos: '/publico/referidos.html',
     perfiles: '/publico/perfiles.html',
     ayuda: '/publico/ayuda.html',
@@ -783,8 +787,11 @@
       var btn = document.querySelector('.sidebar-link[data-panel="' + panelInicial + '"]');
       cargarPanel(panelInicial, btn);
     });
-  })();function abrirModal(id){var m=document.getElementById(id);if(m){m.classList.add("show");m.style.display="flex";}}
-function cerrarModal(id){var m=document.getElementById(id);if(m){m.classList.remove("show");m.style.display="none";}}
+  })();
+
+// modal helpers
+window.abrirModal = function(id){var m=document.getElementById(id);if(m){m.classList.add("show");m.style.display="flex";}};
+window.cerrarModal = function(id){var m=document.getElementById(id);if(m){m.classList.remove("show");m.style.display="none";}};
 document.addEventListener('click',function(e){
 if(e.target.id==='btnAgregarPerfil'){e.preventDefault();abrirModal('modalAgregarPerfil')}
 if(e.target.id==='btnCrearOrden'){e.preventDefault();abrirModal('modalCrearOrden')}

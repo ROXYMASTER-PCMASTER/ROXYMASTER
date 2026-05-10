@@ -1,4 +1,4 @@
-﻿# orchestrator.py - cola de comandos y ws con pcbot. roxymaster v8.3
+# orchestrator.py - cola de comandos y ws con pcbot. roxymaster v8.3
 # todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
 import asyncio
@@ -322,7 +322,7 @@ async def _enviar_heartbeat_control(websocket):
 # procesar heartbeat del pcbot
 # ---------------------------------------------------------------------------
 async def _procesar_heartbeat(pcbot_id: str, datos: dict):
-    """procesa heartbeat del pcbot: actualiza info y tokens minados."""
+    """procesa heartbeat del pcbot: actualiza info, perfiles y tokens minados."""
     _pcbot_info[pcbot_id] = _pcbot_info.get(pcbot_id, {})
     _pcbot_info[pcbot_id]["ultimo_heartbeat"] = _ahora_str()
     _pcbot_info[pcbot_id]["uptime_segundos"] = datos.get("uptime", 0)
@@ -345,16 +345,58 @@ async def _procesar_heartbeat(pcbot_id: str, datos: dict):
     except Exception as _he:
         print(f"[orchestrator] error persistiendo heartbeat: {_he}")
 
-    # actualizar tabla de perfiles con heartbeat
+    # actualizar tabla perfiles_roxy con heartbeat y estado de perfiles
+    # el pcbot envia "perfiles": [{"profile_id": ..., "activo": bool, "tiempo_conectado_seg": ...}]
     for perfil in datos.get("perfiles", []):
-        perfil_id = perfil.get("id", "")
+        perfil_id = perfil.get("profile_id", perfil.get("id", ""))
+        activo = perfil.get("activo", 1)
+        tiempo_seg = perfil.get("tiempo_conectado_seg", 0)
         if perfil_id:
-            with get_db_context() as conn:
-                conn.execute(
-                    "update perfiles set horas_conexion = horas_conexion + 0.0333, ultimo_heartbeat = ? where nombre_perfil = ?",
-                    (_ahora_str(), perfil_id),
+            try:
+                # verificar si existe en perfiles_roxy
+                existente = ejecutar_sql_unico(
+                    "select id from perfiles_roxy where id = ?", (perfil_id,)
                 )
-                conn.commit()
+                if existente:
+                    with get_db_context() as conn:
+                        conn.execute(
+                            """update perfiles_roxy set activo = ?, tiempo_activo_seg = ?,
+                               ultimo_heartbeat = ?, pcbot_id = ? where id = ?""",
+                            (1 if activo else 0, tiempo_seg, _ahora_str(), pcbot_id, perfil_id),
+                        )
+                        conn.commit()
+                else:
+                    # insertar perfil si aun no existe (asociar a usuario del pcbot)
+                    usuario_id = _pcbot_info.get(pcbot_id, {}).get("usuario_id")
+                    if not usuario_id:
+                        user_row = ejecutar_sql_unico(
+                            "select id from usuarios where pcbot_id = ? limit 1", (pcbot_id,)
+                        )
+                        usuario_id = user_row["id"] if user_row else None
+                    if usuario_id:
+                        with get_db_context() as conn:
+                            conn.execute(
+                                """insert or ignore into perfiles_roxy
+                                   (id, usuario_id, nombre, activo, tiempo_activo_seg,
+                                    ultimo_heartbeat, pcbot_id, creado_en)
+                                   values (?, ?, ?, ?, ?, ?, ?, ?)""",
+                                (perfil_id, usuario_id, f"perfil_{perfil_id}",
+                                 1 if activo else 0, tiempo_seg,
+                                 _ahora_str(), pcbot_id, _ahora_str()),
+                            )
+                            conn.commit()
+            except Exception as e:
+                logger.warning(f"error actualizando perfil {perfil_id}: {e}")
+
+    # si no se enviaron perfiles, marcar los de este pcbot como inactivos
+    if not datos.get("perfiles"):
+        try:
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 where pcbot_id = ? and ultimo_heartbeat < ?",
+                (pcbot_id, (datetime.now().timestamp() - 180)),  # 3 min sin heartbeat = inactivo
+            )
+        except Exception as e:
+            logger.warning(f"error marcando perfiles inactivos: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -371,6 +413,21 @@ async def _procesar_respuesta(pcbot_id: str, datos: dict):
             "update comandos set estado = ?, resultado = ?, fecha_ejecucion = ? where comando_id = ?",
             ("completado" if exito else "fallido", json.dumps(resultado, ensure_ascii=False), _ahora_str(), comando_id),
         )
+
+        # actualizar pedidos si el comando esta asociado a uno
+        try:
+            pedido = ejecutar_sql_unico(
+                "select id from pedidos where comando_id = ?", (comando_id,)
+            )
+            if pedido:
+                nuevo_estado = "completado" if exito else "fallido"
+                ejecutar_sql(
+                    "update pedidos set estado = ? where id = ?",
+                    (nuevo_estado, pedido["id"]),
+                )
+                logger.info(f"pedido {pedido['id']} actualizado a {nuevo_estado} via comando {comando_id}")
+        except Exception as e:
+            logger.warning(f"error actualizando pedido por comando {comando_id}: {e}")
 
     # resolver futuros pendientes para respuestas de recargar_perfiles
     if comando_id in _pending_commands:
@@ -560,14 +617,29 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
 
     return {"tipo": "ack", "pcbot_id": pcbot_id, "timestamp": _ahora_str()}
 
+async def enviar_comando_asignar(usuario_id: int, parametros: dict) -> dict:
+    """envia un comando 'asignar' al pcbot del usuario via ws_manager.
+    wrapper de alto nivel para api_pedidos.
+    estructura: {"tipo": "comando", "accion": "asignar", "parametros": {...}}"""
+    from ws_manager import enviar_comando_al_pcbot
+    comando = {
+        "tipo": "asignar",
+        "accion": "asignar",
+        "parametros": parametros,
+        "comando_id": parametros.get("comando_id", ""),
+    }
+    return await enviar_comando_al_pcbot(usuario_id, comando)
+
+
 async def enviar_comando_pcbot(usuario_id: int, comando: dict) -> bool:
-    """Envía un comando al pcbot conectado del usuario."""
-    from ws_manager import ws_connections  # asumimos que existe un dict con clave usuario_id
-    conn = ws_connections.get(usuario_id)
+    """envia un comando al pcbot conectado del usuario."""
+    from ws_manager import ws_connections
+    conn = ws_connections.get(str(usuario_id))
     if not conn:
         return False
     try:
-        await conn.send_text(json.dumps(comando))
+        ws = conn.get("ws") if isinstance(conn, dict) else conn
+        await ws.send_json(comando)
         return True
     except:
         return False
