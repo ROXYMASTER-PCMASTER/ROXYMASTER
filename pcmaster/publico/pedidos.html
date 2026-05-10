@@ -169,9 +169,12 @@
       background: linear-gradient(135deg, #00ff88, #00cc6a); color: #0a0a1a;
     }
     .tipo-toggle .toggle-btn.active-vip {
-      background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+      background: linear-gradient(135deg, #ff1a4a, #cc0033); color: #fff;
+      box-shadow: 0 0 20px rgba(255,26,74,0.5), inset 0 0 20px rgba(255,26,74,0.25);
+      border: 1px solid #ff1a4a;
     }
-    .tipo-toggle .toggle-btn .fa-star { margin-right: 0.3rem; color: #f0b90b; }
+    .tipo-toggle .toggle-btn .fa-star { margin-right: 0.3rem; color: #ff1a4a; }
+    .tipo-toggle .toggle-btn.active-vip .fa-star { color: #fff; text-shadow: 0 0 10px #ff1a4a; }
     .tipo-toggle .toggle-btn .badge-toggle {
       display: block; font-size: 0.6rem; font-weight: 400;
       text-transform: none; letter-spacing: 0; margin-top: 0.1rem; opacity: 0.7;
@@ -339,18 +342,9 @@
 
       <!-- espectadores en tiempo real -->
       <div class="form-group">
-        <label for="ped-seguidores">espectadores en tiempo real</label>
-        <select id="ped-seguidores" onchange="onCambioSeguidores()">
-          <option value="">selecciona un rango</option>
-          <option value="manual">menos de 5k (ingresar manual)</option>
-          <option value="10000" selected>5k - 15k</option>
-          <option value="30000">15k - 50k</option>
-          <option value="200000">50k - 500k</option>
-          <option value="750000">500k - 1m</option>
-          <option value="2000000">mas de 1m</option>
-        </select>
-        <input type="number" id="ped-seguidores-manual" min="1" max="4999" value="100" placeholder="cantidad exacta"
-               style="display:none;margin-top:0.35rem" oninput="calcularCosto()">
+        <label for="ped-seguidores">espectadores en tiempo real (seguidores)</label>
+        <input type="number" id="ped-seguidores" placeholder="ingresa cantidad de seguidores" min="1" step="1" class="form-control" oninput="calcularCosto()">
+        <small>ingresa un numero entero positivo de seguidores</small>
       </div>
 
       <!-- tipo de pedido (normal / vip) toggle -->
@@ -508,36 +502,34 @@ function setTipo(tipo) {
 }
 
 // -------------------------------------------------------------------------
-// cambio en selector de seguidores - mostrar input manual si aplica
+// obtener seguidores validados desde el input numerico
+// retorna null si no hay valor valido
 // -------------------------------------------------------------------------
-function onCambioSeguidores() {
-  var select = document.getElementById('ped-seguidores');
-  var manual = document.getElementById('ped-seguidores-manual');
-  if (select.value === 'manual') {
-    manual.style.display = 'block';
-  } else {
-    manual.style.display = 'none';
+function obtenerSeguidores() {
+  var input = document.getElementById('ped-seguidores');
+  var num = parseInt(input.value, 10);
+  if (isNaN(num) || num < 1) {
+    return null;
   }
-  calcularCosto();
+  return num;
 }
 
 // -------------------------------------------------------------------------
 // calcular costo en tiempo real
 // -------------------------------------------------------------------------
 async function calcularCosto() {
-  var selectVal = document.getElementById('ped-seguidores').value;
-  var seguidores = 0;
-  if (selectVal === 'manual') {
-    seguidores = parseInt(document.getElementById('ped-seguidores-manual').value) || 100;
-  } else {
-    seguidores = parseInt(selectVal) || 0;
+  var seguidores = obtenerSeguidores();
+  if (seguidores === null) {
+    document.getElementById('costo-valor').innerHTML = '0.00 <span class="small">kbt</span>';
+    document.getElementById('costo-detalle-linea').innerText = 'selecciona un rango o ingresa un numero valido';
+    return;
   }
   var perfiles = parseInt(document.getElementById('ped-perfiles').value) || 0;
   var horas = (parseInt(document.getElementById('ped-minutos').value) || 0) / 60.0;
   var nivelComentarios = document.getElementById('ped-comentarios').value;
   var tipo = tipoPedidoActual;
 
-  if (seguidores <= 0 || perfiles <= 0 || horas <= 0) {
+  if (perfiles <= 0 || horas <= 0) {
     document.getElementById('costo-valor').innerHTML = '0.00 <span class="small">kbt</span>';
     return;
   }
@@ -574,12 +566,10 @@ async function calcularCosto() {
 // -------------------------------------------------------------------------
 async function crearPedido() {
   var url = document.getElementById('ped-url').value.trim();
-  var seguidoresSelect = document.getElementById('ped-seguidores').value;
-  var seguidores = 0;
-  if (seguidoresSelect === 'manual') {
-    seguidores = parseInt(document.getElementById('ped-seguidores-manual').value) || 0;
-  } else {
-    seguidores = parseInt(seguidoresSelect) || 0;
+  var seguidores = obtenerSeguidores();
+  if (seguidores === null) {
+    mostrarMensaje('selecciona un rango de seguidores o ingresa una cantidad valida (1-4999)', 'error');
+    return;
   }
   var perfiles = parseInt(document.getElementById('ped-perfiles').value) || 0;
   var horas = (parseInt(document.getElementById('ped-minutos').value) || 0) / 60.0;
