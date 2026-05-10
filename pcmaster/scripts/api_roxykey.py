@@ -99,7 +99,7 @@ async def sincronizar_perfiles(
     if not pcbot_id:
         raise HTTPException(400, "no hay pcbot asociado a este usuario")
     # obtener api key desde computadoras
-    from db import get_db, guardar_perfil_roxy
+    from db import get_db, reemplazar_perfiles_roxy
     with get_db() as conn:
         row = conn.execute(
             "select api_key_roxy from computadoras where pcbot_id = ?",
@@ -117,17 +117,16 @@ async def sincronizar_perfiles(
     logger.info("[DIAG-201] Resultado del comando: %s", resultado)
     if not resultado.get("ok"):
         raise HTTPException(500, resultado.get("error", "error al sincronizar con el pcbot"))
-    # guardar perfiles recibidos
-    workspace_id = resultado.get("workspace_id")
-    for perfil in resultado.get("perfiles", []):
-        guardar_perfil_roxy(
-            usuario["usuario_id"],
-            pcbot_id,
-            perfil["nombre"],
-            perfil["hash"],
-            workspace_id,
-        )
-    return {"ok": True, "perfiles_guardados": len(resultado.get("perfiles", []))}
+    # reemplazar completamente los perfiles (delete all + insert new)
+    workspace_id = resultado.get("workspace_id", 0)
+    perfiles_recibidos = resultado.get("perfiles", [])
+    reemplazar_perfiles_roxy(
+        usuario["usuario_id"],
+        pcbot_id,
+        perfiles_recibidos,
+        workspace_id,
+    )
+    return {"ok": True, "perfiles_guardados": len(perfiles_recibidos)}
 
 
 @router.get("/roxy_key")

@@ -511,13 +511,22 @@ def guardar_perfiles(usuario_id: int, pcbot_id: str, perfiles: list, workspace_i
     return contador
 
 
-def guardar_perfil_roxy(usuario_id: int, computadora_id: str, nombre: str, hash_perfil: str, workspace_id: int):
-    """guarda o reemplaza un perfil roxy en la tabla perfiles_roxy."""
+def reemplazar_perfiles_roxy(usuario_id: int, computadora_id: str, perfiles: list, workspace_id: int):
+    """reemplaza completamente los perfiles roxy de un usuario+computadora.
+    elimina los existentes e inserta los nuevos en una sola transaccion.
+    asi se evita acumulacion de perfiles duplicados al sincronizar."""
     with get_db() as conn:
-        conn.execute("""
-            insert or replace into perfiles_roxy (usuario_id, computadora_id, nombre, hash, workspace_id, ultima_sincronizacion)
-            values (?, ?, ?, ?, ?, current_timestamp)
-        """, (usuario_id, computadora_id, nombre, hash_perfil, workspace_id))
+        # eliminar perfiles existentes para este usuario y computadora
+        conn.execute(
+            "delete from perfiles_roxy where usuario_id = ? and computadora_id = ?",
+            (usuario_id, computadora_id),
+        )
+        # insertar los nuevos perfiles
+        for perfil in perfiles:
+            conn.execute("""
+                insert into perfiles_roxy (usuario_id, computadora_id, nombre, hash, workspace_id, ultima_sincronizacion)
+                values (?, ?, ?, ?, ?, current_timestamp)
+            """, (usuario_id, computadora_id, perfil["nombre"], perfil["hash"], workspace_id))
 
 
 def obtener_perfiles_roxy(usuario_id: int) -> list:
