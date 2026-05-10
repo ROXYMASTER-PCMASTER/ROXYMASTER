@@ -2,7 +2,7 @@
 # todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from api_auth import verificar_token_dependencia
