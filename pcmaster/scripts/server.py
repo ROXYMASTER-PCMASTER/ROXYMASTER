@@ -358,9 +358,17 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
                 except Exception as e:
                     logger.warning(f"error persistir pcbot {pcbot_id}: {e}")
 
-                # responder identify_ok (plano, sin secreto)
+# responder identify_ok (plano, sin secreto)
                 await websocket.send_json({"tipo": "identify_ok", "pcbot_id": pcbot_id})
                 logger.info(f"identify_ok enviado a {pcbot_id}")
+
+                # enviar comandos pendientes al pcbot recien conectado
+                try:
+                    from orchestrator import _enviar_pendientes
+                    await _enviar_pendientes(pcbot_id)
+                    logger.info(f"comandos pendientes enviados a {pcbot_id}")
+                except Exception as e:
+                    logger.warning(f"error enviando pendientes a {pcbot_id}: {e}")
 
                 # registrar en ws_manager por usuario
                 try:

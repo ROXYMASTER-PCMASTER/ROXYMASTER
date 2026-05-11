@@ -14,7 +14,8 @@ from tokenomics_core import (
     _cargar_params,
 )
 from auth import verificar_token_opcional
-from ws_manager import enviar_comando_al_pcbot
+from ws_manager import obtener_pcbot_de_usuario
+from orchestrator import crear_comando
 
 logger = logging.getLogger("roxymaster.api_pedidos")
 
@@ -163,16 +164,25 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
         },
     }
 
-    resultado_envio = await enviar_comando_al_pcbot(uid, comando)
-    if not resultado_envio.get("exito"):
-        logger.warning(f"pedido {pedido_id}: no se pudo enviar comando al pcbot, queda pendiente")
+    # usar orchestrator.crear_comando() para persistir y encolar
+    # obtener pcbot_id del usuario
+    pcbot_id = obtener_pcbot_de_usuario(uid)
+
+    resultado_orch = await crear_comando(
+        tipo="asignar",
+        parametros=comando["parametros"],
+        pcbot_id=pcbot_id,
+        comando_id=comando_id,
+    )
+    if not resultado_orch.get("exito"):
+        logger.warning(f"pedido {pedido_id}: orchestrator no pudo crear comando: {resultado_orch.get('error')}")
         return {
             "exito": True,
             "pedido_id": pedido_id,
             "costo_tokens": costo_tokens,
             "comando_id": comando_id,
             "comando_enviado": False,
-            "mensaje": "pedido creado pero el pcbot no esta conectado. se procesara cuando se conecte.",
+            "mensaje": "pedido creado pero no se pudo encolar el comando. se reintentara.",
         }
 
     # actualizar estado a enviado
