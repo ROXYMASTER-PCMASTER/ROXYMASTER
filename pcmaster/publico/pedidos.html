@@ -168,13 +168,38 @@
     .tipo-toggle .toggle-btn.active-normal {
       background: linear-gradient(135deg, #00ff88, #00cc6a); color: #0a0a1a;
     }
-    .tipo-toggle .toggle-btn.active-vip {
-      background: linear-gradient(135deg, #ff1a4a, #cc0033); color: #fff;
-      box-shadow: 0 0 20px rgba(255,26,74,0.5), inset 0 0 20px rgba(255,26,74,0.25);
-      border: 1px solid #ff1a4a;
+    .tipo-toggle .toggle-btn[data-tipo="vip"] {
+      background: rgba(255,26,74,0.08);
+      border: 1px solid rgba(255,26,74,0.15);
+      transition: all 0.25s ease;
     }
-    .tipo-toggle .toggle-btn .fa-star { margin-right: 0.3rem; color: #ff1a4a; }
-    .tipo-toggle .toggle-btn.active-vip .fa-star { color: #fff; text-shadow: 0 0 10px #ff1a4a; }
+    .tipo-toggle .toggle-btn[data-tipo="vip"]:hover {
+      background: rgba(255,26,74,0.18);
+      border-color: rgba(255,26,74,0.4);
+      box-shadow: 0 0 15px rgba(255,26,74,0.15);
+    }
+    .tipo-toggle .toggle-btn[data-tipo="vip"] .fa-star {
+      color: #ff1a4a;
+      transition: all 0.25s ease;
+    }
+    .tipo-toggle .toggle-btn[data-tipo="vip"]:hover .fa-star {
+      text-shadow: 0 0 8px #ff1a4a;
+    }
+    .tipo-toggle .toggle-btn.active-vip {
+      background: linear-gradient(135deg, #ff1a4a, #cc0033) !important;
+      color: #fff !important;
+      box-shadow: 0 0 25px rgba(255,26,74,0.55), inset 0 0 20px rgba(255,26,74,0.25) !important;
+      border: 1px solid #ff1a4a !important;
+      transform: scale(1.02);
+    }
+    .tipo-toggle .toggle-btn.active-vip .fa-star {
+      color: #fff !important;
+      text-shadow: 0 0 12px #ff1a4a, 0 0 25px rgba(255,26,74,0.6) !important;
+    }
+    .tipo-toggle .toggle-btn.active-vip .badge-toggle {
+      color: rgba(255,255,255,0.8) !important;
+    }
+    .tipo-toggle .toggle-btn .fa-star { margin-right: 0.3rem; }
     .tipo-toggle .toggle-btn .badge-toggle {
       display: block; font-size: 0.6rem; font-weight: 400;
       text-transform: none; letter-spacing: 0; margin-top: 0.1rem; opacity: 0.7;
