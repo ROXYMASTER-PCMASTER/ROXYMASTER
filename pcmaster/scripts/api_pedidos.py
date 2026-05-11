@@ -145,16 +145,19 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     )
 
     # enviar comando al pcbot
+    # mapear parametros al formato que pcbot espera:
+    #   perfiles -> cantidad (numero de perfiles a usar)
+    #   horas -> duracion (en minutos, pcbot espera minutos)
+    duracion_minutos = int(horas * 60)
     comando = {
         "tipo": "asignar",
-        "accion": "asignar",
         "comando_id": comando_id,
         "parametros": {
             "pedido_id": pedido_id,
             "url": url,
             "seguidores": seguidores,
-            "perfiles": perfiles,
-            "horas": horas,
+            "cantidad": perfiles,
+            "duracion": duracion_minutos,
             "nivel_comentarios": nivel_comentarios,
             "tipo_pedido": tipo_pedido,
         },

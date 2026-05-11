@@ -142,9 +142,9 @@ async def enviar_comando_al_pcbot(usuario_id: int, comando: dict) -> dict:
         return {"exito": False, "error": "no hay pcbot conectado para este usuario"}
 
     # armar mensaje con formato que espera el pcbot
+    # el tipo debe ser la accion directa (ej: "asignar"), no "comando"
     mensaje = {
-        "tipo": "comando",
-        "accion": comando.get("tipo", comando.get("accion", "desconocido")),
+        "tipo": comando.get("tipo", comando.get("accion", "asignar")),
         "parametros": comando.get("parametros", {}),
         "comando_id": comando.get("comando_id", ""),
     }

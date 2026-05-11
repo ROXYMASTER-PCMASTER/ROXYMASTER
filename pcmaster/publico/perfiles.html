@@ -138,6 +138,28 @@ function escapeHtml(str) {
   });
 }
 
+// actualizar las tarjetas de estadisticas superiores
+function actualizarEstadisticas(perfiles) {
+  var total = perfiles.length;
+  var activos = 0;
+  var totalSegundos = 0;
+
+  for (var i = 0; i < total; i++) {
+    if (perfiles[i].activo) {
+      activos++;
+    }
+    totalSegundos += perfiles[i].tiempo_activo_seg || 0;
+  }
+
+  var horasTotales = (totalSegundos / 3600).toFixed(1);
+  var promedio = total > 0 ? (totalSegundos / total / 3600).toFixed(1) : 0;
+
+  document.getElementById('pf-activos').textContent = activos;
+  document.getElementById('pf-totales').textContent = total;
+  document.getElementById('pf-horas').textContent = horasTotales;
+  document.getElementById('pf-promedio').textContent = promedio + 'h';
+}
+
 // agregar perfil: guarda api key y sincroniza
 async function agregarPerfil() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
@@ -185,12 +207,17 @@ async function cargarPerfiles() {
     if (!tbody) return;
     tbody.innerHTML = '';
     if (data.perfiles && data.perfiles.length) {
+      // actualizar las tarjetas de estadisticas con los perfiles recibidos
+      actualizarEstadisticas(data.perfiles);
       data.perfiles.forEach(function(p) {
-        const row = '<tr><td>' + escapeHtml(p.nombre) + '</td><td>' + escapeHtml(p.hash) + '</td><td>' + (p.workspace_id || '') + '</td><td>' + new Date(p.ultima_sincronizacion).toLocaleString() + '</td></tr>';
+        var sincro = p.ultima_sincronizacion ? new Date(p.ultima_sincronizacion).toLocaleString() : '';
+        var row = '<tr><td>' + escapeHtml(p.nombre) + '</td><td>' + escapeHtml(p.hash) + '</td><td>' + (p.workspace_id || '') + '</td><td>' + sincro + '</td></tr>';
         tbody.insertAdjacentHTML('beforeend', row);
       });
     } else {
       tbody.innerHTML = '<tr><td colspan="4">no hay perfiles sincronizados.</td></tr>';
+      // si no hay perfiles, poner las estadisticas en cero
+      actualizarEstadisticas([]);
     }
   } catch(e) {
     console.error('error cargando perfiles:', e);

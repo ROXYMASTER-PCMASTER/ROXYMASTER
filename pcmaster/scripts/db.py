@@ -594,7 +594,16 @@ def obtener_perfiles_roxy(usuario_id: int) -> list:
     """obtiene los perfiles roxy sincronizados para un usuario."""
     with get_db() as conn:
         rows = conn.execute(
-            "select nombre, hash, workspace_id, ultima_sincronizacion from perfiles_roxy where usuario_id = ?",
+            "select nombre, hash, workspace_id, activo, tiempo_activo_seg, computadora_id, ultima_sincronizacion "
+            "from perfiles_roxy where usuario_id = ?",
             (usuario_id,),
         ).fetchall()
-        return [{"nombre": r[0], "hash": r[1], "workspace_id": r[2], "ultima_sincronizacion": r[3]} for r in rows]
+        return [{
+            "nombre": r[0],
+            "hash": r[1],
+            "workspace_id": r[2],
+            "activo": r[3],
+            "tiempo_activo_seg": r[4],
+            "computadora_id": r[5],
+            "ultima_sincronizacion": r[6],
+        } for r in rows]

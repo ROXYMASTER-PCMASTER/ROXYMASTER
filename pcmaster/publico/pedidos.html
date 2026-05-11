@@ -1,618 +1,820 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pedidos - roxymaster</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    /* ------------------------------------------------------------------ */
-    /* header estilo marketplace                                          */
-    /* ------------------------------------------------------------------ */
-    .header {
-      background: linear-gradient(135deg, #0d0d2b 0%, #1a0533 30%, #0a1628 60%, #0d2137 100%);
-      padding: 2.5rem 1.5rem 2rem;
-      text-align: center;
-      border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-      position: relative;
-      overflow: hidden;
-    }
-    .header::before {
-      content: '';
-      position: absolute; top: -60%; left: -40%;
-      width: 180%; height: 180%;
-      background: radial-gradient(circle at 30% 40%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 60%, rgba(0, 255, 136, 0.06) 0%, transparent 40%);
-      pointer-events: none;
-    }
-    .header::after {
-      content: '';
-      position: absolute; bottom: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #7c3aed, #00ff88, #f0b90b, transparent);
-      animation: headerGlow 3s ease-in-out infinite;
-    }
-    @keyframes headerGlow {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-    .header-content {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; justify-content: center;
-      gap: 1.25rem; flex-wrap: wrap;
-    }
-    .header-avatar {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7c3aed, #f0b90b);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 1.4rem; color: #fff;
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(240, 185, 11, 0.2);
-      animation: avatarPulse 3s ease-in-out infinite;
-    }
-    @keyframes avatarPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(240, 185, 11, 0.2); }
-      50% { box-shadow: 0 0 30px rgba(124, 58, 237, 0.6), 0 0 60px rgba(240, 185, 11, 0.3); }
-    }
-    .header-text { text-align: left; }
-    .header h1 {
-      font-size: 1.85rem; font-weight: 900; letter-spacing: 1px;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #f0b90b, #7c3aed, #00ff88);
-      background-size: 200% auto;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradientShift 4s ease-in-out infinite;
-    }
-    .header h1::after {
-      content: '◆';
-      font-size: 0.5rem; vertical-align: super; margin-left: 4px;
-      -webkit-text-fill-color: #f0b90b;
-    }
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% center; }
-      50% { background-position: 100% center; }
-    }
-    .header .subtitle {
-      font-size: 0.9rem; color: #94a3b8; margin-top: 0.3rem;
-      max-width: 500px; line-height: 1.5; letter-spacing: 0.3px;
-    }
-    .header .subtitle span { color: #f0b90b; font-weight: 600; }
-    .header .user-info {
-      margin-top: 0.75rem; font-size: 0.8rem; color: #64748b;
-    }
-    .header .user-info span { margin: 0 0.5rem; }
-    .header .user-info .badge {
-      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 20px;
-      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #7c3aed33, #f0b90b22);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      -webkit-text-fill-color: #a78bfa; color: #a78bfa;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pedidos - roxymaster</title>
+<style>
+/* ============================================================================
+   panel pedidos - estilos completos
+   ============================================================================ */
+.panel-pedidos {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-    /* ------------------------------------------------------------------ */
-    /* estilos del panel pedidos - coherente con dashboard_publico.html    */
-    /* ------------------------------------------------------------------ */
-    .pedidos-wrapper { max-width: 1200px; margin: 0 auto; margin-top: 1.5rem; }
-    .pedidos-wrapper h2 {
-      font-size: 1.4rem; font-weight: 900; margin-bottom: 0.25rem;
-      background: linear-gradient(90deg, #00ff88, #7c3aed);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .pedidos-wrapper .subtitle { font-size: 0.82rem; color: #94a3b8; margin-bottom: 1.5rem; }
+.panel-pedidos h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-    /* card generica para formulario y tabla */
-    .card-pedido {
-      background: linear-gradient(135deg, rgba(21,27,47,0.95), rgba(15,10,40,0.95));
-      border: 1px solid rgba(124,58,237,0.12);
-      border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: background 0.3s, border 0.3s, box-shadow 0.3s;
-    }
-    .card-pedido .card-title {
-      font-size: 0.85rem; font-weight: 700; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem;
-    }
+.panel-pedidos .subtitle {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
 
-    /* modo vip en la card */
-    .card-pedido.vip-mode {
-      background: linear-gradient(135deg, #2a2010, #1e1508);
-      border: 1px solid #f0b90b;
-      box-shadow: 0 4px 20px rgba(240, 185, 11, 0.15);
-    }
-    .card-pedido.vip-mode .card-title { color: #f0b90b; }
+.pedido-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
 
-    /* grid de formulario responsivo */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem 1.5rem;
-    }
-    @media (max-width: 768px) {
-      .form-grid { grid-template-columns: 1fr; }
-    }
-    .form-grid .full-width { grid-column: 1 / -1; }
+@media (max-width: 992px) {
+  .pedido-grid { grid-template-columns: 1fr; }
+}
 
-    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
-    .form-group label {
-      font-size: 0.72rem; font-weight: 700; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .form-group input,
-    .form-group select {
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(124,58,237,0.2);
-      border-radius: 8px; padding: 0.6rem 0.8rem;
-      color: #e2e8f0; font-size: 0.85rem; font-weight: 500;
-      outline: none; transition: border 0.2s;
-    }
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
-    }
-    .form-group input::placeholder { color: #475569; font-weight: 400; }
+/* --- card base --- */
+.card-pedido {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 16px;
+  border: 1px solid #334155;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+}
 
-    /* toggle normal / vip */
-    .tipo-toggle {
-      display: flex; gap: 0; border-radius: 10px; overflow: hidden;
-      border: 1px solid rgba(124,58,237,0.2);
-    }
-    .tipo-toggle .toggle-btn {
-      flex: 1; padding: 0.6rem 0.8rem; font-size: 0.82rem; font-weight: 700;
-      text-align: center; cursor: pointer; transition: all 0.2s;
-      border: none; background: rgba(0,0,0,0.3); color: #94a3b8;
-      letter-spacing: 0.3px; text-transform: uppercase;
-    }
-    .tipo-toggle .toggle-btn.active-normal {
-      background: linear-gradient(135deg, #00ff88, #00cc6a); color: #0a0a1a;
-    }
-    .tipo-toggle .toggle-btn[data-tipo="vip"] {
-      background: rgba(255,26,74,0.08);
-      border: 1px solid rgba(255,26,74,0.15);
-      transition: all 0.25s ease;
-    }
-    .tipo-toggle .toggle-btn[data-tipo="vip"]:hover {
-      background: rgba(255,26,74,0.18);
-      border-color: rgba(255,26,74,0.4);
-      box-shadow: 0 0 15px rgba(255,26,74,0.15);
-    }
-    .tipo-toggle .toggle-btn[data-tipo="vip"] .fa-star {
-      color: #ff1a4a;
-      transition: all 0.25s ease;
-    }
-    .tipo-toggle .toggle-btn[data-tipo="vip"]:hover .fa-star {
-      text-shadow: 0 0 8px #ff1a4a;
-    }
-    .tipo-toggle .toggle-btn.active-vip {
-      background: linear-gradient(135deg, #ff1a4a, #cc0033) !important;
-      color: #fff !important;
-      box-shadow: 0 0 25px rgba(255,26,74,0.55), inset 0 0 20px rgba(255,26,74,0.25) !important;
-      border: 1px solid #ff1a4a !important;
-      transform: scale(1.02);
-    }
-    .tipo-toggle .toggle-btn.active-vip .fa-star {
-      color: #fff !important;
-      text-shadow: 0 0 12px #ff1a4a, 0 0 25px rgba(255,26,74,0.6) !important;
-    }
-    .tipo-toggle .toggle-btn.active-vip .badge-toggle {
-      color: rgba(255,255,255,0.8) !important;
-    }
-    .tipo-toggle .toggle-btn .fa-star { margin-right: 0.3rem; }
-    .tipo-toggle .toggle-btn .badge-toggle {
-      display: block; font-size: 0.6rem; font-weight: 400;
-      text-transform: none; letter-spacing: 0; margin-top: 0.1rem; opacity: 0.7;
-    }
+.card-pedido::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #a78bfa, #06b6d4);
+  opacity: 0.5;
+}
 
-    /* costo en tiempo real */
-    .costo-display {
-      background: rgba(0,255,136,0.06);
-      border: 1px solid rgba(0,255,136,0.15);
-      border-radius: 10px; padding: 0.75rem 1rem; margin-top: 1rem;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .costo-display .costo-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
-    .costo-display .costo-valor { font-size: 1.3rem; font-weight: 900; color: #00ff88; }
-    .costo-display .costo-valor.vip { color: #f0b90b; }
-    .costo-display .costo-valor .small { font-size: 0.65rem; font-weight: 400; color: #64748b; }
+.card-pedido.vip-mode {
+  border-color: #f0b90b;
+  box-shadow: 0 4px 24px rgba(240,185,11,0.15);
+}
 
-    /* boton crear pedido */
-    .btn-crear-pedido {
-      width: 100%; padding: 0.75rem 1.5rem; border-radius: 10px;
-      font-size: 0.9rem; font-weight: 800; cursor: pointer; border: none;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      transition: all 0.3s; margin-top: 0.75rem;
-    }
-    .btn-crear-pedido.normal {
-      background: linear-gradient(135deg, #00ff88, #00cc6a); color: #0a0a1a;
-      box-shadow: 0 4px 15px rgba(0,255,136,0.15);
-    }
-    .btn-crear-pedido.normal:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,255,136,0.3); }
-    .btn-crear-pedido.vip {
-      background: linear-gradient(135deg, #f0b90b, #d4a308); color: #1a1508;
-      box-shadow: 0 4px 15px rgba(240,185,11,0.2);
-    }
-    .btn-crear-pedido.vip:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(240,185,11,0.35); }
-    .btn-crear-pedido:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-    .btn-tooltip {
-      display: block; font-size: 0.62rem; font-weight: 400;
-      text-transform: none; letter-spacing: 0; margin-top: 0.2rem; opacity: 0.7;
-    }
+.card-pedido.vip-mode::before {
+  background: linear-gradient(90deg, #f0b90b, #f59e0b);
+}
 
-    /* tabla de pedidos */
-    .table-wrapper { overflow-x: auto; }
-    .pedidos-table {
-      width: 100%; border-collapse: collapse; font-size: 0.82rem;
-    }
-    .pedidos-table thead th {
-      padding: 0.65rem 0.75rem; text-align: left;
-      font-size: 0.68rem; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1px solid rgba(124,58,237,0.1);
-    }
-    .pedidos-table tbody td {
-      padding: 0.6rem 0.75rem; border-bottom: 1px solid rgba(124,58,237,0.06);
-      color: #cbd5e1; vertical-align: middle;
-    }
-    .pedidos-table tbody tr:hover td { background: rgba(124,58,237,0.04); }
-    .pedidos-table tbody tr.vip-row td { background: rgba(240,185,11,0.04); }
-    .pedidos-table tbody tr.vip-row:hover td { background: rgba(240,185,11,0.08); }
-    .pedidos-table .truncate-url {
-      max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
-    }
+.card-titulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-    /* badges de estado */
-    .badge-estado {
-      display: inline-block; padding: 0.15rem 0.55rem; border-radius: 20px;
-      font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-    }
-    .badge-estado.pendiente { background: rgba(240,173,78,0.15); color: #f0ad4e; }
-    .badge-estado.progreso,
-    .badge-estado.enviado,
-    .badge-estado.en-progreso { background: rgba(91,192,222,0.15); color: #5bc0de; }
-    .badge-estado.completado { background: rgba(92,184,92,0.15); color: #5cb85c; }
-    .badge-estado.fallido { background: rgba(217,83,79,0.15); color: #d9534f; }
+.card-titulo i {
+  color: #a78bfa;
+}
 
-    /* vip icon en tabla */
-    .vip-indicator { color: #f0b90b; font-size: 0.75rem; margin-right: 0.3rem; }
+/* --- campos del formulario --- */
+.pedido-field {
+  margin-bottom: 1rem;
+}
 
-    /* mensajes toast */
-    .pedido-msg {
-      padding: 0.6rem 1rem; border-radius: 8px; margin-bottom: 1rem;
-      font-size: 0.82rem; font-weight: 600; display: none;
-    }
-    .pedido-msg.success { display: block; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); color: #00ff88; }
-    .pedido-msg.error { display: block; background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.2); color: #ff3366; }
-    .pedido-msg.info { display: block; background: rgba(91,192,222,0.1); border: 1px solid rgba(91,192,222,0.2); color: #5bc0de; }
+.pedido-field label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+}
 
-    /* spinner pequeno */
-    .spinner-mini {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(124,58,237,0.2); border-top-color: #00ff88;
-      border-radius: 50%; animation: spin-mini 0.6s linear infinite;
-      vertical-align: middle; margin-right: 0.4rem;
-    }
-    @keyframes spin-mini { to { transform: rotate(360deg); } }
+.pedido-field input,
+.pedido-field select {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
 
-    /* costo detalle */
-    .costo-detalle {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem;
-    }
-    .costo-detalle .detalle-linea { font-size: 0.65rem; color: #475569; }
-    .costo-detalle .detalle-linea.vip { color: #f0b90b; }
-  </style>
+.pedido-field input:focus,
+.pedido-field select:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.15);
+}
+
+.pedido-field .field-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.field-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.field-row .pedido-field {
+  flex: 1;
+}
+
+/* --- botones de tiempo rapido --- */
+.tiempo-opt-group {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-top: 0.375rem;
+}
+
+.btn-opt-tiempo {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border: 1px solid #334155;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-opt-tiempo:hover {
+  border-color: #a78bfa;
+  color: #e2e8f0;
+}
+
+.btn-opt-tiempo.active {
+  background: rgba(167,139,250,0.15);
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+/* --- toggle vip --- */
+.toggle-group {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #334155;
+  width: fit-content;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.toggle-btn.active-normal {
+  background: rgba(167,139,250,0.2);
+  color: #a78bfa;
+}
+
+.toggle-btn.active-vip {
+  background: rgba(240,185,11,0.2);
+  color: #f0b90b;
+}
+
+/* --- visor de costo --- */
+.costo-visor {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: center;
+  border: 1px solid #1e293b;
+}
+
+.costo-visor .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.costo-visor .valor {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #00ff88;
+  line-height: 1.2;
+  font-family: 'Courier New', monospace;
+}
+
+.costo-visor .valor.vip {
+  color: #f0b90b;
+}
+
+.costo-visor .valor .small {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.costo-visor .detalle-linea {
+  font-size: 0.75rem;
+  color: #475569;
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
+
+.costo-visor .detalle-linea.vip {
+  color: #f0b90b;
+}
+
+/* --- boton crear --- */
+.btn-crear {
+  width: 100%;
+  padding: 0.875rem;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  position: relative;
+}
+
+.btn-crear:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+}
+
+.btn-crear:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-crear .btn-tooltip {
+  position: absolute;
+  bottom: -1.5rem;
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* --- tabla de pedidos --- */
+.card-tabla {
+  grid-column: 1 / -1;
+}
+
+.tabla-pedidos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.tabla-pedidos th {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
+}
+
+.tabla-pedidos td {
+  padding: 0.625rem 0.5rem;
+  border-bottom: 1px solid #1a1f2e;
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+
+.tabla-pedidos tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-pedidos tr:hover td {
+  background: rgba(167,139,250,0.03);
+}
+
+.tabla-pedidos tr.vip-row td {
+  background: rgba(240,185,11,0.03);
+}
+
+.tabla-pedidos tr.vip-row:hover td {
+  background: rgba(240,185,11,0.06);
+}
+
+.tabla-pedidos td .truncate-url {
+  display: inline-block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #94a3b8;
+}
+
+/* --- badges de estado --- */
+.badge-estado {
+  display: inline-block;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-estado.pendiente {
+  background: rgba(234,179,8,0.12);
+  color: #eab308;
+}
+
+.badge-estado.trabajando {
+  background: rgba(59,130,246,0.12);
+  color: #60a5fa;
+}
+
+.badge-estado.completado {
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+}
+
+.badge-estado.fallido {
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+
+/* --- indicador vip en tabla --- */
+.vip-indicator {
+  color: #f0b90b;
+  font-size: 0.8rem;
+}
+
+/* --- mensaje / toast --- */
+.pedido-msg {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  display: none;
+}
+
+.pedido-msg.success {
+  display: block;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  color: #22c55e;
+}
+
+.pedido-msg.error {
+  display: block;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #ef4444;
+}
+
+.pedido-msg.info {
+  display: block;
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
+  color: #60a5fa;
+}
+
+/* --- spinner --- */
+.spinner-mini {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- header de tabla con boton actualizar --- */
+.tabla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-actualizar {
+  padding: 0.375rem 0.875rem;
+  background: rgba(167,139,250,0.1);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #a78bfa;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: inherit;
+}
+
+.btn-actualizar:hover {
+  background: rgba(167,139,250,0.2);
+  border-color: #a78bfa;
+}
+
+/* --- scroll horizontal en tabla en mobile --- */
+.tabla-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #1a1f2e;
+}
+
+/* --- scrollbar personalizado --- */
+.tabla-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabla-wrapper::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.tabla-wrapper::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+</style>
 </head>
 <body>
-  <!-- header estilo marketplace -->
-  <header class="header">
-    <div class="header-content">
-      <div class="header-avatar">p</div>
-      <div class="header-text">
-        <h1>pedidos</h1>
-        <p class="subtitle">crea pedidos de visitas a tus directos <span>kick</span> y gestiona tus ordenes existentes.</p>
-      </div>
-    </div>
-    <div class="user-info">
-      <span id="user-email">---</span>
-      <span>|</span>
-      <span class="badge" id="user-rol">---</span>
-    </div>
-  </header>
 
-<div class="pedidos-wrapper">
+<div class="panel-pedidos" id="panel-pedidos-root">
+
+  <h2><i class="fas fa-shopping-cart"></i> mis pedidos</h2>
+  <p class="subtitle">crea pedidos de visitas para tus directos. los pedidos se procesan automaticamente.</p>
 
   <div id="pedido-msg" class="pedido-msg"></div>
 
-  <!-- =============================================================== -->
-  <!-- card: formulario de creacion                                    -->
-  <!-- =============================================================== -->
-  <div id="card-formulario" class="card-pedido">
-    <div class="card-title"><i class="fas fa-shopping-cart" style="margin-right:0.4rem"></i> nuevo pedido</div>
+  <div class="pedido-grid">
 
-    <div class="form-grid">
-      <!-- url del directo -->
-      <div class="form-group full-width">
+    <!-- columna izquierda: formulario -->
+    <div class="card-pedido" id="card-formulario">
+
+      <div class="card-titulo">
+        <i class="fas fa-pen-fancy"></i> nuevo pedido
+      </div>
+
+      <!-- url -->
+      <div class="pedido-field">
         <label for="ped-url">url del directo</label>
-        <input type="text" id="ped-url" placeholder="https://kick.com/tunickname" required>
+        <input type="text" id="ped-url" placeholder="https://www.twitch.tv/tu_usuario" autocomplete="off">
+        <div class="field-hint">la url completa de tu directo en twitch, kick o youtube</div>
       </div>
 
-      <!-- cantidad de perfiles -->
-      <div class="form-group">
-        <label for="ped-perfiles">cantidad de perfiles</label>
-        <input type="number" id="ped-perfiles" min="1" max="1000" value="10" required>
+      <!-- seguidores -->
+      <div class="pedido-field">
+        <label for="ped-seguidores">seguidores a alcanzar</label>
+        <input type="number" id="ped-seguidores" placeholder="ej: 1000" min="1" value="100" autocomplete="off">
+        <div class="field-hint">cantidad de seguidores que debe tener el streamer para generar visitas</div>
       </div>
 
-      <!-- tiempo de visita (minutos) -->
-      <div class="form-group">
-        <label for="ped-minutos">tiempo de visita (minutos)</label>
-        <input type="number" id="ped-minutos" min="1" max="1440" value="15" required>
-        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.25rem">
-          <button type="button" class="btn-opt-tiempo" data-minutos="15" onclick="setTiempo(15)">15</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="30" onclick="setTiempo(30)">30</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="60" onclick="setTiempo(60)">60</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="120" onclick="setTiempo(120)">120</button>
+      <!-- perfiles y minutos en fila -->
+      <div class="field-row">
+        <div class="pedido-field">
+          <label for="ped-perfiles">perfiles</label>
+          <input type="number" id="ped-perfiles" placeholder="10" min="1" max="1000" value="10" autocomplete="off">
+          <div class="field-hint">min 1, max 1000</div>
+        </div>
+        <div class="pedido-field">
+          <label for="ped-minutos">tiempo (minutos)</label>
+          <input type="number" id="ped-minutos" placeholder="15" min="1" value="15" autocomplete="off">
+          <div class="field-hint">duracion de la visita por perfil</div>
+        </div>
+      </div>
+
+      <!-- tiempo rapido -->
+      <div class="pedido-field">
+        <label>tiempo rapido</label>
+        <div class="tiempo-opt-group">
+          <button type="button" class="btn-opt-tiempo" data-minutos="5" onclick="window.setTiempo(5)">5 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="15" onclick="window.setTiempo(15)">15 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="30" onclick="window.setTiempo(30)">30 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="60" onclick="window.setTiempo(60)">1 hora</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="120" onclick="window.setTiempo(120)">2 horas</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="240" onclick="window.setTiempo(240)">4 horas</button>
         </div>
       </div>
 
       <!-- nivel de comentarios -->
-      <div class="form-group">
+      <div class="pedido-field">
         <label for="ped-comentarios">nivel de comentarios</label>
         <select id="ped-comentarios">
           <option value="basico">basico</option>
           <option value="normal">normal</option>
-          <option value="vip">vip</option>
+          <option value="intenso">intenso</option>
         </select>
+        <div class="field-hint">los comentarios se generan automaticamente segun el perfil</div>
       </div>
 
-      <!-- espectadores en tiempo real -->
-      <div class="form-group">
-        <label for="ped-seguidores">espectadores en tiempo real (seguidores)</label>
-        <input type="number" id="ped-seguidores" placeholder="ingresa cantidad de seguidores" min="1" step="1" class="form-control" oninput="calcularCosto()">
-        <small>ingresa un numero entero positivo de seguidores</small>
-      </div>
-
-      <!-- tipo de pedido (normal / vip) toggle -->
-      <div class="form-group">
+      <!-- tipo: normal / vip -->
+      <div class="pedido-field">
         <label>tipo de pedido</label>
-        <div class="tipo-toggle" id="tipo-toggle">
-          <button type="button" class="toggle-btn active-normal" data-tipo="normal" onclick="setTipo('normal')">
-            <i class="fas fa-check-circle" style="margin-right:0.25rem"></i> normal
-            <span class="badge-toggle">cola estandar</span>
-          </button>
-          <button type="button" class="toggle-btn" data-tipo="vip" onclick="setTipo('vip')">
-            <i class="fas fa-star" style="margin-right:0.25rem;color:#f0b90b"></i> vip
-            <span class="badge-toggle">prioridad alta</span>
-          </button>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn active-normal" data-tipo="normal" onclick="window.setTipo('normal')">normal</button>
+          <button type="button" class="toggle-btn" data-tipo="vip" onclick="window.setTipo('vip')">vip</button>
         </div>
       </div>
+
+      <!-- costo -->
+      <div class="costo-visor">
+        <div class="label">costo estimado</div>
+        <div class="valor" id="costo-valor">0.00 <span class="small">kbt</span></div>
+        <div class="detalle-linea" id="costo-detalle-linea">ingresa datos para calcular costo</div>
+      </div>
+
+      <!-- boton crear -->
+      <button class="btn-crear" id="btn-crear-pedido" onclick="window.crearPedido()">
+        <i class="fas fa-paper-plane"></i> crear pedido
+        <span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>
+      </button>
+
     </div>
 
-    <!-- costo en tiempo real -->
-    <div class="costo-display" id="costo-display">
-      <span class="costo-label"><i class="fas fa-coins" style="margin-right:0.3rem"></i> costo estimado</span>
-      <div class="costo-detalle">
-        <span class="costo-valor" id="costo-valor">0.00 <span class="small">kbt</span></span>
-        <span class="detalle-linea" id="costo-detalle-linea"></span>
+    <!-- columna derecha (o al final): estado / informacion extra (vacia por ahora) -->
+    <div class="card-pedido">
+      <div class="card-titulo">
+        <i class="fas fa-info-circle"></i> informacion
+      </div>
+      <div style="font-size:0.85rem;color:#94a3b8;line-height:1.6">
+        <p><strong style="color:#e2e8f0">como funciona?</strong></p>
+        <p>1. ingresa la url de tu directo.</p>
+        <p>2. define el numero de seguidores minimo que debe tener el streamer.</p>
+        <p>3. elige la cantidad de perfiles y el tiempo de visita.</p>
+        <p>4. selecciona normal o vip (vip tiene prioridad y multiplicador x2).</p>
+        <p>5. crea el pedido. los tokens se descuentan de tu wallet.</p>
+        <p>6. el sistema asignara perfiles disponibles automaticamente.</p>
+        <p style="margin-top:0.75rem;color:#64748b">los pedidos aparecen en la tabla inferior con su estado actual.</p>
       </div>
     </div>
 
-    <!-- boton crear pedido -->
-    <button class="btn-crear-pedido normal" id="btn-crear-pedido" onclick="crearPedido()">
-      <i class="fas fa-paper-plane" style="margin-right:0.4rem"></i> crear pedido
-      <span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>
-    </button>
-  </div>
+    <!-- tabla de pedidos (ocupa ambas columnas) -->
+    <div class="card-pedido card-tabla">
+      <div class="card-titulo">
+        <i class="fas fa-list"></i> historial de pedidos
+      </div>
 
-  <!-- =============================================================== -->
-  <!-- card: tabla de pedidos existentes                               -->
-  <!-- =============================================================== -->
-  <div class="card-pedido">
-    <div class="card-title"><i class="fas fa-list" style="margin-right:0.4rem"></i> mis pedidos</div>
-    <div class="table-wrapper">
-      <table class="pedidos-table" id="tabla-pedidos">
-        <thead>
-          <tr>
-            <th style="width:30px"></th>
-            <th>id</th>
-            <th>url</th>
-            <th>perfiles</th>
-            <th>duracion</th>
-            <th>costo</th>
-            <th>estado</th>
-            <th>fecha</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-pedidos-body">
-          <tr><td colspan="8" style="text-align:center;padding:2rem;color:#475569">cargando pedidos...</td></tr>
-        </tbody>
-      </table>
+      <div class="tabla-header">
+        <span style="font-size:0.8rem;color:#64748b">pedidos recientes</span>
+        <button class="btn-actualizar" onclick="window.cargarPedidos()">
+          <i class="fas fa-sync-alt"></i> actualizar
+        </button>
+      </div>
+
+      <div class="tabla-wrapper">
+        <table class="tabla-pedidos">
+          <thead>
+            <tr>
+              <th style="width:30px"></th>
+              <th>#id</th>
+              <th>url</th>
+              <th>perfiles</th>
+              <th>duracion</th>
+              <th>costo</th>
+              <th>estado</th>
+              <th>fecha</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-pedidos-body">
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:#475569">cargando pedidos...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
   </div>
 </div>
 
-<style>
-  /* botones de tiempo rapido */
-  .btn-opt-tiempo {
-    padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
-    background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.15);
-    color: #94a3b8; cursor: pointer; transition: all 0.2s;
-  }
-  .btn-opt-tiempo:hover { background: rgba(124,58,237,0.2); color: #a78bfa; }
-  .btn-opt-tiempo.active { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.3); color: #00ff88; }
-</style>
-
 <script>
 // =========================================================================
-// logica del panel pedidos
+// funciones globales del panel de pedidos
+// todas las funciones y variables van a window para funcionar incluso
+// cuando son evaluadas desde dashboard_publico mediante script tag injection
 // =========================================================================
-var tipoPedidoActual = 'normal';
 
-function obtenerToken() {
+// variable global para el tipo de pedido actual
+window.tipoPedidoActual = 'normal';
+// handler del intervalo de actualizacion
+var _intervaloPedidos = null;
+
+// -----------------------------------------------------------------------
+// obtener token desde cualquier storage
+// -----------------------------------------------------------------------
+window.obtenerToken = function() {
   var token = localStorage.getItem('token') || sessionStorage.getItem('token');
   if (!token) {
     var params = new URLSearchParams(window.location.search);
     token = params.get('token');
-    if (token) {
-      localStorage.setItem('token', token);
-    }
+    if (token) localStorage.setItem('token', token);
   }
   return token;
-}
+};
 
-function getHeaders() {
-  var token = obtenerToken();
+// -----------------------------------------------------------------------
+// headers con autorizacion
+// -----------------------------------------------------------------------
+window.getHeaders = function() {
+  var token = window.obtenerToken();
   var h = { 'Content-Type': 'application/json' };
   if (token) h['Authorization'] = 'Bearer ' + token;
   return h;
-}
+};
 
-function mostrarMensaje(texto, tipo) {
+// -----------------------------------------------------------------------
+// mostrar mensaje en el toast del panel
+// -----------------------------------------------------------------------
+window.mostrarMensaje = function(texto, tipo) {
   var el = document.getElementById('pedido-msg');
+  if (!el) return;
   el.textContent = texto;
   el.className = 'pedido-msg ' + tipo;
   if (tipo === 'success' || tipo === 'info') {
     setTimeout(function() { el.className = 'pedido-msg'; }, 5000);
   }
-}
+};
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // selector de tiempo rapido
-// -------------------------------------------------------------------------
-function setTiempo(minutos) {
-  document.getElementById('ped-minutos').value = minutos;
-  // resaltar boton activo
+// -----------------------------------------------------------------------
+window.setTiempo = function(minutos) {
+  var input = document.getElementById('ped-minutos');
+  if (!input) return;
+  input.value = minutos;
   var btns = document.querySelectorAll('.btn-opt-tiempo');
   for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   var active = document.querySelector('.btn-opt-tiempo[data-minutos="' + minutos + '"]');
   if (active) active.classList.add('active');
-  calcularCosto();
-}
+  window.calcularCosto();
+};
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // selector tipo pedido (normal / vip)
-// -------------------------------------------------------------------------
-function setTipo(tipo) {
-  tipoPedidoActual = tipo;
+// -----------------------------------------------------------------------
+window.setTipo = function(tipo) {
+  window.tipoPedidoActual = tipo;
   var btns = document.querySelectorAll('.toggle-btn');
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].className = 'toggle-btn';
-  }
-  if (tipo === 'normal') {
-    document.querySelector('.toggle-btn[data-tipo="normal"]').classList.add('active-normal');
-    document.querySelector('.toggle-btn[data-tipo="vip"]').classList.remove('active-vip');
-  } else {
-    document.querySelector('.toggle-btn[data-tipo="vip"]').classList.add('active-vip');
-    document.querySelector('.toggle-btn[data-tipo="normal"]').classList.remove('active-normal');
-  }
-  // cambiar estilo de la card
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'toggle-btn';
   var card = document.getElementById('card-formulario');
-  var btn = document.getElementById('btn-crear-pedido');
   var costoLabel = document.getElementById('costo-valor');
   var detalleLinea = document.getElementById('costo-detalle-linea');
-  if (tipo === 'vip') {
-    card.classList.add('vip-mode');
-    btn.className = 'btn-crear-pedido vip';
-    costoLabel.classList.add('vip');
-    detalleLinea.classList.add('vip');
-    detalleLinea.textContent = 'multiplicador vip x2.00 activo';
+  if (tipo === 'normal') {
+    var el = document.querySelector('.toggle-btn[data-tipo="normal"]');
+    if (el) el.classList.add('active-normal');
+    el = document.querySelector('.toggle-btn[data-tipo="vip"]');
+    if (el) el.classList.remove('active-vip');
+    if (card) card.classList.remove('vip-mode');
+    if (costoLabel) costoLabel.classList.remove('vip');
+    if (detalleLinea) {
+      detalleLinea.classList.remove('vip');
+      detalleLinea.textContent = '';
+    }
   } else {
-    card.classList.remove('vip-mode');
-    btn.className = 'btn-crear-pedido normal';
-    costoLabel.classList.remove('vip');
-    detalleLinea.classList.remove('vip');
-    detalleLinea.textContent = '';
+    var el = document.querySelector('.toggle-btn[data-tipo="vip"]');
+    if (el) el.classList.add('active-vip');
+    el = document.querySelector('.toggle-btn[data-tipo="normal"]');
+    if (el) el.classList.remove('active-normal');
+    if (card) card.classList.add('vip-mode');
+    if (costoLabel) costoLabel.classList.add('vip');
+    if (detalleLinea) {
+      detalleLinea.classList.add('vip');
+      detalleLinea.textContent = 'multiplicador vip x2.00 activo';
+    }
   }
-  calcularCosto();
-}
+  window.calcularCosto();
+};
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // obtener seguidores validados desde el input numerico
-// retorna null si no hay valor valido
-// -------------------------------------------------------------------------
-function obtenerSeguidores() {
+// -----------------------------------------------------------------------
+window.obtenerSeguidores = function() {
   var input = document.getElementById('ped-seguidores');
+  if (!input) return null;
   var num = parseInt(input.value, 10);
-  if (isNaN(num) || num < 1) {
-    return null;
-  }
+  if (isNaN(num) || num < 1) return null;
   return num;
-}
+};
 
-// -------------------------------------------------------------------------
-// calcular costo en tiempo real
-// -------------------------------------------------------------------------
-async function calcularCosto() {
-  var seguidores = obtenerSeguidores();
+// -----------------------------------------------------------------------
+// calcular costo en tiempo real - llama a endpoint real
+// -----------------------------------------------------------------------
+window.calcularCosto = async function() {
+  var seguidores = window.obtenerSeguidores();
   if (seguidores === null) {
-    document.getElementById('costo-valor').innerHTML = '0.00 <span class="small">kbt</span>';
-    document.getElementById('costo-detalle-linea').innerText = 'selecciona un rango o ingresa un numero valido';
+    var cv = document.getElementById('costo-valor');
+    if (cv) cv.innerHTML = '0.00 <span class="small">kbt</span>';
+    var dl = document.getElementById('costo-detalle-linea');
+    if (dl) dl.innerText = 'ingresa numero de seguidores para ver costo';
     return;
   }
-  var perfiles = parseInt(document.getElementById('ped-perfiles').value) || 0;
-  var horas = (parseInt(document.getElementById('ped-minutos').value) || 0) / 60.0;
-  var nivelComentarios = document.getElementById('ped-comentarios').value;
-  var tipo = tipoPedidoActual;
+  var perfiles = parseInt((document.getElementById('ped-perfiles') || {}).value) || 0;
+  var horas = (parseInt((document.getElementById('ped-minutos') || {}).value) || 0) / 60.0;
+  var nivelComentarios = (document.getElementById('ped-comentarios') || {}).value || 'basico';
+  var tipo = window.tipoPedidoActual;
 
   if (perfiles <= 0 || horas <= 0) {
-    document.getElementById('costo-valor').innerHTML = '0.00 <span class="small">kbt</span>';
+    var cv = document.getElementById('costo-valor');
+    if (cv) cv.innerHTML = '0.00 <span class="small">kbt</span>';
     return;
   }
 
-    try {
-        var resp = await fetch('/api/pedidos/calcular_costo', {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({
-            seguidores: seguidores,
-            perfiles: perfiles,
-            horas: horas,
-            nivel_comentarios: nivelComentarios,
-            tipo_pedido: tipo
-          })
-        });
-        var data = await resp.json();
-        if (data.exito) {
-          var costo = data.costo_tokens;
-          document.getElementById('costo-valor').innerHTML = costo.toFixed(2) + ' <span class="small">kbt</span>';
-        } else {
-          document.getElementById('costo-valor').innerHTML = 'error <span class="small">kbt</span>';
-        }
-      } catch (e) {
-        // fallback: calculo mock (backend no disponible)
-        var multiplicador = (tipo === 'vip') ? 2.0 : 1.0;
-        var base = seguidores * perfiles * horas / 25000 * multiplicador;
-        document.getElementById('costo-valor').innerHTML = base.toFixed(2) + ' <span class="small">kbt</span>';
-      }
-}
+  try {
+    var resp = await fetch('/api/pedidos/calcular_costo', {
+      method: 'POST',
+      headers: window.getHeaders(),
+      body: JSON.stringify({
+        seguidores: seguidores,
+        perfiles: perfiles,
+        horas: horas,
+        nivel_comentarios: nivelComentarios,
+        tipo_pedido: tipo
+      })
+    });
+    var data = await resp.json();
+    if (data.exito) {
+      var costo = data.costo_tokens;
+      var cv = document.getElementById('costo-valor');
+      if (cv) cv.innerHTML = costo.toFixed(2) + ' <span class="small">kbt</span>';
+      var dl = document.getElementById('costo-detalle-linea');
+      if (dl) dl.innerText = '';
+    } else {
+      var cv = document.getElementById('costo-valor');
+      if (cv) cv.innerHTML = 'error <span class="small">kbt</span>';
+    }
+  } catch (e) {
+    // fallback offline
+    var multiplicador = (tipo === 'vip') ? 2.0 : 1.0;
+    var base = seguidores * perfiles * horas / 25000 * multiplicador;
+    var cv = document.getElementById('costo-valor');
+    if (cv) cv.innerHTML = base.toFixed(2) + ' <span class="small">kbt</span>';
+    var dl = document.getElementById('costo-detalle-linea');
+    if (dl) dl.innerText = 'estimado offline';
+  }
+};
 
-// -------------------------------------------------------------------------
-// crear pedido
-// -------------------------------------------------------------------------
-async function crearPedido() {
-  var url = document.getElementById('ped-url').value.trim();
-  var seguidores = obtenerSeguidores();
+// -----------------------------------------------------------------------
+// crear pedido - envia POST a /api/pedidos/crear
+// -----------------------------------------------------------------------
+window.crearPedido = async function() {
+  var url = (document.getElementById('ped-url') || {}).value;
+  if (url) url = url.trim();
+  var seguidores = window.obtenerSeguidores();
   if (seguidores === null) {
-    mostrarMensaje('selecciona un rango de seguidores o ingresa una cantidad valida (1-4999)', 'error');
+    window.mostrarMensaje('ingresa una cantidad valida de seguidores (minimo 1)', 'error');
     return;
   }
-  var perfiles = parseInt(document.getElementById('ped-perfiles').value) || 0;
-  var horas = (parseInt(document.getElementById('ped-minutos').value) || 0) / 60.0;
-  var nivelComentarios = document.getElementById('ped-comentarios').value;
-  var tipo = tipoPedidoActual;
+  var perfiles = parseInt((document.getElementById('ped-perfiles') || {}).value) || 0;
+  var horas = (parseInt((document.getElementById('ped-minutos') || {}).value) || 0) / 60.0;
+  var nivelComentarios = (document.getElementById('ped-comentarios') || {}).value || 'basico';
+  var tipo = window.tipoPedidoActual;
 
-  if (!url) { mostrarMensaje('ingresa la url del directo', 'error'); return; }
-  if (perfiles < 1 || perfiles > 1000) { mostrarMensaje('la cantidad de perfiles debe estar entre 1 y 1000', 'error'); return; }
-  if (horas <= 0) { mostrarMensaje('el tiempo de visita debe ser mayor a 0', 'error'); return; }
+  if (!url) { window.mostrarMensaje('ingresa la url del directo', 'error'); return; }
+  if (perfiles < 1 || perfiles > 1000) { window.mostrarMensaje('la cantidad de perfiles debe estar entre 1 y 1000', 'error'); return; }
+  if (horas <= 0) { window.mostrarMensaje('el tiempo de visita debe ser mayor a 0', 'error'); return; }
 
   var btn = document.getElementById('btn-crear-pedido');
+  if (!btn) return;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-mini"></span> creando pedido...';
 
   try {
     var resp = await fetch('/api/pedidos/crear', {
       method: 'POST',
-      headers: getHeaders(),
+      headers: window.getHeaders(),
       body: JSON.stringify({
         url: url,
         seguidores: seguidores,
@@ -624,32 +826,38 @@ async function crearPedido() {
     });
     var data = await resp.json();
     if (data.exito) {
-      mostrarMensaje('pedido #' + data.pedido_id + ' creado exitosamente. costo: ' + data.costo_tokens.toFixed(2) + ' kbt', 'success');
-      document.getElementById('ped-url').value = '';
-      document.getElementById('ped-perfiles').value = '10';
-      document.getElementById('ped-minutos').value = '15';
-      // recargar tabla
-      cargarPedidos();
+      window.mostrarMensaje('pedido #' + data.pedido_id + ' creado exitosamente. costo: ' + Number(data.costo_tokens || 0).toFixed(2) + ' kbt', 'success');
+      var elUrl = document.getElementById('ped-url');
+      if (elUrl) elUrl.value = '';
+      var elPf = document.getElementById('ped-perfiles');
+      if (elPf) elPf.value = '10';
+      var elMin = document.getElementById('ped-minutos');
+      if (elMin) elMin.value = '15';
+      window.cargarPedidos();
     } else {
-      mostrarMensaje(data.detail || 'error al crear pedido', 'error');
+      window.mostrarMensaje(data.detail || 'error al crear pedido', 'error');
     }
   } catch (e) {
-    mostrarMensaje('error de conexion: ' + e.message, 'error');
+    console.error('error en crearPedido:', e);
+    window.mostrarMensaje('error de conexion: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:0.4rem"></i> crear pedido<span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> crear pedido<span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>';
+    }
   }
-}
+};
 
-// -------------------------------------------------------------------------
-// cargar tabla de pedidos
-// -------------------------------------------------------------------------
-async function cargarPedidos() {
+// -----------------------------------------------------------------------
+// cargar tabla de pedidos - incluye en cola Y trabajando
+// -----------------------------------------------------------------------
+window.cargarPedidos = async function() {
   var body = document.getElementById('tabla-pedidos-body');
+  if (!body) return;
   body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:#475569"><span class="spinner-mini"></span> cargando pedidos...</td></tr>';
 
   try {
-    var resp = await fetch('/api/pedidos/mis_pedidos', { headers: getHeaders() });
+    var resp = await fetch('/api/pedidos/mis_pedidos', { headers: window.getHeaders() });
     var data = await resp.json();
     if (!data.exito) {
       body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ff3366">error al cargar pedidos</td></tr>';
@@ -668,8 +876,8 @@ async function cargarPedidos() {
 
       var badgeClass = 'pendiente';
       var estadoTexto = p.estado || 'pendiente';
-      if (estadoTexto === 'enviado' || estadoTexto === 'en progreso' || estadoTexto === 'progreso') {
-        badgeClass = 'progreso';
+      if (estadoTexto === 'enviado' || estadoTexto === 'en progreso' || estadoTexto === 'progreso' || estadoTexto === 'trabajando') {
+        badgeClass = 'trabajando';
       } else if (estadoTexto === 'completado') {
         badgeClass = 'completado';
       } else if (estadoTexto === 'fallido' || estadoTexto === 'cancelado') {
@@ -677,49 +885,93 @@ async function cargarPedidos() {
       }
 
       var iconVip = esVip ? '<span class="vip-indicator"><i class="fas fa-star" title="pedido vip"></i></span>' : '';
-
       var fecha = p.fecha_creacion ? p.fecha_creacion.substring(0, 16) : '-';
+      // escapar html de url
+      var safeUrl = (function(s) { var d=document.createElement('div'); d.appendChild(document.createTextNode(s||'')); return d.innerHTML; })(p.url);
+      var costoMostrar = (p.costo_tokens !== null && p.costo_tokens !== undefined) ? Number(p.costo_tokens).toFixed(2) : '0.00';
 
       html += '<tr class="' + rowClass + '">';
       html += '<td>' + iconVip + '</td>';
       html += '<td style="font-weight:700;color:#a78bfa">#' + p.id + '</td>';
-      html += '<td><span class="truncate-url" title="' + escapeHtml(p.url) + '">' + escapeHtml(p.url) + '</span></td>';
-      html += '<td>' + p.cantidad_perfiles + '</td>';
-      html += '<td>' + p.duracion_horas + 'h</td>';
-      html += '<td style="font-weight:700;color:' + (esVip ? '#f0b90b' : '#00ff88') + '">' + parseFloat(p.costo_tokens).toFixed(2) + ' kbt</td>';
+      html += '<td><span class="truncate-url" title="' + safeUrl + '">' + safeUrl + '</span></td>';
+      html += '<td>' + (p.cantidad_perfiles || 0) + '</td>';
+      html += '<td>' + (p.duracion_horas || 0) + 'h</td>';
+      html += '<td style="font-weight:700;color:' + (esVip ? '#f0b90b' : '#00ff88') + '">' + costoMostrar + ' kbt</td>';
       html += '<td><span class="badge-estado ' + badgeClass + '">' + estadoTexto + '</span></td>';
       html += '<td style="font-size:0.75rem;color:#64748b">' + fecha + '</td>';
       html += '</tr>';
     }
     body.innerHTML = html;
   } catch (e) {
+    console.error('error cargando pedidos:', e);
     body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ff3366">error de conexion</td></tr>';
   }
-}
+};
 
-function escapeHtml(text) {
-  if (!text) return '';
-  var map = { '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#039;' };
-  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+// -----------------------------------------------------------------------
+// inicializacion del panel (llamada desde dashboard_publico.html)
+// -----------------------------------------------------------------------
+window.inicializarPanelPedidos = function() {
 
-// -------------------------------------------------------------------------
-// init: escuchar cambios en los campos del formulario
-// -------------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', function() {
-  // recalcular costo al cambiar cualquier campo
-  var campos = ['ped-url', 'ped-perfiles', 'ped-minutos', 'ped-comentarios', 'ped-seguidores'];
-  for (var i = 0; i < campos.length; i++) {
-    var el = document.getElementById(campos[i]);
-    if (el) {
-      el.addEventListener('input', calcularCosto);
-      el.addEventListener('change', calcularCosto);
-    }
+  // si ya existe un intervalo, limpiarlo
+  if (_intervaloPedidos) {
+    clearInterval(_intervaloPedidos);
+    _intervaloPedidos = null;
   }
-  // calcular inicial y cargar pedidos
-  calcularCosto();
-  cargarPedidos();
-});
+
+  // asignar eventos de input/change a los campos
+  var urlInput = document.getElementById('ped-url');
+  var perfilesInput = document.getElementById('ped-perfiles');
+  var minutosInput = document.getElementById('ped-minutos');
+  var comentariosSelect = document.getElementById('ped-comentarios');
+  var seguidoresInput = document.getElementById('ped-seguidores');
+
+  // usar delegacion de eventos en el contenedor raiz en vez de listeners individuales
+  // para evitar acumulacion de listeners al cambiar de panel
+  var root = document.getElementById('panel-pedidos-root');
+  if (root) {
+    // si ya hay un manejador previo, lo removemos
+    if (root._inputHandler) root.removeEventListener('input', root._inputHandler);
+    if (root._changeHandler) root.removeEventListener('change', root._changeHandler);
+
+    root._inputHandler = function(e) {
+      var id = e.target.id;
+      if (id === 'ped-url' || id === 'ped-perfiles' || id === 'ped-minutos' || id === 'ped-seguidores') {
+        window.calcularCosto();
+      }
+    };
+    root._changeHandler = function(e) {
+      var id = e.target.id;
+      if (id === 'ped-url' || id === 'ped-perfiles' || id === 'ped-minutos' || id === 'ped-seguidores' || id === 'ped-comentarios') {
+        window.calcularCosto();
+      }
+    };
+    root.addEventListener('input', root._inputHandler);
+    root.addEventListener('change', root._changeHandler);
+  }
+
+  // calcular costo inicial y cargar pedidos
+  window.calcularCosto();
+  window.cargarPedidos();
+
+  // configurar actualizacion automatica cada 30 segundos
+  _intervaloPedidos = setInterval(function() {
+    if (document.visibilityState === 'visible' && document.getElementById('tabla-pedidos-body')) {
+      window.cargarPedidos();
+    }
+  }, 30000);
+};
+
+// -----------------------------------------------------------------------
+// limpiar intervalo al cambiar de panel
+// -----------------------------------------------------------------------
+window.limpiarIntervaloPedidos = function() {
+  if (_intervaloPedidos) {
+    clearInterval(_intervaloPedidos);
+    _intervaloPedidos = null;
+  }
+};
 </script>
+
 </body>
 </html>
