@@ -631,6 +631,8 @@
 window.tipoPedidoActual = 'normal';
 // handler del intervalo de actualizacion
 var _intervaloPedidos = null;
+// referencias a elementos del formulario (se llenan al inicializar)
+var _elementosPedidos = {};
 
 // -----------------------------------------------------------------------
 // obtener token desde cualquier storage
@@ -910,6 +912,12 @@ window.cargarPedidos = async function() {
 
 // -----------------------------------------------------------------------
 // inicializacion del panel (llamada desde dashboard_publico.html)
+// no depende de DOMContentLoaded. se ejecuta solo cuando el panel se
+// inserta en el dom.
+//
+// eventos directos con limpieza explicita: removeEventListener antes de
+// addEventListener para evitar duplicacion.
+// sin bandera data-pedidos-ready. el intervalo se destruye al salir.
 // -----------------------------------------------------------------------
 window.inicializarPanelPedidos = function() {
 
@@ -919,35 +927,56 @@ window.inicializarPanelPedidos = function() {
     _intervaloPedidos = null;
   }
 
+  // cachear referencias a elementos del formulario
+  _elementosPedidos.url = document.getElementById('ped-url');
+  _elementosPedidos.perfiles = document.getElementById('ped-perfiles');
+  _elementosPedidos.minutos = document.getElementById('ped-minutos');
+  _elementosPedidos.comentarios = document.getElementById('ped-comentarios');
+  _elementosPedidos.seguidores = document.getElementById('ped-seguidores');
+  _elementosPedidos.costoValor = document.getElementById('costo-valor');
+  _elementosPedidos.costoDetalle = document.getElementById('costo-detalle-linea');
+  _elementosPedidos.tablaBody = document.getElementById('tabla-pedidos-body');
+
+  // remover listeners previos (si los hay) para evitar duplicacion
+  if (_elementosPedidos.url) {
+    _elementosPedidos.url.removeEventListener('input', window.calcularCosto);
+    _elementosPedidos.url.removeEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.perfiles) {
+    _elementosPedidos.perfiles.removeEventListener('input', window.calcularCosto);
+    _elementosPedidos.perfiles.removeEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.minutos) {
+    _elementosPedidos.minutos.removeEventListener('input', window.calcularCosto);
+    _elementosPedidos.minutos.removeEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.comentarios) {
+    _elementosPedidos.comentarios.removeEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.seguidores) {
+    _elementosPedidos.seguidores.removeEventListener('input', window.calcularCosto);
+    _elementosPedidos.seguidores.removeEventListener('change', window.calcularCosto);
+  }
+
   // asignar eventos de input/change a los campos
-  var urlInput = document.getElementById('ped-url');
-  var perfilesInput = document.getElementById('ped-perfiles');
-  var minutosInput = document.getElementById('ped-minutos');
-  var comentariosSelect = document.getElementById('ped-comentarios');
-  var seguidoresInput = document.getElementById('ped-seguidores');
-
-  // usar delegacion de eventos en el contenedor raiz en vez de listeners individuales
-  // para evitar acumulacion de listeners al cambiar de panel
-  var root = document.getElementById('panel-pedidos-root');
-  if (root) {
-    // si ya hay un manejador previo, lo removemos
-    if (root._inputHandler) root.removeEventListener('input', root._inputHandler);
-    if (root._changeHandler) root.removeEventListener('change', root._changeHandler);
-
-    root._inputHandler = function(e) {
-      var id = e.target.id;
-      if (id === 'ped-url' || id === 'ped-perfiles' || id === 'ped-minutos' || id === 'ped-seguidores') {
-        window.calcularCosto();
-      }
-    };
-    root._changeHandler = function(e) {
-      var id = e.target.id;
-      if (id === 'ped-url' || id === 'ped-perfiles' || id === 'ped-minutos' || id === 'ped-seguidores' || id === 'ped-comentarios') {
-        window.calcularCosto();
-      }
-    };
-    root.addEventListener('input', root._inputHandler);
-    root.addEventListener('change', root._changeHandler);
+  if (_elementosPedidos.url) {
+    _elementosPedidos.url.addEventListener('input', window.calcularCosto);
+    _elementosPedidos.url.addEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.perfiles) {
+    _elementosPedidos.perfiles.addEventListener('input', window.calcularCosto);
+    _elementosPedidos.perfiles.addEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.minutos) {
+    _elementosPedidos.minutos.addEventListener('input', window.calcularCosto);
+    _elementosPedidos.minutos.addEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.comentarios) {
+    _elementosPedidos.comentarios.addEventListener('change', window.calcularCosto);
+  }
+  if (_elementosPedidos.seguidores) {
+    _elementosPedidos.seguidores.addEventListener('input', window.calcularCosto);
+    _elementosPedidos.seguidores.addEventListener('change', window.calcularCosto);
   }
 
   // calcular costo inicial y cargar pedidos
