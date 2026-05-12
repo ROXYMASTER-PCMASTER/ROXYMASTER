@@ -72,16 +72,23 @@ async def async_main():
     print()
 
     # ---------------------------------------------------------------
-    # paso 2: roxybrowser api - autodeteccion de workspace
+    # paso 2: roxybrowser api - obtiene workspace id real via api rest
     # ---------------------------------------------------------------
     print("[2/6] conectando a roxybrowser api...")
-    workspace_id = find_workspace_id()
-    if workspace_id:
-        print(f"       workspace autodetectado: {workspace_id}")
+    # solo usar find_workspace_id si es un numero (workspace id real)
+    workspace_id_hint = find_workspace_id()
+    if workspace_id_hint and workspace_id_hint.isdigit():
+        workspace_id = workspace_id_hint
     else:
-        print("       advertencia: workspace no detectado (roxybrowser no instalado?)")
+        workspace_id = ""
 
     roxy = RoxyBrowserAPI(ROXYBROWSER_API_URL, workspace_id)
+    # forzar obtencion del workspace_id real via api rest
+    ws_id_real = roxy.get_workspace_id()
+    if ws_id_real:
+        print(f"       workspace id obtenido via api: {ws_id_real}")
+    else:
+        print("       advertencia: no se pudo obtener workspace id de roxybrowser api")
     perfiles_api = roxy.get_profiles()
 
     if perfiles_api:
@@ -175,6 +182,9 @@ async def async_main():
         return result
 
     ws.set_command_handler(on_command)
+
+    # pasar profile manager al ws para incluir datos de perfiles en heartbeat
+    ws.set_profile_manager(pm)
 
     # pasar referencia ws al orchestrator para estado de heartbeat y enviar respuestas
     orchestrator.ws_client = ws

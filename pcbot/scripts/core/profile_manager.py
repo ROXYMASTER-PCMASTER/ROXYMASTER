@@ -7,6 +7,7 @@ todo en minusculas, utf-8 sin bom.
 
 import asyncio
 import logging
+import time
 from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import Optional
@@ -31,6 +32,7 @@ class Profile:
     inicio: float = 0.0
     fail_count: int = 0
     hash_interno: str = ""
+    nivel_comentarios: int = 0
     metadata: dict = field(default_factory=dict)
 
 
@@ -81,12 +83,13 @@ class ProfileManager:
             logger.warning("roxybrowser api no disponible para navegar")
             return False
         try:
-            ok = self.roxy.navigate(profile_id, url)
+            ok = await self.roxy.navigate_async(profile_id, url)
             if ok:
                 p = self.profiles.get(profile_id)
                 if p:
                     p.current_url = url
                     p.state = ProfileState.ACTIVE
+                    p.inicio = time.time()
                     logger.info(f"perfil {profile_id} navegando a {url}")
             return ok
         except Exception as e:
@@ -104,6 +107,7 @@ class ProfileManager:
                 if p:
                     p.state = ProfileState.INACTIVE
                     p.current_url = ""
+                    p.inicio = 0.0
                     logger.info(f"perfil {profile_id} cerrado")
             return ok
         except Exception as e:

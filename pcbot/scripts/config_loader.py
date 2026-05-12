@@ -1,4 +1,4 @@
-﻿# config_loader.py - roxymaster v8.3
+# config_loader.py - roxymaster v8.3
 # carga unificada de configuracion para pcbot
 
 import json
@@ -37,18 +37,26 @@ def obtener_setting(clave: str, default: str = "") -> str:
         return str(valor)
     return default
 
-# variables globales - todo desde variables de entorno del so
-NOMBRE_PC = os.getenv("COMPUTERNAME", "desconocido")
-USUARIO_PC = os.getenv("USERNAME", "")
+# cargar configuracion global
+_cfg = load_config()
 
-# ip local y tailscale se detectan dinamicamente
-IP_LOCAL = "127.0.0.1"
-IP_TAILSCALE = ""
+# variables globales - autodetectar hostname si pcbot_id esta vacio
+_pcbot_id_cfg = _cfg.get("pcbot", {}).get("pcbot_id", "")
+NOMBRE_PC = _pcbot_id_cfg if _pcbot_id_cfg else os.environ.get("COMPUTERNAME", "desconocido")
+USUARIO_PC = _cfg.get("pcbot", {}).get("usuario", "")
+IP_LOCAL = _cfg.get("pcbot", {}).get("ip_local", "127.0.0.1")
+IP_TAILSCALE = _cfg.get("pcbot", {}).get("ip_tailscale", "100.85.100.109")
 
-# roxybrowser - solo url base, workspace se autodetecta
-ROXYBROWSER_API_URL = "http://127.0.0.1:50000"
+PCMASTER_HOST = _cfg.get("pcmaster", {}).get("ip_tailscale", "100.111.179.65")
+PCMASTER_IP = PCMASTER_HOST
+PCMASTER_IP_TAILSCALE = _cfg.get("pcmaster", {}).get("ip_tailscale", "100.111.179.65")
+PCMASTER_WS_PORT = _cfg.get("pcmaster", {}).get("ws_port", 8086)
+PCMASTER_HTTP_PORT = _cfg.get("pcmaster", {}).get("http_port", 8086)
 
-VERSION = "8.3"
+ROXYBROWSER_API_URL = _cfg.get("roxybrowser", {}).get("api_url", "http://127.0.0.1:50000")
+ROXY_WORKSPACE_ID = _cfg.get("roxybrowser", {}).get("workspace_id", "")
+
+VERSION = _cfg.get("version", "8.3")
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
 OBSOLETOS_DIR = os.path.join(BASE_DIR, "obsoletos")

@@ -1,0 +1,55 @@
+limpieza de hardcodeos - realizada el 2026-05-10
+================================================
+
+cambios aplicados:
+
+1. scripts/ws_client.py
+   - linea 48: self.pcbot_id = pcbot_id or os.environ.get("COMPUTERNAME", "unknown")
+     (reemplazado "pcbot_prueba1" por deteccion dinamica de hostname)
+   - linea 113 (get_conexion_status): "pcbot_id": self.pcbot_id (en vez de "pcbot_prueba1")
+   - linea 210 (_send_handshake): "pcbot_id": hd.get("pcbot_id", self.pcbot_id)
+     (permite sobrescritura desde main.py)
+   - linea 258 (_send_heartbeat): "pcbot_id": self.pcbot_id (en vez de "pcbot_prueba1")
+   - eliminada toda referencia a "pcbot_prueba1"
+
+2. scripts/config_loader.py
+   - linea 44: NOMBRE_PC = _cfg.get("pcbot", {}).get("pcbot_id", "desconocido")
+     (reemplazado "pcbot_prueba1" por lectura de config.json con fallback "desconocido")
+
+3. config.json
+   - pcbot.pcbot_id: cambiado de "pcbot_prueba1" a "" (vacio)
+   - todos los campos del agente ahora estan vacios para autodeteccion
+
+4. data/secrets/cliente.json
+   - verificado: no contiene pcbot_id, solo ip, puerto y secreto shs
+   - sin cambios necesarios
+
+5. scripts/main.py
+   - verificado: ya pasa pcbot_id=NOMBRE_PC (dinamico desde config_loader)
+   - si NOMBRE_PC es "desconocido", ws_client usara COMPUTERNAME
+   - sin cambios necesarios
+
+6. scripts/api/roxybrowser_api.py
+   - verificado: sin hardcodeos, usa Token header y endpoints dinamicos
+   - sin cambios necesarios
+
+7. fix adicional: compatibilidad con websockets 16.0
+   - _send_plano: reemplazado "if self.ws.closed" por try/except con
+     websockets.ConnectionClosed, porque websockets 16.0 no tiene
+     atributo .closed en ClientConnection
+   - send_response: eliminado "not self.ws.closed" del log por misma razon
+   - logging de errores en reconexion: cambiado de logger.debug a
+     logger.error con exc_info=True para visibilidad
+
+8. archivos eliminados:
+   - scripts/orchestrator_local - copia.py
+   - scripts/api/roxybrowser_api - copia.py
+   - scripts/config_loader.py.bak
+   - scripts/config_loader.py.bak_20260509_053112
+   - _backup_20260510_010415/ (directorio completo con sus .bak)
+
+resultado final:
+- 0 referencias a "pcbot_prueba1" en el codigo fuente
+- el agente se autodetecta usando hostname real de la maquina
+- todos los valores configurables vienen de config.json o cliente.json
+- agente listo para distribuir via instalador

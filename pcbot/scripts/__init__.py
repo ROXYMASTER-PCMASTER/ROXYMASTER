@@ -1,1 +1,1 @@
-# ROXYMASTER PCBOT Scripts
+# pcbot package
