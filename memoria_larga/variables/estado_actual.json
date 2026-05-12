@@ -1,16 +1,15 @@
 ﻿{
-  "ultima_prueba_pedidos": "2026-05-11 19:39",
-  "comando_enviado": "pedido_be4eb5e2b400",
-  "pedido_id": 13,
-  "pcbot_conectado": "PCWILMER",
-  "usuario_prueba": "prueba1@roxymaster.local (id=33)",
-  "canal_pedidos": "api_pedidos -> orchestrator.crear_comando -> _conexiones_ws[pcbot_id] -> ws.send_json",
-  "formato_exitoso": "tipo:asignar, comando_id:uuid, parametros:{url, cantidad, duracion, nivel_comentarios}",
-  "envio_resultado": "OK - enviado via ws directo a PCWILMER",
-  "fix_ws_manager_sync": "server.py ahora registra en ws_manager en cada mensaje, no solo en identify",
-  "fix_heartbeat_handler": "server.py heartbeat_handler ya no usa json() (fallaba), usa data crudo",
-  "fix_orchestrator_fallback": "orchestrator.py crear_comando intenta ws_manager si ws directo falla",
-  "fix_api_pedidos_log": "api_pedidos.py ahora loguea payload exacto y resultado del envio",
-  "pendiente": "verificar que pcbot (PCWILMER) procese el comando asignar y ejecute navegacion",
-  "ultimo_log": "2026-05-11 19:41 - pedido #13 enviado OK a PCWILMER"
+  "vigilante_pedidos": {
+    "activo": true,
+    "modulo": "pedidos_vigilante.py",
+    "tabla_asignaciones": "pedido_asignaciones",
+    "intervalo_seg": 30,
+    "timeout_pcbot_seg": 60
+  },
+  "archivos_vigilante": {
+    "db_pedidos_vigilante.py": "pcmaster/scripts/db_pedidos_vigilante.py",
+    "pedidos_vigilante.py": "pcmaster/scripts/pedidos_vigilante.py"
+  },
+  "server_py_modificado": true,
+  "ultima_actualizacion": "2026-05-11 22:05 UTC"
 }

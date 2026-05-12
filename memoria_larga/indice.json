@@ -1,25 +1,28 @@
 {
   "version": "1.0",
-  "ultima_actualizacion": "2026-05-11 18:58",
+  "ultima_actualizacion": "2026-05-11 23:56",
   "contadores": {
-    "archivos": 47,
-    "tareas": 20,
+    "archivos": 49,
+    "tareas": 21,
     "errores": 1,
-    "decisiones": 12
+    "decisiones": 17
   },
   "archivos_recientes": [
-    "pcmaster/_monitorear_pedidos.py",
+    "pcmaster/scripts/db_pedidos_vigilante.py",
+    "pcmaster/scripts/pedidos_vigilante.py",
     "pcmaster/scripts/server.py",
-    "pcmaster/scripts/orchestrator.py",
+    "pcmaster/scripts/db.py",
     "pcmaster/scripts/ws_manager.py",
-    "pcmaster/scripts/api_pedidos.py",
-    "pcmaster/_fix_pcbot_id.py"
+    "pcmaster/scripts/orchestrator.py",
+    "pcmaster/scripts/api_pedidos.py"
   ],
   "modulos_activos": {
     "server": "fastapi + websocket pcbot (punto de entrada)",
     "orchestrator": "core de comandos, persistencia y envio ws a pcbot",
     "ws_manager": "gestion de conexiones por usuario y pcbot_id",
     "api_pedidos": "creacion de pedidos con descuento de tokens y envio a orchestrator",
+    "db_pedidos_vigilante": "crea tabla pedido_asignaciones para rastrear perfiles por pedido",
+    "pedidos_vigilante": "vigilante de pedidos activos: reemplaza perfiles caidos y finaliza pedidos vencidos",
     "_monitorear_pedidos": "monitor en tiempo real de pedidos y comandos (loop 5s)",
     "_fix_pcbot_id": "corrige usuarios con pcbot_id null desde tabla computadoras"
   }

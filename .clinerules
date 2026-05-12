@@ -55,9 +55,21 @@ cuando no encuentras un archivo, función, variable o módulo importado, no inte
 - si un cambio rompe algo, recuperá el snapshot más reciente desde esa carpeta y documentá la reversión en C:\Users\PCMASTER\Desktop\roxymaster_backups\reports\rollback_<YYYYMMDD>.md.
 
 ## regla de oro
-prohibido hacer `git pull`. nunca traer cambios del remoto. solo se permite push. prohibido hacer `git push --force` porque elimina carpetas/archivos del remoto. el push debe ser normal: `git push origin main`. si hay conflicto, detenerse y pedir instrucciones.
-prohibido deducir, suponer o asumir lo que el usuario no dijo explicitamente. si hay duda, preguntar antes de ejecutar.
-prohibido borrar, modificar o crear archivos fuera de `pcmaster/`. no tocar ninguna otra carpeta. el unico comando de push permitido es: `git add pcmaster/ .gitignore && git commit --allow-empty -m "backup automatico antes de push" && git commit -m "push automatico pcmaster" && git push origin main`. bajo ningun concepto se hace `git add .`, `git add -A`, ni se agregan archivos fuera de `pcmaster/`. el repositorio puede contener otras carpetas (como pcmaster/). cualquier archivo suelto en roxymaster/ jamas debe ser agregado al stage ni al commit. como seguridad extra, antes del push se ejecuta un commit de backup con `git commit --allow-empty -m "backup automatico antes de push"`.
+# regla de sincronización con el repositorio
+si el `pull` amenaza con modificar `pcmaster/`, cancelar y pedir instrucciones.
+1. **backup local de `pcmaster/` antes de todo**  
+   - copiar la carpeta `pcmaster/` a `backups/pcmaster_YYYYMMDD_HHMMSS` (o ruta que uses habitualmente).  
+   - esto asegura que nunca se pierda el trabajo actual.
+
+2. **descarga de otros archivos (pcbot, etc.) solo si es inevitable**  
+   - si para subir `pcmaster/` hace falta tener la última versión de otros archivos (por conflicto), se puede hacer `git pull` pero **sin sobrescribir nunca `pcmaster/`**.  
+   - si el `pull` amenaza con modificar `pcmaster/`, cancelar y pedir instrucciones.
+
+3. **push de `pcmaster/` sin pérdida de datos**  
+   - solo se añade la carpeta `pcmaster/` y `.gitignore`: `git add pcmaster/ .gitignore`  
+   - prohibido `git add .` o `git add -A`.  
+   - commit y push normales:  
+
 
 ## autoridad de pcmaster (maestro) y sincronizacion pcbot
 esta maquina es la unica autorizada y fuente de verdad para pcmaster/. contiene los datos originales y actualizados. ninguna otra maquina debe sobreescribir pcmaster/ desde el remoto. solo desde aqui se hace push de pcmaster/.
