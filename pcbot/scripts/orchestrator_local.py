@@ -2,6 +2,7 @@
 roxymaster v8.3 - orchestrator local (pcbot)
 ejecuta comandos recibidos de pcmaster via websocket.
 maneja comandos: asignar, open_url, detener, estado, recargar_perfiles, etc.
+todo en minusculas, utf-8 sin bom.
 """
 
 import asyncio
@@ -25,6 +26,8 @@ class OrchestratorLocal:
         self._command_history = []
         self._max_history = 50
         self.ws_client = None
+        # tareas de cierre automatico por perfil (pedidos con duracion)
+        self._cierres_pendientes: dict[str, asyncio.Task] = {}
 
     async def process_command(self, cmd: dict) -> dict:
         cmd_type = cmd.get("tipo", cmd.get("type", ""))
@@ -124,6 +127,15 @@ class OrchestratorLocal:
                         p.duracion_min = duracion
                         p.nivel_comentarios = nivel_comentarios
                     resultados.append({"perfil": pid, "ok": True})
+                    # lanzar tarea de cierre automatico si la duracion es positiva
+                    if duracion > 0:
+                        tarea = asyncio.create_task(
+                            self._cierre_automatico(pid, duracion)
+                        )
+                        self._cierres_pendientes[pid] = tarea
+                        logger.info(
+                            f"tarea de cierre automatico programada para {pid} en {duracion}s"
+                        )
                 else:
                     resultados.append({"perfil": pid, "ok": False, "error": "fallo al navegar"})
             except Exception as e:
@@ -153,6 +165,11 @@ class OrchestratorLocal:
                     if p:
                         p.duracion_min = duracion
                     resultados.append({"perfil": pid, "ok": True})
+                    if duracion > 0:
+                        tarea = asyncio.create_task(
+                            self._cierre_automatico(pid, duracion)
+                        )
+                        self._cierres_pendientes[pid] = tarea
                 else:
                     resultados.append({"perfil": pid, "ok": False})
             except Exception as e:
@@ -160,18 +177,73 @@ class OrchestratorLocal:
         return {"ok": True, "resultados": resultados}
 
     async def _cmd_detener(self, params: dict, cmd_id: str) -> dict:
-        perfiles_ids = params.get("perfiles", params.get("profile_ids", []))
-        if not perfiles_ids:
-            perfiles_ids = list(self.pm.profiles.keys())
-        portal_url = "https://www.wafabot.com"
-        resultados = []
-        for pid in perfiles_ids:
+        """detiene un perfil especifico: cierra el navegador, marca inactivo,
+        cancela temporizador pendiente y envia respuesta de confirmacion."""
+        # aceptar profile_id, perfil_id, o extraer de perfiles[]
+        profile_id = params.get("profile_id", "")
+        if not profile_id:
+            profile_id = params.get("perfil_id", "")
+        if not profile_id:
+            lista = params.get("perfiles", params.get("profile_ids", []))
+            if lista:
+                profile_id = lista[0] if isinstance(lista, list) else ""
+        if not profile_id:
+            return {"ok": False, "error": "profile_id requerido", "comando": "detener"}
+
+        logger.info(f"detener perfil solicitado: {profile_id}")
+
+        # cancelar tarea de cierre automatico si existe
+        tarea = self._cierres_pendientes.pop(profile_id, None)
+        if tarea is not None and not tarea.done():
+            tarea.cancel()
+            logger.info(f"tarea de cierre automatico cancelada para {profile_id}")
+
+        # cerrar el perfil via api roxybrowser
+        try:
+            ok = await self.pm.close_profile(profile_id)
+            if ok:
+                logger.info(f"perfil {profile_id} cerrado exitosamente por comando detener")
+            else:
+                logger.warning(f"close_profile devolvio false para {profile_id}")
+        except Exception as e:
+            logger.error(f"error cerrando perfil {profile_id}: {e}")
+            ok = False
+
+        # enviar respuesta de confirmacion
+        respuesta = {
+            "tipo": "respuesta_detener",
+            "comando_id": cmd_id,
+            "perfil_id": profile_id,
+            "ok": ok,
+        }
+        if self.ws_client is not None:
             try:
-                await self.pm.redirect_to_portal(pid, portal_url)
-                resultados.append({"perfil": pid, "ok": True})
+                await self.ws_client.send_response(respuesta)
+                logger.info(f"respuesta_detener enviada para perfil {profile_id}")
             except Exception as e:
-                resultados.append({"perfil": pid, "ok": False, "error": str(e)})
-        return {"ok": True, "resultados": resultados}
+                logger.error(f"error enviando respuesta_detener: {e}")
+
+        return respuesta
+
+    async def _cierre_automatico(self, profile_id: str, duracion_seg: int):
+        """espera duracion_seg segundos y cierra el perfil.
+        si el perfil ya fue cerrado por otro medio, maneja el error sin propagarse."""
+        try:
+            await asyncio.sleep(duracion_seg)
+            logger.info(f"cierre automatico: cerrando perfil {profile_id} tras {duracion_seg}s")
+            ok = await self.pm.close_profile(profile_id)
+            if ok:
+                logger.info(f"cierre automatico: perfil {profile_id} cerrado")
+            else:
+                logger.warning(f"cierre automatico: no se pudo cerrar {profile_id} (quizas ya cerrado)")
+        except asyncio.CancelledError:
+            logger.info(f"cierre automatico: cancelado para perfil {profile_id}")
+        except Exception as e:
+            logger.error(f"cierre automatico: error inesperado en {profile_id}: {e}")
+        finally:
+            # limpiar referencia si aun esta en el dict
+            if self._cierres_pendientes.get(profile_id) is asyncio.current_task():
+                self._cierres_pendientes.pop(profile_id, None)
 
     async def _cmd_detener_url(self, params: dict, cmd_id: str) -> dict:
         url = params.get("url", "")

@@ -285,6 +285,7 @@ class WSClient:
                     entry["activo"] = activo
                     if activo and p.inicio > 0:
                         entry["tiempo_conectado_seg"] = int(ahora - p.inicio)
+                    entry["url"] = p.current_url or ""
                     perfiles.append(entry)
             payload["perfiles"] = perfiles
             payload.update(self._hb_extra)

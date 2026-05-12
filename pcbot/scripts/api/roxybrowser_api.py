@@ -301,6 +301,20 @@ class RoxyBrowserAPI:
                 logger.error(f"[navigate] page.navigate error: {error_msg}")
                 return False
 
+    def get_cdp_ws(self, profile_id: str) -> str:
+        """obtiene el websocket url cdp de un perfil.
+        retorna la url del page websocket o cadena vacia si no se puede."""
+        http_port = self._http_ports.get(profile_id, "")
+        if not http_port:
+            data = self._abrir_perfil(profile_id)
+            if data:
+                http_port = data.get("http", "") or ""
+        if http_port:
+            page_ws = self._obtener_page_ws(http_port)
+            if page_ws:
+                return page_ws
+        return ""
+
     def close_profile(self, profile_id: str) -> bool:
         """cierra un perfil en roxybrowser."""
         result = self._request("POST", f"/browser/close", {"dirId": profile_id})
