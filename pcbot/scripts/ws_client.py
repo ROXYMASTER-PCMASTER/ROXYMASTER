@@ -1,4 +1,4 @@
-﻿# ws_client.py - websocket client (pcbot) con formato json plano
+# ws_client.py - websocket client (pcbot) con formato json plano
 # sin hmac. compatible con server.py de pcmaster v8.3.
 # todo en minusculas, utf-8 sin bom
 
@@ -59,11 +59,18 @@ class WSClient:
         self._reconnect_task = None
         self._intentos_ws = 0
         self._max_intentos_ws = 999999
+        self._profile_manager = None
 
-    def configurar_secreto(self, secreto: str):
-        """almacena el secreto shs (no usado en conexiones planas pero necesario para compatibilidad)."""
-        self._secreto_shs = secreto
-        logger.info("secreto shs configurado para autenticacion")
+        # contadores de heartbeat
+        self._heartbeats_enviados = 0
+        self._acks_recibidos = 0
+        self._ultimo_heartbeat_ts = 0.0
+        self._ultimo_ack_ts = 0.0
+        self._handshake_ok_recibido = False
+
+    def set_profile_manager(self, pm):
+        """asigna el profile manager para incluir datos de perfiles en heartbeat."""
+        self._profile_manager = pm
 
     def set_handshake(self, data: dict):
         self.handshake_data = data
@@ -77,6 +84,41 @@ class WSClient:
     def cambiar_modo(self, nuevo_modo: str):
         self.modo = nuevo_modo
         logger.info(f"modo cambiado a: {nuevo_modo}")
+
+    # --------------------------------------------------------------
+    # estado publico del heartbeat
+    # --------------------------------------------------------------
+    def get_heartbeat_status(self) -> dict:
+        """devuelve estadisticas de heartbeat para monitoreo."""
+        ahora = time.time()
+        segs_desde_ultimo_hb = 0.0
+        if self._ultimo_heartbeat_ts > 0:
+            segs_desde_ultimo_hb = ahora - self._ultimo_heartbeat_ts
+        segs_desde_ultimo_ack = 0.0
+        if self._ultimo_ack_ts > 0:
+            segs_desde_ultimo_ack = ahora - self._ultimo_ack_ts
+        uptime_sec = int(ahora - self._uptime_start)
+        return {
+            "conectado": self.connected,
+            "heartbeats_enviados": self._heartbeats_enviados,
+            "acks_recibidos": self._acks_recibidos,
+            "ultimo_heartbeat_hace_seg": round(segs_desde_ultimo_hb, 1),
+            "ultimo_ack_hace_seg": round(segs_desde_ultimo_ack, 1),
+            "handshake_confirmado": self._handshake_ok_recibido,
+            "modo": self.modo,
+            "uptime_seg": uptime_sec,
+            "uptime_str": f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m",
+            "intentos_reconexion": self._intentos_ws,
+        }
+
+    def get_conexion_status(self) -> dict:
+        """resumen completo de conexion para el comando estado."""
+        hb = self.get_heartbeat_status()
+        return {
+            "pcbot_id": self.pcbot_id,
+            "uri": self.uri,
+            "heartbeat": hb,
+        }
 
     # --------------------------------------------------------------
     # conexion no-bloqueante
@@ -119,7 +161,7 @@ class WSClient:
             except OSError as e:
                 logger.warning(f"error de red en ws: {e.strerror if hasattr(e, 'strerror') else e}")
             except Exception as e:
-                logger.debug(f"error en reconexion: {type(e).__name__}: {str(e)[:100]}")
+                logger.error(f"error en reconexion: {type(e).__name__}: {str(e)[:300]}", exc_info=True)
             finally:
                 self.connected = False
                 self.ws = None
@@ -154,14 +196,21 @@ class WSClient:
     # --------------------------------------------------------------
     async def _send_plano(self, payload: dict):
         if not self.ws:
+            logger.error(f"_send_plano: ws es None, no se puede enviar {payload.get('tipo', '?')}")
             return
         try:
+            # websockets 13+ tiene ws.close_state, websockets 16+ puede no tener .closed
+            # usar try/except para detectar cierre sin depender de .closed o .close_state
             await asyncio.wait_for(self.ws.send(json.dumps(payload)), timeout=5)
-            logger.debug(f"enviado {payload.get('tipo', '?')} plano")
+            logger.info(f"_send_plano: enviado {payload.get('tipo', '?')} correctamente")
+        except websockets.ConnectionClosed:
+            logger.error(f"_send_plano: websocket cerrado al enviar {payload.get('tipo', '?')}")
         except asyncio.TimeoutError:
-            logger.debug("timeout enviando mensaje plano")
+            logger.error(f"_send_plano: timeout enviando {payload.get('tipo', '?')} (5s)")
+        except AttributeError as e:
+            logger.error(f"_send_plano: error de atributo ws: {e}")
         except Exception as e:
-            logger.debug(f"error enviando plano: {type(e).__name__}: {str(e)[:100]}")
+            logger.error(f"_send_plano: error enviando {payload.get('tipo', '?')}: {type(e).__name__}: {str(e)[:200]}")
 
     # --------------------------------------------------------------
     # handshake (siempre plano)
@@ -169,19 +218,18 @@ class WSClient:
     async def _send_handshake(self):
         hd = self.handshake_data
         payload = {
-            "tipo": "identify",
+            "tipo": "handshake",
             "pcbot_id": hd.get("pcbot_id", self.pcbot_id),
-            "usuario": hd.get("usuario", ""),
+            "hostname": hd.get("hostname", hd.get("pcbot_id", self.pcbot_id)),
             "ip_local": hd.get("ip_local", "0.0.0.0"),
             "ip_tailscale": hd.get("ip_tailscale", "0.0.0.0"),
             "ip_wan": hd.get("ip_wan", "0.0.0.0"),
-            "perfiles_roxy": hd.get("perfiles_roxy", []),
-            "perfiles_vip": hd.get("perfiles_vip", []),
-            "navegadores": hd.get("navegadores", []),
+            "sistema_operativo": hd.get("sistema_operativo", ""),
+            "version_agente": hd.get("version_agente", "8.3"),
             "modo": hd.get("modo", self.modo),
         }
         await self._send_plano(payload)
-        logger.info("identify enviado a pcmaster")
+        logger.info("handshake enviado (plano)")
 
     # --------------------------------------------------------------
     # loop: heartbeat + recv
@@ -209,13 +257,14 @@ class WSClient:
         logger.info("loop ws terminado")
 
     # --------------------------------------------------------------
-    # heartbeat (siempre plano)
+    # heartbeat (siempre plano) con datos de perfiles
     # --------------------------------------------------------------
     async def _send_heartbeat(self):
         if not self.ws:
             return
         try:
-            uptime_sec = int(time.time() - self._uptime_start)
+            ahora = time.time()
+            uptime_sec = int(ahora - self._uptime_start)
             uptime_str = f"{uptime_sec // 3600}h {(uptime_sec % 3600) // 60}m"
             payload = {
                 "tipo": "heartbeat",
@@ -225,8 +274,25 @@ class WSClient:
                 "modo": self.modo,
                 "conectado_desde": _utc_now(),
             }
+            # agregar datos de perfiles activos desde profile manager
+            perfiles = []
+            if self._profile_manager is not None:
+                for pid, p in self._profile_manager.profiles.items():
+                    entry = {"profile_id": pid}
+                    if p.name:
+                        entry["nombre"] = p.name
+                    activo = p.state.name == "ACTIVE"
+                    entry["activo"] = activo
+                    if activo and p.inicio > 0:
+                        entry["tiempo_conectado_seg"] = int(ahora - p.inicio)
+                    entry["url"] = p.current_url or ""
+                    perfiles.append(entry)
+            payload["perfiles"] = perfiles
             payload.update(self._hb_extra)
             await self._send_plano(payload)
+            # actualizar contadores despues de enviar
+            self._heartbeats_enviados += 1
+            self._ultimo_heartbeat_ts = ahora
         except Exception as e:
             logger.debug(f"error enviando heartbeat: {e}")
 
@@ -241,9 +307,11 @@ class WSClient:
             return
 
         tipo = data.get("tipo", "")
+        logger.debug(f"mensaje recibido por ws: tipo={tipo}, datos={data}")
 
-        if tipo == "identify_ok":
-            logger.info("identify_ok recibido de pcmaster")
+        if tipo == "handshake_ok":
+            self._handshake_ok_recibido = True
+            logger.info("handshake_ok recibido de pcmaster")
             return
 
         if tipo == "error":
@@ -251,7 +319,9 @@ class WSClient:
             return
 
         if tipo == "ack":
-            logger.debug("ack recibido del servidor")
+            self._acks_recibidos += 1
+            self._ultimo_ack_ts = time.time()
+            logger.debug(f"ack recibido del servidor (total: {self._acks_recibidos})")
             return
 
         if self.on_command:
@@ -264,4 +334,8 @@ class WSClient:
     # envio de respuesta a comando (plano)
     # --------------------------------------------------------------
     async def send_response(self, respuesta: dict):
+        tipo = respuesta.get("tipo", "?")
+        ws_ok = self.ws is not None
+        logger.info(f"send_response llamado, tipo={tipo}, ws conectado={ws_ok}")
         await self._send_plano(respuesta)
+        logger.info(f"send_response: completado envio de {tipo}")

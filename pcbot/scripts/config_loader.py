@@ -1,83 +1,75 @@
-﻿# config_loader.py - roxymaster v8.3
-# carga configuración desde archivos json y obtiene token dinámicamente.
+# config_loader.py - roxymaster v8.3
+# carga unificada de configuracion para pcbot
 
 import json
 import os
-import logging
-import aiohttp
-import asyncio
+from pathlib import Path
 
-logger = logging.getLogger("pcbot.config_loader")
+BASE_DIR = Path(__file__).parent.parent.absolute()
+CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+SECRETOS_DIR = os.path.join(BASE_DIR, "data", "secrets")
+CLIENTE_SECRET_PATH = os.path.join(SECRETOS_DIR, "cliente.json")
 
-CONFIG_PATHS = [
-    "config.json",
-    "data/roxy_config.json",
-    "data/roxy_profiles.json"
-]
-
-SECRETS_PATH = "data/secrets/cliente.json"
-TOKEN_CACHE_PATH = "data/secrets/token_cache.json"
-
-def cargar_configuracion():
-    """carga la configuración desde cualquiera de las rutas disponibles."""
-    config = {}
-    for path in CONFIG_PATHS:
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    config.update(json.load(f))
-            except Exception as e:
-                logger.warning("error al cargar %s: %s", path, e)
-    return config
-
-def guardar_token(token):
-    """guarda el token en un archivo de caché."""
-    os.makedirs(os.path.dirname(TOKEN_CACHE_PATH), exist_ok=True)
-    with open(TOKEN_CACHE_PATH, "w", encoding="utf-8") as f:
-        json.dump({"token": token}, f)
-
-def cargar_token_cache():
-    """carga el token desde el caché si existe."""
-    if os.path.exists(TOKEN_CACHE_PATH):
+def load_config() -> dict:
+    """carga config.json o devuelve diccionario vacio."""
+    if os.path.isfile(CONFIG_PATH):
         try:
-            with open(TOKEN_CACHE_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("token")
-        except Exception:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
             pass
-    return None
+    return {}
 
-async def obtener_token_dinamico(config):
-    """obtiene un token de acceso llamando al endpoint de login."""
-    email = config.get("email", "")
-    password = config.get("password", "")
-    base_url = config.get("base_url", "https://www.wafabot.com")
-    login_url = f"{base_url}/api/login"
+def obtener_setting(clave: str, default: str = "") -> str:
+    """obtiene un setting desde data/secrets/cliente.json o config.json."""
+    if os.path.isfile(CLIENTE_SECRET_PATH):
+        try:
+            with open(CLIENTE_SECRET_PATH, "r", encoding="utf-8") as f:
+                secretos = json.load(f)
+            valor = secretos.get(clave)
+            if valor is not None:
+                return str(valor)
+        except (json.JSONDecodeError, IOError):
+            pass
+    cfg = load_config()
+    valor = cfg.get(clave)
+    if valor is not None:
+        return str(valor)
+    return default
 
-    if not email or not password:
-        logger.error("email o password no configurados en roxy_config.json")
-        return None
+# cargar configuracion global
+_cfg = load_config()
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            payload = {"email": email, "password": password}
-            async with session.post(login_url, json=payload) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    token = data.get("token")
-                    if token:
-                        guardar_token(token)
-                        logger.info("token obtenido dinámicamente")
-                        return token
-                logger.error("error al obtener token: %s", await resp.text())
-    except Exception as e:
-        logger.error("excepción al conectar con el servidor de login: %s", e)
-    return None
+# variables globales - autodetectar hostname si pcbot_id esta vacio
+_pcbot_id_cfg = _cfg.get("pcbot", {}).get("pcbot_id", "")
+NOMBRE_PC = _pcbot_id_cfg if _pcbot_id_cfg else os.environ.get("COMPUTERNAME", "desconocido")
+USUARIO_PC = _cfg.get("pcbot", {}).get("usuario", "")
+IP_LOCAL = _cfg.get("pcbot", {}).get("ip_local", "127.0.0.1")
+IP_TAILSCALE = _cfg.get("pcbot", {}).get("ip_tailscale", "100.85.100.109")
 
-def obtener_token(config):
-    """devuelve el token de acceso: primero prueba el caché, luego lo obtiene dinámicamente."""
-    token = config.get("token", "") or cargar_token_cache()
-    if token:
-        return token
-    # Si no hay token, se debe obtener asíncronamente (se llama desde el event loop)
-    return None
+PCMASTER_HOST = _cfg.get("pcmaster", {}).get("ip_tailscale", "100.111.179.65")
+PCMASTER_IP = PCMASTER_HOST
+PCMASTER_IP_TAILSCALE = _cfg.get("pcmaster", {}).get("ip_tailscale", "100.111.179.65")
+PCMASTER_WS_PORT = _cfg.get("pcmaster", {}).get("ws_port", 8086)
+PCMASTER_HTTP_PORT = _cfg.get("pcmaster", {}).get("http_port", 8086)
+
+ROXYBROWSER_API_URL = _cfg.get("roxybrowser", {}).get("api_url", "http://127.0.0.1:50000")
+ROXY_WORKSPACE_ID = _cfg.get("roxybrowser", {}).get("workspace_id", "")
+
+VERSION = _cfg.get("version", "8.3")
+
+DATA_DIR = os.path.join(BASE_DIR, "data")
+OBSOLETOS_DIR = os.path.join(BASE_DIR, "obsoletos")
+PORTAL_PATH = os.path.join(BASE_DIR, "portal.html")
+DASHBOARD_PATH = os.path.join(BASE_DIR, "dashboard.html")
+
+HTTP_PORT = 8086
+PORTAL_PORT = 8087
+
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(OBSOLETOS_DIR, exist_ok=True)
+
+def save_config(cfg: dict):
+    """guarda config.json."""
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=4, ensure_ascii=False)

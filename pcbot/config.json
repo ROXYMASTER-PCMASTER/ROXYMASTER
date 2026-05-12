@@ -3,12 +3,13 @@
         "nombre_pc": "",
         "usuario": "",
         "ip_local": "",
-        "ip_tailscale": ""
+        "ip_tailscale": "",
+        "pcbot_id": ""
     },
     "pcmaster": {
         "ip": "",
-        "ip_tailscale": "",
-        "ws_port": 5006,
+        "ip_tailscale": "100.111.179.65",
+        "ws_port": 8086,
         "http_port": 8086
     },
     "roxybrowser": {
