@@ -38,7 +38,8 @@
 - si una búsqueda de archivo o texto no devuelve resultados, no asumas que el recurso no existe. prueba con rutas alternativas o busca en directorios padre antes de declararlo ausente.
 
 ## regla de oro
-- prohibido hacer `git pull`. nunca traer cambios del remoto. solo se permite push.
+- **git pull permitido solo para bajar pcmaster/.** se permite `git pull origin main` con la condición de que **NO se modifique nada dentro de pcbot/**. esta computadora es la autoridad sobre pcbot/ y sus archivos nunca deben ser sobreescritos por el remoto.
+- después de un `git pull`, verificar con `git status` que ningún archivo de `pcbot/` haya cambiado. si ocurrió, restaurar inmediatamente con `git checkout HEAD -- pcbot/` y reportar.
 - prohibido hacer `git push --force` porque elimina carpetas/archivos del remoto. el push debe ser normal: `git push origin main`. si hay conflicto, detenerse y pedir instrucciones.
 - prohibido deducir, suponer o asumir lo que el usuario no dijo explicitamente. si hay duda, preguntar antes de ejecutar.
 - prohibido borrar, modificar o crear archivos fuera de `pcbot/`. no tocar ninguna otra carpeta.
