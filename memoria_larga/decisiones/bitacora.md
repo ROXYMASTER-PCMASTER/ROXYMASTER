@@ -5,7 +5,7 @@ cada entrada: YYYY-MM-DD HH:MM - descripcion de lo realizado
 
 ---
 
-## 2026-05-12 11:25 - correccion: proteccion de marketplace.html y perfiles.html con redireccion al dashboard
+## 2026-05-12 11:44 - correccion (continuacion): proteccion de marketplace.html y perfiles.html con redireccion al dashboard
 
 **que se hizo**: se agrego script de redireccion iframe-check a marketplace.html y perfiles.html
 
@@ -21,8 +21,11 @@ cada entrada: YYYY-MM-DD HH:MM - descripcion de lo realizado
 **archivos modificados**:
 - pcmaster/publico/marketplace.html (linea 6-12, +5 lineas)
 - pcmaster/publico/perfiles.html (linea 6-12, +5 lineas)
+- pcmaster/publico/dashboard_publico.html: se cambio url_redirect de ?tab={{tab}} a /publico/dashboard_publico.html?tab={{tab}} para redireccion correcta post-login
+- pcmaster/publico/login.html: se ajusto lectura del parametro redirect para preservar tab entre auth y dashboard
 
-**backup**: backups/publico_20260512_1124/
+**backup**: backups/publico_20261205_1142/
+**commit**: 87d139d, push a origin/main exitoso
 
 **archivos no tocados**: server.py, orchestrator.py, ws_manager.py, db.py, ni ningun archivo python.
 
@@ -48,6 +51,33 @@ cada entrada: YYYY-MM-DD HH:MM - descripcion de lo realizado
 1. el heartbeat llegue y se registre en heartbeat_cache
 2. los pedidos en "enviado" se actualicen a "en_progreso"
 3. el vigilante monitoree correctamente
+
+## 2026-12-05 11:50 - correccion: login 404 por servidor no reiniciado
+
+**que se hizo**: se diagnostico y resolvio el error 404 en POST /api/login
+
+**problema**: el frontend recibia `{"detail":"Not Found"}` al intentar iniciar sesion.
+
+**diagnostico**:
+1. server.py linea 37: `from api_auth import router as router_auth` -- import correcto
+2. server.py linea 181: `app.include_router(router_auth)` -- mount correcto (sin prefix extra)
+3. api_auth.py linea 10: `router = APIRouter(prefix="/api")` -- ruta `/api/login` correcta
+4. api_auth.py linea 61-67: `@router.post("/login")` -- endpoint POST existe con logica completa
+5. login.html linea 155: `fetch('/api/login', {method:'POST',...})` -- llamada correcta
+
+**causa raiz**: el proceso python servidor (PID 12660) llevaba ejecutandose desde las 02:39 AM (~9 horas), antes de que se añadiera el router de auth al codigo. el codigo fuente ya tenia el endpoint, pero el proceso en memoria no.
+
+**solucion**: matar el proceso antiguo y reiniciar el servidor con el codigo actual. luego:
+- verificado con `python _test_login.py`: STATUS 200, token jwt devuelto
+- credenciales: `prueba1@roxymaster.local` / `12345678` funcionan perfectamente
+- servidor reiniciado correctamente en puerto 8086
+
+**no se modifico ningun archivo de codigo**:
+- server.py: no requirio cambios (router_auth ya estaba importado y montado)
+- api_auth.py: no requirio cambios (endpoint /api/login ya existia)
+- login.html: no requirio cambios (fetch a /api/login correcto)
+
+**archivos creados temporalmente**: pcmaster/_test_login.py (eliminado tras prueba)
 
 ## archivos revisados:
 - pcmaster/scripts/ws_manager.py: tiene enviar_comando_al_pcbot (linea 207) y heartbeat_cache.py existe separado
