@@ -29,6 +29,8 @@ from orchestrator import (
 )
 from tasks import iniciar_tareas_periodicas, inicializar_registros_tareas
 from tokenomics import inicializar_tokenomics, emitir_kbt_admin
+from db_pedidos_vigilante import crear_tablas_vigilante
+from pedidos_vigilante import monitorear_pedidos
 
 # routers api
 from api_heartbeat import router as heartbeat_router
@@ -111,6 +113,12 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else "data", exist_ok=True)
     inicializar_db()
     logger.info(f"base de datos inicializada: {db_path}")
+    # crear tablas del vigilante de pedidos
+    try:
+        await crear_tablas_vigilante()
+        logger.info("tablas del vigilante de pedidos creadas")
+    except Exception as e:
+        logger.warning(f"no se pudieron crear tablas vigilante: {e}")
 
     # inicializar registros de tareas
     inicializar_registros_tareas()
@@ -130,6 +138,9 @@ async def lifespan(app: FastAPI):
     # iniciar tareas periodicas en segundo plano
     tarea_fondo = asyncio.create_task(iniciar_tareas_periodicas())
     logger.info("tareas periodicas iniciadas")
+    # iniciar vigilante de pedidos
+    tarea_vigilante = asyncio.create_task(monitorear_pedidos())
+    logger.info("vigilante de pedidos iniciado")
 
     yield  # servidor corriendo
 
