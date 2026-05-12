@@ -126,7 +126,8 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
 
     logger.info(f"[PEDIDO-DIAG] uid={uid} url={url} perfiles={perfiles} horas={horas} costo={costo_tokens}")
 
-    # guardar pedido en bd
+    # LOG-ANTES: antes de insertar pedido en bd
+    logger.info(f"[PEDIDO-LOG] paso 1/6: insertando pedido en bd uid={uid} url={url}")
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     pedido_id = ejecutar_insercion(
         """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
@@ -137,7 +138,10 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
          costo_tokens, comando_id, ahora),
     )
 
+    # LOG-DESPUES: resultado de insercion
+    logger.info(f"[PEDIDO-LOG] paso 2/6: pedido insertado id={pedido_id}")
     if not pedido_id:
+        logger.error(f"[PEDIDO-LOG] paso 2/6 FALLO: no se obtuvo pedido_id. revirtiendo descuento")
         # revertir descuento
         ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
                      (costo_tokens, uid))
@@ -162,8 +166,10 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
         "nivel_comentarios": nivel_comentarios,
     }
 
+    # LOG-ANTES: consultar pcbot_id
+    logger.info(f"[PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid={uid}) - conexiones activas en ws_manager")
     pcbot_id = obtener_pcbot_de_usuario(uid)
-    logger.info(f"[PEDIDO-DIAG] uid={uid} pcbot_id='{pcbot_id}' comando_id={comando_id}")
+    logger.info(f"[PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='{pcbot_id}' tipo={type(pcbot_id).__name__}")
 
     # log del payload exacto que se enviara al pcbot (para depuracion)
     payload_exacto = {
@@ -174,6 +180,8 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     logger.info(f"[PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='{pcbot_id}': {json.dumps(payload_exacto, ensure_ascii=False)}")
     logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en ws_manager? CHEQUEAR LOGS")
 
+    # LOG-ANTES: enviar comando
+    logger.info(f"[PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id={uid}) pcbot_id='{pcbot_id}' comando_id={comando_id}")
     resultado_orch = await enviar_comando_al_pcbot(
         usuario_id=uid,
         comando={
@@ -182,12 +190,12 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
             "parametros": parametros_pedido,
         },
     )
-    logger.info(f"[PEDIDO-DIAG] resultado_orch={resultado_orch}")
+    logger.info(f"[PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={json.dumps(resultado_orch, ensure_ascii=False)}")
 
     if not resultado_orch.get("exito"):
         logger.warning(
-            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO orchestrator. "
-            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error')}"
+            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO envio a pcbot. "
+            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error', 'sin error')}"
         )
         return {
             "exito": True,

@@ -548,7 +548,7 @@
     dashboard: '/publico/panel_dashboard.html',
     wallet: '/publico/wallet.html',
     marketplace: '/publico/marketplace.html',
-    pedidos: '/publico/pedidos.html',
+    pedidos: '/publico/pedidos_core.html',
     referidos: '/publico/referidos.html',
     perfiles: '/publico/perfiles.html',
     ayuda: '/publico/ayuda.html',
@@ -740,16 +740,24 @@
         }, 50);
       }
 
-      // inicializacion especifica para el panel de pedidos
-      if (panel === 'pedidos') {
+      // inicializacion especifica del panel
+      var initMap = {
+        'pedidos': 'inicializarPanelPedidos',
+        'perfiles': 'inicializarPanelPerfiles',
+        'marketplace': 'inicializarPanelMarketplace',
+      };
+      var funcName = initMap[panel];
+      if (funcName) {
         setTimeout(function() {
-          if (typeof window.inicializarPanelPedidos === 'function') {
-            window.inicializarPanelPedidos();
+          if (typeof window[funcName] === 'function') {
+            window[funcName]();
           } else {
-            console.warn('inicializarPanelPedidos no esta definido. asegurate de que pedidos.html este cargado correctamente.');
+            console.warn(funcName + ' no esta definido. asegurate de que el panel este cargado correctamente.');
           }
         }, 150);
-      } else {
+      }
+      // limpiar intervalo de pedidos al salir de ese panel
+      if (panel !== 'pedidos') {
         if (typeof window.limpiarIntervaloPedidos === 'function') {
           window.limpiarIntervaloPedidos();
         }

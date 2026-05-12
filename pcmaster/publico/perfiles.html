@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function() {
+  if (window.top === window.self) {
+    window.location.replace('/publico/dashboard_publico.html?tab=perfiles');
+  }
+})();
+</script>
 <title>perfiles - roxymaster</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -127,6 +134,15 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 // funciones globales para perfiles (compatibles con SPA y standalone)
 // ============================================================
 
+// --- guard de autenticacion ---
+(function() {
+  var token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/publico/login.html';
+    return;
+  }
+})();
+
 // escapar html seguro
 function escapeHtml(str) {
   if (typeof str !== 'string') return str;
@@ -161,7 +177,7 @@ function actualizarEstadisticas(perfiles) {
 }
 
 // agregar perfil: guarda api key y sincroniza
-async function agregarPerfil() {
+window.agregarPerfil = async function() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   if (!apiKey) { alert('ingresa una api key'); return; }
   const token = localStorage.getItem('token');
@@ -173,14 +189,14 @@ async function agregarPerfil() {
   const data = await res.json();
   if (data.exito) {
     alert('api key guardada. sincronizando...');
-    await sincronizarPerfiles();
+    await window.sincronizarPerfiles();
   } else {
     alert('error: ' + (data.mensaje || 'desconocido'));
   }
-}
+};
 
 // sincronizar perfiles con el pcbot
-async function sincronizarPerfiles() {
+window.sincronizarPerfiles = async function() {
   const token = localStorage.getItem('token');
   const res = await fetch('/api/roxy/sync_profiles', {
     method: 'POST',
@@ -189,14 +205,14 @@ async function sincronizarPerfiles() {
   const data = await res.json();
   if (data.ok) {
     alert('sincronizacion completada: ' + data.perfiles_guardados + ' perfiles.');
-    await cargarPerfiles();
+    await window.cargarPerfiles();
   } else {
     alert('error al sincronizar: ' + (data.error || 'desconocido'));
   }
-}
+};
 
 // cargar perfiles desde el backend
-async function cargarPerfiles() {
+window.cargarPerfiles = async function() {
   const token = localStorage.getItem('token');
   try {
     const d = await fetch('/api/roxy/profiles', {
@@ -222,16 +238,25 @@ async function cargarPerfiles() {
   } catch(e) {
     console.error('error cargando perfiles:', e);
   }
-}
+};
 
-// asignar eventos inmediatamente (funciona tanto standalone como via SPA)
-var _pf_agregarBtn = document.getElementById('agregarPerfilBtn');
-var _pf_recargarBtn = document.getElementById('recargarBtn');
-if (_pf_agregarBtn) _pf_agregarBtn.onclick = agregarPerfil;
-if (_pf_recargarBtn) _pf_recargarBtn.onclick = sincronizarPerfiles;
+// funcion de inicializacion llamada desde SPA dashboard (o standalone)
+window.inicializarPanelPerfiles = function() {
+  // asignar eventos a botones
+  var agregarBtn = document.getElementById('agregarPerfilBtn');
+  var recargarBtn = document.getElementById('recargarBtn');
+  if (agregarBtn) agregarBtn.onclick = window.agregarPerfil;
+  if (recargarBtn) recargarBtn.onclick = window.sincronizarPerfiles;
+  // cargar perfiles
+  window.cargarPerfiles();
+};
 
-// cargar perfiles al iniciar
-cargarPerfiles();
+// auto-inicializar si se carga standalone (no desde SPA)
+(function() {
+  if (document.getElementById('agregarPerfilBtn')) {
+    window.inicializarPanelPerfiles();
+  }
+})();
 </script>
 </body>
 </html>

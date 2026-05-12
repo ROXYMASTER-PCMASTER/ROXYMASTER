@@ -35,16 +35,17 @@ section{padding:80px 0}
 header{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:15px 0;transition:all 0.3s;background:rgba(10,10,26,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,215,0,0.1)}
 header.scrolled{background:rgba(10,10,26,0.95);box-shadow:0 4px 30px rgba(0,0,0,0.5)}
 header .container{display:flex;align-items:center;justify-content:space-between}
-.logo{font-size:1.6rem;font-weight:800;letter-spacing:1px}
-.logo span{color:#ffd700}
-.logo .neon{color:#00ff88}
-.nav-links{display:flex;gap:25px;align-items:center}
-.nav-links a{font-size:0.85rem;font-weight:500;color:#b0b0c0;transition:color 0.3s;position:relative}
-.nav-links a:hover,.nav-links a.active{color:#ffd700}
-.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:linear-gradient(90deg,#ffd700,#00ff88);transition:width 0.3s}
-.nav-links a:hover::after,.nav-links a.active::after{width:100%}
-.nav-cta{padding:8px 20px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#0a0a1a;border-radius:50px;font-weight:600;font-size:0.85rem;transition:all 0.3s}
-.nav-cta:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,255,136,0.4)}
+.logo{font-size:1.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ffffff;display:inline-flex;flex-direction:column;align-items:center}
+.logo .logo-main{color:#ffffff}
+.logo .logo-main span{color:#ffd700}
+.logo .neon{color:#00ff88;display:block;font-size:0.5em}
+.nav-links{display:flex;gap:15px;align-items:center}
+.nav-links a{font-size:1rem;font-weight:600;color:#e0e0e0;transition:all 0.3s;position:relative;padding:8px 16px;border-radius:8px}
+.nav-links a:hover,.nav-links a.active{color:#ffd700;background:rgba(255,215,0,0.08)}
+.nav-links a::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:0;height:2px;background:linear-gradient(90deg,#ffd700,#00ff88);transition:width 0.3s;border-radius:2px}
+.nav-links a:hover::after,.nav-links a.active::after{width:60%}
+.nav-cta{padding:10px 24px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#ffffff;border-radius:50px;font-weight:700;font-size:1rem;transition:all 0.3s}
+.nav-cta:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 4px 20px rgba(0,255,136,0.5);color:#ffffff}
 .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:5px;z-index:1001}
 .hamburger span{display:block;width:28px;height:2.5px;background:#fff;border-radius:2px;transition:all 0.3s}
 .hamburger.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
@@ -320,7 +321,7 @@ footer{background:#050510;border-top:1px solid rgba(255,255,255,0.03);padding:60
 <!-- ===== HEADER ===== -->
 <header>
   <div class="container">
-    <a href="#hero" class="logo">WAFABOT<span>.</span> <span class="neon">beta</span></a>
+    <a href="#hero" class="logo"><span class="logo-main">WAFABOT<span>.</span></span><span class="neon">beta</span></a>
     <nav class="nav-links" id="nav-links">
       <a href="#hero">inicio</a>
       <a href="#beneficios">beneficios</a>
