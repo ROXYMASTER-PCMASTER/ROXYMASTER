@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -166,8 +166,9 @@
           // guardar token
           localStorage.setItem('token', data.token);
           localStorage.setItem('usuario', JSON.stringify(data.usuario));
-          // redirigir al dashboard
-          window.location.href = '/publico/dashboard_publico.html';
+          // redirigir al dashboard (o al redirect original si venia de marketplace/perfiles)
+          var redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/publico/dashboard_publico.html';
+          window.location.href = redirectUrl;
         } catch (err) {
           msg.className = 'msg-box error';
           msg.textContent = 'error de conexion: ' + err.message;

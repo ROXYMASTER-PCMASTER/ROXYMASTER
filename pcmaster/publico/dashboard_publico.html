@@ -797,7 +797,10 @@
     // usar helper obtenerToken que revisa url, localStorage y sessionStorage
     var token = obtenerToken();
     if (!token) {
-      window.location.href = '/publico/login.html';
+      var params = new URLSearchParams(window.location.search);
+      var tab = params.get('tab');
+      var redirect = '/publico/dashboard_publico.html' + (tab ? '?tab=' + tab : '');
+      window.location.href = '/publico/login.html?redirect=' + encodeURIComponent(redirect);
       return;
     }
     // obtener panel desde query string
