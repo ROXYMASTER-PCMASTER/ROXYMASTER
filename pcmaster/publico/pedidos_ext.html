@@ -110,26 +110,81 @@ window.crearPedido = function() {
   var minutos = parseInt(valor('ped-minutos')) || 0;
   if (minutos <= 0) { window.mostrarMensaje('ingresa un tiempo valido', 'error'); return; }
   var nivel = valor('ped-comentarios') || 'basico';
-  var btn = $('btn-crear-pedido');
-  if (btn) btn.disabled = true;
-
   var pedEstado = window._ped_estado || { tipo: 'normal' };
-  var data = {
+
+  // mostrar modal de validacion
+  window.mostrarModalValidacion({
     url: url,
     seguidores: seguidores,
     perfiles: perfiles,
     minutos: minutos,
-    nivel_comentarios: nivel,
+    nivel: nivel,
     tipo: pedEstado.tipo,
+  });
+};
+
+// --- modal de validacion ---
+
+window._modalData = null;
+
+window.mostrarModalValidacion = function(data) {
+  window._modalData = data;
+  var modal = document.getElementById('modal-validar-pedido');
+  if (!modal) return;
+  document.getElementById('modal-val-url').textContent = data.url;
+  document.getElementById('modal-val-seguidores').textContent = data.seguidores;
+  document.getElementById('modal-val-perfiles').textContent = data.perfiles;
+  document.getElementById('modal-val-duracion').textContent = data.minutos + ' min';
+  document.getElementById('modal-val-comentarios').textContent = data.nivel;
+  var tipoEl = document.getElementById('modal-val-tipo');
+  tipoEl.textContent = data.tipo;
+  tipoEl.className = 'modal-value' + (data.tipo === 'vip' ? ' vip' : '');
+
+  // calcular costo para el modal (misma formula que calcularCosto)
+  var tasaBase = 0.0001;
+  var multNivel = { basico: 1, normal: 1.5, intenso: 2.5 };
+  var multVip = data.tipo === 'vip' ? 2.0 : 1.0;
+  var horas = data.minutos / 60;
+  var costo = data.seguidores * data.perfiles * horas * tasaBase * (multNivel[data.nivel] || 1) * multVip;
+  var costoSinVip = data.seguidores * data.perfiles * horas * tasaBase * (multNivel[data.nivel] || 1);
+
+  var costoStr = costo.toFixed(4);
+  var totalEl = document.getElementById('modal-val-costo');
+  totalEl.textContent = costoStr + ' kbt';
+  totalEl.className = 'total-valor' + (data.tipo === 'vip' ? ' vip' : '');
+
+  modal.style.display = 'flex';
+};
+
+window.cerrarModalValidacion = function() {
+  var modal = document.getElementById('modal-validar-pedido');
+  if (modal) modal.style.display = 'none';
+  window._modalData = null;
+};
+
+window.confirmarPedido = function() {
+  var data = window._modalData;
+  if (!data) return;
+  var btn = document.getElementById('btn-modal-confirmar');
+  if (btn) btn.disabled = true;
+
+  var payload = {
+    url: data.url,
+    seguidores: data.seguidores,
+    perfiles: data.perfiles,
+    minutos: data.minutos,
+    nivel_comentarios: data.nivel,
+    tipo: data.tipo,
   };
 
   fetch('/api/pedidos/crear', {
     method: 'POST',
     headers: window.getHeaders(),
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
   .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
   .then(function(resp) {
+    window.cerrarModalValidacion();
     if (resp.status >= 200 && resp.status < 300) {
       window.mostrarMensaje(resp.json.detail || 'pedido creado exitosamente', 'success');
       window.cargarPedidos();
@@ -139,6 +194,7 @@ window.crearPedido = function() {
     }
   })
   .catch(function(err) {
+    window.cerrarModalValidacion();
     window.mostrarMensaje('error de conexion: ' + err.message, 'error');
   })
   .finally(function() {
