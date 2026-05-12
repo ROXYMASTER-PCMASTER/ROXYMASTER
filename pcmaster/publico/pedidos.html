@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function() {
+  if (window.top === window.self) {
+    window.location.replace('/publico/dashboard_publico.html?tab=pedidos');
+  }
+})();
+</script>
 <title>pedidos - roxymaster</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
