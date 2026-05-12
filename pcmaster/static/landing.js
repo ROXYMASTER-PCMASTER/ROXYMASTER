@@ -59,7 +59,7 @@
     shareButtonsInit();
     copyLinkInit();
     hamburgerInit();
-    floatBtnInit();
+    scrollTopInit();
     tiltCards();
     rippleButtons();
   }
@@ -239,9 +239,11 @@
       e.preventDefault();
       const name = document.getElementById('reg-name');
       const email = document.getElementById('reg-email');
+      const password = document.getElementById('reg-password');
       const type = document.getElementById('reg-type');
       const nameErr = document.getElementById('reg-name-error');
       const emailErr = document.getElementById('reg-email-error');
+      const passwordErr = document.getElementById('reg-password-error');
       let valid = true;
 
       if (!name.value.trim()) {
@@ -255,13 +257,33 @@
         valid = false;
       } else emailErr.textContent = '';
 
+      if (password.value.length < 6) {
+        passwordErr.textContent = 'la contraseña debe tener al menos 6 caracteres';
+        valid = false;
+      } else passwordErr.textContent = '';
+
       if (!type.value) { valid = false; }
 
       if (valid) {
-        try { localStorage.setItem('wafabot_registered', JSON.stringify({ name: name.value.trim(), email: email.value.trim(), type: type.value })); } catch(e) {}
-        document.getElementById('register-form-content').style.display = 'none';
-        document.getElementById('register-form-result').style.display = 'block';
-        form.reset();
+        const payload = {
+          username: name.value.trim(),
+          email: email.value.trim(),
+          password: password.value.trim()
+        };
+        fetch('/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function(r) { return r.json(); }).then(function(data) {
+          try { localStorage.setItem('wafabot_registered', JSON.stringify({ name: name.value.trim(), email: email.value.trim(), type: type.value })); } catch(e) {}
+          document.getElementById('register-form-content').style.display = 'none';
+          document.getElementById('register-form-result').style.display = 'block';
+          form.reset();
+        }).catch(function() {
+          document.getElementById('register-form-content').style.display = 'none';
+          document.getElementById('register-form-result').style.display = 'block';
+          form.reset();
+        });
       }
     });
   }
@@ -276,9 +298,11 @@
       e.preventDefault();
       const name = document.getElementById('modal-name');
       const email = document.getElementById('modal-email');
+      const password = document.getElementById('modal-password');
       const type = document.getElementById('modal-type');
       const nameErr = document.getElementById('modal-name-error');
       const emailErr = document.getElementById('modal-email-error');
+      const passwordErr = document.getElementById('modal-password-error');
       let valid = true;
 
       if (!name.value.trim()) { nameErr.textContent = 'ingresa tu nombre'; valid = false; }
@@ -288,12 +312,32 @@
       if (!emailRe.test(email.value.trim())) { emailErr.textContent = 'ingresa un email valido'; valid = false; }
       else emailErr.textContent = '';
 
+      if (password.value.length < 6) {
+        passwordErr.textContent = 'la contraseña debe tener al menos 6 caracteres';
+        valid = false;
+      } else passwordErr.textContent = '';
+
       if (!type.value) { valid = false; }
 
       if (valid) {
-        try { localStorage.setItem('wafabot_modal_sent', '1'); } catch(e) {}
-        form.style.display = 'none';
-        document.getElementById('modal-success').style.display = 'block';
+        const payload = {
+          username: name.value.trim(),
+          email: email.value.trim(),
+          password: password.value.trim()
+        };
+        fetch('/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function(r) { return r.json(); }).then(function() {
+          try { localStorage.setItem('wafabot_modal_sent', '1'); } catch(e) {}
+          form.style.display = 'none';
+          document.getElementById('modal-success').style.display = 'block';
+        }).catch(function() {
+          try { localStorage.setItem('wafabot_modal_sent', '1'); } catch(e) {}
+          form.style.display = 'none';
+          document.getElementById('modal-success').style.display = 'block';
+        });
       }
     });
   }
@@ -361,20 +405,21 @@
   }
 
   /* ====================================
-     FLOAT BTN
+     SCROLL TO TOP BUTTON
      ==================================== */
-  function floatBtnInit() {
-    const btn = document.querySelector('.float-btn');
+  function scrollTopInit() {
+    const btn = document.getElementById('scrollTopBtn');
     if (!btn) return;
-    let lastScroll = 0;
     window.addEventListener('scroll', function() {
-      const cur = window.scrollY;
-      if (cur > lastScroll && cur > 300) {
-        btn.classList.add('float-btn-hidden');
+      if (window.scrollY > 400) {
+        btn.classList.add('visible');
       } else {
-        btn.classList.remove('float-btn-hidden');
+        btn.classList.remove('visible');
       }
-      lastScroll = cur;
+    });
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 

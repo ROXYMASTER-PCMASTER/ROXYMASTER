@@ -370,19 +370,44 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
                 except Exception as e:
                     logger.warning(f"error enviando pendientes a {pcbot_id}: {e}")
 
+                # sincronizar con orchestrator._conexiones_ws para que crear_comando encuentre al pcbot
+                try:
+                    import orchestrator as _orch
+                    _orch._conexiones_ws[pcbot_id] = {"ws": websocket, "ultimo_heartbeat": datetime.now().isoformat()}
+                    logger.info(f"[DIAG-SYNC] orchestrator._conexiones_ws[{pcbot_id}] poblado. keys={list(_orch._conexiones_ws.keys())}")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC] error poblando orchestrator._conexiones_ws: {e}")
+
                 # registrar en ws_manager por usuario
                 try:
                     from db import ejecutar_sql_unico as _sql_unico
                     _user = _sql_unico(
                         "select id from usuarios where pcbot_id = ?", (pcbot_id,)
                     )
+                    # fallback: buscar via tabla computadoras si usuarios.pcbot_id no esta actualizado
+                    if not _user:
+                        _conn = _sql_unico(
+                            "select usuario_id from computadoras where pcbot_id = ?",
+                            (pcbot_id,)
+                        )
+                        if _conn:
+                            _uid = _conn["usuario_id"]
+                            from db import ejecutar_sql as _sql_upd
+                            _sql_upd(
+                                "update usuarios set pcbot_id = ?, modo = 'conectado' where id = ?",
+                                (pcbot_id, _uid)
+                            )
+                            _user = {"id": _uid}
+                            logger.info(f"[DIAG-SYNC] usuario {_uid} actualizado con pcbot_id={pcbot_id} via computadoras")
                     if _user:
                         _usuario_registrado_ws = _user["id"]
                         from ws_manager import registrar_conexion
                         registrar_conexion(_user["id"], pcbot_id, websocket)
-                        logger.info(f"usuario {_user['id']} registrado en ws_manager via pcbot {pcbot_id}")
-                except Exception:
-                    pass
+                        logger.info(f"[DIAG-SYNC] usuario {_user['id']} registrado en ws_manager via pcbot {pcbot_id} (mapeo usuario->pcbot completo)")
+                    else:
+                        logger.warning(f"[DIAG-SYNC] NO SE ENCONTRO usuario para pcbot {pcbot_id} - ni en usuarios ni en computadoras")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC] error registrando en ws_manager: {e}")
 
                 # actualizar heartbeat
                 gestor_websockets[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()

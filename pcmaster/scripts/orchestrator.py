@@ -100,12 +100,18 @@ async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None, coman
 
     _cola_comandos[comando_id] = comando
 
+    logger.info(f"[ORCH-DIAG] crear_comando: comando_id={comando_id} tipo={tipo} pcbot_id='{pcbot_id}' _conexiones_ws keys={list(_conexiones_ws.keys())}")
+
     # intentar enviar inmediatamente si hay conexion activa
     if pcbot_id and pcbot_id in _conexiones_ws:
+        logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en _conexiones_ws, intentando enviar")
         try:
-            await _enviar_a_pcbot(pcbot_id, comando)
+            ok = await _enviar_a_pcbot(pcbot_id, comando)
+            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot resultado={ok}")
         except Exception as e:
-            pass  # se reintentara via heartbeat
+            logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot exception: {e}")
+    else:
+        logger.info(f"[ORCH-DIAG] pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws. keys disponibles: {list(_conexiones_ws.keys())}")
 
     return {"exito": True, "comando_id": comando_id, "estado": "pendiente"}
 
@@ -123,19 +129,21 @@ async def _enviar_a_pcbot(pcbot_id: str, comando: dict) -> bool:
         return False
     try:
         mensaje = {
-            "tipo": "comando",
+            "tipo": comando["tipo"],
             "comando_id": comando["comando_id"],
-            "accion": comando["tipo"],
             "parametros": comando["parametros"],
         }
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviando a {pcbot_id} tipo={comando.get('tipo')} comando_id={comando.get('comando_id')}")
         await ws.send_json(mensaje)
         # marcar como enviado en db
         ejecutar_sql(
             "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
             (_ahora_str(), comando["comando_id"]),
         )
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id}")
         return True
-    except Exception:
+    except Exception as e:
+        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION a {pcbot_id}: {e}")
         return False
 
 
@@ -220,6 +228,18 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
         except Exception as e:
             logger.warning(f"no se pudo actualizar pcbot_id en users: {e}")
 
+        # ws_manager: registrar conexion post-handshake
+        try:
+            from ws_manager import registrar_conexion
+            _user_row = ejecutar_sql_unico(
+                "select id from usuarios where pcbot_id = ?", (pcbot_id,)
+            )
+            if _user_row:
+                registrar_conexion(_user_row["id"], pcbot_id, websocket)
+                logger.info(f"[ORCH-DIAG] usuario {_user_row['id']} registrado en ws_manager via orchestrator (handshake)")
+        except Exception as e:
+            logger.warning(f"[ORCH-DIAG] error registrando ws_manager en orchestrator: {e}")
+
         # Handshake exitoso
         await websocket.send_json({"tipo": "handshake_ok", "pcbot_id": pcbot_id})
         logger.info("[DIAG-002] Handshake completado, entrando al bucle de mensajes")
@@ -284,6 +304,12 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
     finally:
         # Limpiar conexión
         _conexiones_ws.pop(pcbot_id, None)
+        # limpiar ws_manager
+        try:
+            from ws_manager import eliminar_conexion
+            eliminar_conexion(pcbot_id=pcbot_id)
+        except Exception:
+            pass
         logger.info(f"pcbot desconectado: {pcbot_id}")
 
 
@@ -296,6 +322,7 @@ async def _enviar_pendientes(pcbot_id: str):
         "select * from comandos where pcbot_id = ? and estado = 'pendiente' order by fecha_creacion",
         (pcbot_id,),
     )
+    logger.info(f"[ORCH-DIAG] _enviar_pendientes: pcbot_id={pcbot_id} cantidad={len(pendientes)}")
     for cmd in pendientes:
         comando = {
             "comando_id": cmd["comando_id"],
@@ -303,7 +330,8 @@ async def _enviar_pendientes(pcbot_id: str):
             "parametros": json.loads(cmd["parametros"]) if cmd["parametros"] else {},
             "estado": cmd["estado"],
         }
-        await _enviar_a_pcbot(pcbot_id, comando)
+        ok = await _enviar_a_pcbot(pcbot_id, comando)
+        logger.info(f"[ORCH-DIAG] _enviar_pendientes: reenvio cmd {cmd['comando_id']} ok={ok}")
 
 
 # ---------------------------------------------------------------------------
@@ -622,11 +650,10 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
 async def enviar_comando_asignar(usuario_id: int, parametros: dict) -> dict:
     """envia un comando 'asignar' al pcbot del usuario via ws_manager.
     wrapper de alto nivel para api_pedidos.
-    estructura: {"tipo": "comando", "accion": "asignar", "parametros": {...}}"""
+    estructura: {"tipo": "asignar", "parametros": {...}}"""
     from ws_manager import enviar_comando_al_pcbot
     comando = {
         "tipo": "asignar",
-        "accion": "asignar",
         "parametros": parametros,
         "comando_id": parametros.get("comando_id", ""),
     }

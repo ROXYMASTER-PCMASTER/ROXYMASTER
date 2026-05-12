@@ -16,6 +16,7 @@
         <form id="register-form" novalidate>
           <div class="form-group"><label for="reg-name">nombre completo</label><input type="text" id="reg-name" placeholder="tu nombre" required><span class="form-error" id="reg-name-error"></span></div>
           <div class="form-group"><label for="reg-email">correo electronico</label><input type="email" id="reg-email" placeholder="tu@email.com" required><span class="form-error" id="reg-email-error"></span></div>
+          <div class="form-group"><label for="reg-password">contraseña</label><input type="password" id="reg-password" placeholder="minimo 6 caracteres" minlength="6" required><span class="form-error" id="reg-password-error"></span></div>
           <div class="form-group"><label for="reg-type">tipo de usuario</label><select id="reg-type" required><option value="">selecciona...</option><option value="streamer">streamer / creador</option><option value="agencia">agencia de marketing</option><option value="otro">otro</option></select></div>
           <button type="submit" class="btn btn-cta btn-block" style="max-width:100%"><i class="fas fa-paper-plane"></i> quiero ser parte</button>
           <p class="form-terms">al registrarte aceptas nuestros <a href="#">terminos y condiciones</a> y <a href="#">politica de privacidad</a>.</p>

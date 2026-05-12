@@ -283,9 +283,15 @@ header.scrolled{background:rgba(10,10,26,0.95);backdrop-filter:blur(16px)}
 .footer-bottom p{color:#606070;font-size:0.8rem;margin-bottom:5px}
 .footer-legal-text{font-size:0.7rem}
 
-/* ===== WHATSAPP BUTTON ===== */
-.whatsapp-float{position:fixed;bottom:30px;right:30px;z-index:999;width:60px;height:60px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;box-shadow:0 4px 20px rgba(37,211,102,0.4);transition:all 0.3s;cursor:pointer}
-.whatsapp-float:hover{transform:scale(1.1);box-shadow:0 8px 30px rgba(37,211,102,0.6)}
+/* ===== FLOATING BUTTONS (CONTACT + SCROLL TOP) ===== */
+.float-btn,.scroll-top-btn{position:fixed;z-index:999;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:all 0.3s ease;cursor:pointer;border:none;text-decoration:none}
+.float-btn{bottom:30px;right:30px;background:linear-gradient(135deg,#00ff88,#00cc6a)}
+.float-btn:hover{transform:scale(1.1) translateY(-3px);box-shadow:0 8px 30px rgba(0,255,136,0.5)}
+.float-btn-tooltip{position:absolute;right:66px;background:#1a1a3a;color:#ffd700;padding:6px 14px;border-radius:8px;font-size:0.8rem;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:all 0.3s ease}
+.float-btn:hover .float-btn-tooltip{opacity:1}
+.scroll-top-btn{bottom:100px;right:30px;background:linear-gradient(135deg,#7c3aed,#6d28d9);opacity:0;pointer-events:none;transform:translateY(20px)}
+.scroll-top-btn.visible{opacity:1;pointer-events:auto;transform:translateY(0)}
+.scroll-top-btn:hover{transform:translateY(-3px) scale(1.1);box-shadow:0 8px 30px rgba(124,58,237,0.5)}
 
 /* ===== PARALLAX DE TITULOS ===== */
 .parallax-layer{transition:transform 0.1s ease-out}

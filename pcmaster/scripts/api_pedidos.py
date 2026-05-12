@@ -119,6 +119,8 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     # generar comando_id
     comando_id = f"pedido_{uuid.uuid4().hex[:12]}"
 
+    logger.info(f"[PEDIDO-DIAG] uid={uid} url={url} perfiles={perfiles} horas={horas} costo={costo_tokens}")
+
     # guardar pedido en bd
     ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     pedido_id = ejecutar_insercion(
@@ -146,36 +148,31 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     )
 
     # enviar comando al pcbot
-    # mapear parametros al formato que pcbot espera:
-    #   perfiles -> cantidad (numero de perfiles a usar)
-    #   horas -> duracion (en minutos, pcbot espera minutos)
     duracion_minutos = int(horas * 60)
-    comando = {
-        "tipo": "asignar",
-        "comando_id": comando_id,
-        "parametros": {
-            "pedido_id": pedido_id,
-            "url": url,
-            "seguidores": seguidores,
-            "cantidad": perfiles,
-            "duracion": duracion_minutos,
-            "nivel_comentarios": nivel_comentarios,
-            "tipo_pedido": tipo_pedido,
-        },
+
+    parametros_pedido = {
+        "url": url,
+        "cantidad": perfiles,
+        "duracion": duracion_minutos,
+        "nivel_comentarios": nivel_comentarios,
     }
 
-    # usar orchestrator.crear_comando() para persistir y encolar
-    # obtener pcbot_id del usuario
     pcbot_id = obtener_pcbot_de_usuario(uid)
+    logger.info(f"[PEDIDO-DIAG] uid={uid} pcbot_id='{pcbot_id}' comando_id={comando_id}")
 
     resultado_orch = await crear_comando(
         tipo="asignar",
-        parametros=comando["parametros"],
+        parametros=parametros_pedido,
         pcbot_id=pcbot_id,
         comando_id=comando_id,
     )
+    logger.info(f"[PEDIDO-DIAG] resultado_orch={resultado_orch}")
+
     if not resultado_orch.get("exito"):
-        logger.warning(f"pedido {pedido_id}: orchestrator no pudo crear comando: {resultado_orch.get('error')}")
+        logger.warning(
+            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO orchestrator. "
+            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error')}"
+        )
         return {
             "exito": True,
             "pedido_id": pedido_id,
@@ -188,7 +185,7 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     # actualizar estado a enviado
     ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
 
-    logger.info(f"pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} tokens")
+    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} pcbot_id='{pcbot_id}'")
     return {
         "exito": True,
         "pedido_id": pedido_id,
