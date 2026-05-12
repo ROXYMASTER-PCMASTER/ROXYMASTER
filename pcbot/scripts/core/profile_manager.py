@@ -33,6 +33,7 @@ class Profile:
     fail_count: int = 0
     hash_interno: str = ""
     nivel_comentarios: int = 0
+    pedidos_ids: list = field(default_factory=list)  # ids de pedidos que usan este perfil
     metadata: dict = field(default_factory=dict)
 
 

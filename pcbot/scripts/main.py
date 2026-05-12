@@ -186,6 +186,9 @@ async def async_main():
     # pasar profile manager al ws para incluir datos de perfiles en heartbeat
     ws.set_profile_manager(pm)
 
+    # pasar orchestrator al ws para incluir datos de pedidos en heartbeat
+    ws.set_orchestrator(orchestrator)
+
     # pasar referencia ws al orchestrator para estado de heartbeat y enviar respuestas
     orchestrator.ws_client = ws
 
