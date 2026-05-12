@@ -1,0 +1,35 @@
+<!-- tabla de historial de pedidos -->
+    <div class="card-pedido card-tabla">
+      <div class="card-titulo">
+        <i class="fas fa-history"></i> historial de pedidos
+      </div>
+
+      <div class="tabla-header">
+        <span class="tabla-info"><i class="fas fa-info-circle"></i> ultimos pedidos registrados</span>
+        <button class="btn-actualizar" onclick="window.cargarPedidos()">
+          <i class="fas fa-sync-alt"></i> actualizar
+        </button>
+      </div>
+
+      <div class="tabla-wrapper">
+        <table class="tabla-pedidos">
+          <thead>
+            <tr>
+              <th class="col-id">#</th>
+              <th>url</th>
+              <th class="col-perfiles">perfiles</th>
+              <th class="col-duracion">duracion</th>
+              <th class="col-costo">costo</th>
+              <th class="col-estado">estado</th>
+              <th class="col-fecha">fecha</th>
+              <th class="col-acciones">acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-pedidos-body">
+            <tr>
+              <td colspan="8" class="tabla-empty">cargando pedidos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>

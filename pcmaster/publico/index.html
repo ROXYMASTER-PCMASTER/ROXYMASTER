@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=inter:wght@400;500;600;700;800;900&family=poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="css/estilo_gamer.css">
 <style>
 /* ===== RESET ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -326,7 +327,8 @@ footer{background:#050510;border-top:1px solid rgba(255,255,255,0.03);padding:60
       <a href="#usecases">casos de uso</a>
       <a href="#testimonios">testimonios</a>
       <a href="#pricing">planes</a>
-      <a href="#registro" class="nav-cta">acceso anticipado</a>
+      <a href="/login" class="btn-login"><i class="fas fa-sign-in-alt"></i> iniciar sesion</a>
+      <a href="/registro" class="nav-cta"><i class="fas fa-user-plus"></i> crear cuenta</a>
     </nav>
     <button class="hamburger" id="hamburger" aria-label="menu">
       <span></span><span></span><span></span>
@@ -894,5 +896,6 @@ document.querySelectorAll('.btn,.form-submit,.share-btn').forEach(function(btn){
 .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.3);transform:scale(0);animation:ripple-anim 0.6s ease-out;pointer-events:none}
 @keyframes ripple-anim{to{transform:scale(4);opacity:0}}
 </style>
+<script src="js/main.js"></script>
 </body>
 </html>

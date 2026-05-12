@@ -1,374 +1,287 @@
-# pedidos_vigilante.py - modulo vigilante de pedidos en progreso
-# monitorea pedidos activos y reemplaza perfiles caidos
-# parte del modulo pedidos_vigilante
+# pedidos_vigilante.py - monitoreo y reemplazo de perfiles caidos
+# modulo para vigilante de pedidos, se ejecuta como tarea asincrona
+# dependencias: ws_manager, db, datetime
 
 import asyncio
-import json
 import logging
-import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-from db import ejecutar_sql, ejecutar_sql_unico
-from ws_manager import enviar_comando_al_pcbot
+from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
+from db import ejecutar_sql, ejecutar_insercion
 
-logger = logging.getLogger("roxymaster.pedidos_vigilante")
+logger = logging.getLogger("vigilante_pedidos")
 
-# nombre de la tabla de asignaciones (se crea en db_pedidos_vigilante.py)
-TABLA_ASIGNACIONES = "pedido_asignaciones"
 
-# intervalo de monitoreo en segundos
-INTERVALO_SEG = 30
+def _ahora_str() -> str:
+    """devuelve timestamp utc en formato iso."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-# tiempo maximo sin heartbeat antes de considerar pcbot desconectado
-TIMEOUT_HEARTBEAT_SEG = 60
+
+def _ahora_dt() -> datetime:
+    """devuelve datetime utc actual."""
+    return datetime.now(timezone.utc)
+
+
+def _obtener_perfiles_activos(pcbot_id: str) -> list:
+    """obtiene perfiles activos del heartbeat almacenados en perfiles_roxy.
+    devuelve lista de dicts con hash (profile_id), activo."""
+    rows = ejecutar_sql(
+        "select hash as profile_id, activo from perfiles_roxy "
+        "where pcbot_id = ? and activo = 1",
+        (pcbot_id,),
+    )
+    return rows if rows else []
+
+
+def _obtener_perfiles_libres(pcbot_id: str) -> list:
+    """obtiene perfiles instalados que no estan activos en este pcbot.
+    busca en perfiles_roxy perfiles del pcbot que no tienen activo=1.
+    devuelve lista de hash (profile_id) disponibles."""
+    rows = ejecutar_sql(
+        "select hash from perfiles_roxy "
+        "where pcbot_id = ? and (activo is null or activo = 0)",
+        (pcbot_id,),
+    )
+    return [r["hash"] for r in rows] if rows else []
 
 
 async def monitorear_pedidos():
-    """bucle principal del vigilante: cada INTERVALO_SEG revisa pedidos activos."""
-    logger.info("vigilante de pedidos iniciado, intervalo=%ss", INTERVALO_SEG)
+    """bucle principal del vigilante.
+    se ejecuta cada 30 segundos y verifica:
+    - pedidos expirados -> finalizar
+    - perfiles caidos -> reemplazar
+    """
+    logger.info("vigilante de pedidos iniciado")
     while True:
         try:
-            await _revisar_pedidos()
-        except asyncio.CancelledError:
-            logger.info("vigilante de pedidos detenido")
-            raise
+            await _ciclo_vigilante()
         except Exception as e:
-            logger.error("error en ciclo vigilante: %s", e, exc_info=True)
-        await asyncio.sleep(INTERVALO_SEG)
+            logger.error("error en ciclo vigilante: %s", str(e)[:200])
+        await asyncio.sleep(30)
 
 
-async def _revisar_pedidos():
-    """obtiene pedidos en_progreso y los procesa uno por uno."""
-    try:
-        pedidos = ejecutar_sql(
-            "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
-            "nivel_comentarios, fecha_creacion, estado "
-            "from pedidos where estado = 'en_progreso'"
-        )
-    except Exception as e:
-        logger.error("error consultando pedidos en_progreso: %s", e)
-        return
-
+async def _ciclo_vigilante():
+    """ejecuta una ronda de verificacion sobre todos los pedidos activos."""
+    pedidos = ejecutar_sql(
+        "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
+        "nivel_comentarios, fecha_creacion, estado "
+        "from pedidos where estado = 'en_progreso'"
+    )
     if not pedidos:
-        logger.info("vigilante: no hay pedidos en_progreso")
         return
 
-    logger.info("vigilante: %d pedido(s) en_progreso", len(pedidos))
+    ahora = _ahora_dt()
+
     for pedido in pedidos:
         try:
-            await _procesar_pedido(pedido)
+            await _verificar_pedido(pedido, ahora)
         except Exception as e:
-            logger.error("error procesando pedido %s: %s", pedido["id"], e)
+            logger.error(
+                "error verificando pedido %s: %s",
+                pedido.get("id"), str(e)[:200],
+            )
 
 
-def _obtener_pcbot_del_pedido(pedido: dict) -> str:
-    """obtiene el pcbot_id asociado al usuario del pedido."""
-    usuario_id = pedido.get("usuario_id")
-    if not usuario_id:
-        return None
-    try:
-        row = ejecutar_sql_unico(
-            "select pcbot_id from usuarios where id = ?", (usuario_id,)
-        )
-        return row["pcbot_id"] if row and row.get("pcbot_id") else None
-    except Exception as e:
-        logger.error("error obteniendo pcbot para usuario %s: %s", usuario_id, e)
-        return None
-
-
-def _obtener_perfiles_heartbeat(pcbot_id: str) -> set:
-    """obtiene el set de profile_id activos desde el ultimo heartbeat del pcbot.
-    retorna None si el pcbot esta desconectado.
-    """
-    try:
-        from ws_manager import _conexiones_por_pcbot
-    except ImportError:
-        logger.error("no se puede importar _conexiones_por_pcbot desde ws_manager")
-        return set()
-
-    datos_pcbot = _conexiones_por_pcbot.get(pcbot_id)
-    if not datos_pcbot:
-        logger.warning("pcbot %s: no hay datos de conexion", pcbot_id)
-        return set()
-
-    ultimo_hb = datos_pcbot.get("ultimo_heartbeat")
-    if not ultimo_hb:
-        return set()
-
-    ahora = datetime.now(timezone.utc)
-    if isinstance(ultimo_hb, str):
-        try:
-            ts_hb = datetime.fromisoformat(ultimo_hb)
-        except Exception:
-            ts_hb = ahora - timedelta(hours=1)
-    else:
-        ts_hb = ahora - timedelta(hours=1)
-
-    if ts_hb.tzinfo is None:
-        ts_hb = ts_hb.replace(tzinfo=timezone.utc)
-
-    # si pasaron mas de TIMEOUT_HEARTBEAT_SEG seg sin heartbeat, pcbot desconectado
-    if (ahora - ts_hb).total_seconds() > TIMEOUT_HEARTBEAT_SEG:
-        logger.warning("pcbot %s: heartbeat vencido (>%ds), considerando desconectado",
-                       pcbot_id, TIMEOUT_HEARTBEAT_SEG)
-        return None
-
-    # obtener perfiles del heartbeat almacenado
-    try:
-        perfiles_lista = datos_pcbot.get("perfiles", [])
-        if isinstance(perfiles_lista, str):
-            perfiles_lista = json.loads(perfiles_lista)
-    except Exception:
-        return set()
-
-    return {p.get("profile_id", p.get("dirId", ""))
-            for p in perfiles_lista if p.get("activo")}
-
-
-async def _procesar_pedido(pedido: dict):
-    """procesa un pedido: calcula tiempo, verifica perfiles activos,
-    reemplaza caidos, ajusta sobrantes.
-    """
+async def _verificar_pedido(pedido: dict, ahora: datetime):
+    """verifica estado de un pedido y actua si es necesario."""
     pedido_id = pedido["id"]
-    url = pedido["url"]
-    cantidad_solicitada = pedido["cantidad_perfiles"]
-    nivel_comentarios = pedido.get("nivel_comentarios", 1)
-    duracion_horas = pedido.get("duracion_horas", 0)
 
+    # calcular tiempo restante usando fecha_creacion + duracion_horas
     fecha_creacion_str = pedido.get("fecha_creacion")
     if not fecha_creacion_str:
-        logger.warning("pedido %s sin fecha_creacion, saltando", pedido_id)
         return
 
-    try:
-        fecha_creacion = datetime.fromisoformat(fecha_creacion_str)
-        if fecha_creacion.tzinfo is None:
-            fecha_creacion = fecha_creacion.replace(tzinfo=timezone.utc)
-    except Exception:
-        logger.warning("fecha_creacion invalida en pedido %s: %s", pedido_id, fecha_creacion_str)
-        return
+    fecha_inicio = datetime.strptime(fecha_creacion_str, "%Y-%m-%d %H:%M:%S")
+    fecha_inicio = fecha_inicio.replace(tzinfo=timezone.utc)
+    transcurrido = (ahora - fecha_inicio).total_seconds()
+    duracion_horas = pedido.get("duracion_horas", 0)
+    duracion_seg = duracion_horas * 3600
+    tiempo_restante = duracion_seg - transcurrido
 
-    duracion_total_seg = duracion_horas * 3600
-    ahora = datetime.now(timezone.utc)
-    tiempo_transcurrido = (ahora - fecha_creacion).total_seconds()
-    tiempo_restante = duracion_total_seg - tiempo_transcurrido
-
+    # caso 1: pedido expirado
     if tiempo_restante <= 0:
-        logger.info("pedido %s: tiempo cumplido, finalizando", pedido_id)
-        await _finalizar_pedido(pedido_id)
+        logger.info("pedido %s expirado, finalizando", pedido_id)
+        await _finalizar_pedido(pedido)
         return
 
-    # obtener asignaciones activas de este pedido
-    try:
-        asignaciones = ejecutar_sql(
-            f"select id, pcbot_id, perfil_id, estado, comando_id "
-            f"from {TABLA_ASIGNACIONES} "
-            f"where pedido_id = ? and estado = 'activo'",
-            (pedido_id,)
-        )
-    except Exception as e:
-        logger.error("error consultando asignaciones para pedido %s: %s", pedido_id, e)
+    # caso 2: verificar perfiles activos
+    asignaciones = ejecutar_sql(
+        "select id, perfil_id, pcbot_id, url from pedido_asignaciones "
+        "where pedido_id = ? and estado = 'activo'",
+        (pedido_id,),
+    )
+    if not asignaciones:
+        # sin asignaciones activas -> reasignar todas
+        logger.info("pedido %s sin asignaciones activas, reasignando", pedido_id)
+        cantidad_pedido = pedido.get("cantidad_perfiles", 1)
+        for _ in range(cantidad_pedido):
+            await _asignar_perfil(pedido, tiempo_restante)
         return
 
-    # obtener el pcbot del usuario del pedido
-    pcbot_id = _obtener_pcbot_del_pedido(pedido)
-    if not pcbot_id:
-        logger.warning("pedido %s: no se pudo determinar pcbot, saltando", pedido_id)
-        return
+    # contar perfiles caidos
+    perfiles_fallidos = 0
+    usuario_id = pedido.get("usuario_id")
 
-    # contar perfiles realmente activos segun heartbeat
-    activos = _contar_perfiles_activos_en_pcbot(pcbot_id, asignaciones)
-    logger.info("pedido %s: activos=%d solicitados=%d tiempo_restante=%ds",
-                pedido_id, activos, cantidad_solicitada, int(tiempo_restante))
-
-    if activos < cantidad_solicitada:
-        faltantes = cantidad_solicitada - activos
-        logger.info("pedido %s: faltan %d perfiles, abriendo reemplazos", pedido_id, faltantes)
-        for _ in range(faltantes):
-            await _abrir_perfil_reemplazo(pedido_id, pcbot_id, url,
-                                          tiempo_restante, nivel_comentarios)
-    elif activos > cantidad_solicitada:
-        sobrantes = activos - cantidad_solicitada
-        logger.info("pedido %s: sobran %d perfiles, cerrando extras", pedido_id, sobrantes)
-        await _cerrar_perfiles_sobrantes(pedido_id, asignaciones, sobrantes)
-
-    # marcar como fallidas las asignaciones cuyo perfil ya no esta activo
-    _actualizar_asignaciones_caidas(pcbot_id, asignaciones)
-
-
-def _contar_perfiles_activos_en_pcbot(pcbot_id: str, asignaciones: list) -> int:
-    """cuenta cuantos perfiles de las asignaciones estan realmente activos
-    segun el ultimo heartbeat del pcbot.
-    """
-    perfiles_heartbeat = _obtener_perfiles_heartbeat(pcbot_id)
-    if perfiles_heartbeat is None:
-        # pcbot desconectado o sin heartbeat
-        return 0
-
-    activos = 0
     for asig in asignaciones:
+        pcbot_id = asig.get("pcbot_id")
         perfil_id = asig.get("perfil_id")
-        if perfil_id and perfil_id in perfiles_heartbeat:
-            activos += 1
-    return activos
+
+        if not pcbot_id:
+            # si no tiene pcbot_id, obtenerlo del usuario
+            try:
+                pcbot_id = obtener_pcbot_de_usuario(int(usuario_id))
+            except Exception:
+                logger.warning(
+                    "no se pudo obtener pcbot para usuario %s en asig %s",
+                    usuario_id, asig.get("id"),
+                )
+                continue
+
+        activos = _obtener_perfiles_activos(pcbot_id)
+        perfil_activo = any(p.get("profile_id") == perfil_id for p in activos)
+
+        if not perfil_activo:
+            logger.info(
+                "perfil %s caido en pcbot %s para pedido %s",
+                perfil_id, pcbot_id, pedido_id,
+            )
+            # marcar asignacion como fallida
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
+            )
+            perfiles_fallidos += 1
+
+    # reemplazar perfiles caidos si hay
+    if perfiles_fallidos > 0:
+        logger.info(
+            "reemplazando %s perfiles caidos en pedido %s",
+            perfiles_fallidos, pedido_id,
+        )
+        for _ in range(perfiles_fallidos):
+            await _asignar_perfil(pedido, tiempo_restante)
 
 
-async def _abrir_perfil_reemplazo(pedido_id: int, pcbot_id: str, url: str,
-                                  duracion_seg: int, nivel_comentarios: int):
-    """envia comando asignar para abrir un perfil de reemplazo y registra asignacion."""
-    comando_id = str(uuid.uuid4())
+async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
+    """asigna un perfil libre al pedido.
+    busca perfiles libres en perfiles_roxy para el pcbot del usuario,
+    envia comando asignar y registra en pedido_asignaciones."""
+    usuario_id = pedido.get("usuario_id")
+    if not usuario_id:
+        logger.warning("pedido %s sin usuario_id", pedido.get("id"))
+        return False
 
-    # asegurar duracion minima 60 seg
-    if duracion_seg < 60:
-        duracion_seg = 60
+    try:
+        pcbot_id = obtener_pcbot_de_usuario(int(usuario_id))
+    except Exception as e:
+        logger.warning("no se pudo obtener pcbot para usuario %s: %s", usuario_id, str(e)[:100])
+        return False
+
+    if not pcbot_id:
+        logger.warning("usuario %s no tiene pcbot asignado", usuario_id)
+        return False
+
+    # buscar perfil libre
+    libres = _obtener_perfiles_libres(pcbot_id)
+    if not libres:
+        logger.warning("no hay perfiles libres en pcbot %s", pcbot_id)
+        return False
+
+    perfil_elegido = libres[0]
+    url = pedido.get("url", "")
+    nivel_comentarios = pedido.get("nivel_comentarios", 0)
+    duracion_int = max(1, int(duracion))
 
     comando = {
         "tipo": "asignar",
         "parametros": {
             "cantidad": 1,
             "url": url,
-            "duracion": duracion_seg,
-            "nivel_comentarios": nivel_comentarios
+            "duracion": duracion_int,
+            "nivel_comentarios": nivel_comentarios,
+            "perfil_id": perfil_elegido,
         },
-        "comando_id": comando_id
     }
 
-    # obtener usuario_id del pcbot para el comando
-    usuario_id = _obtener_usuario_por_pcbot(pcbot_id)
-    if not usuario_id:
-        logger.error("no se pudo determinar usuario_id para pcbot %s", pcbot_id)
-        return
-
     try:
-        resultado = await enviar_comando_al_pcbot(usuario_id, comando)
-        logger.info("reemplazo enviado: pedido=%s comando=%s resultado=%s",
-                    pedido_id, comando_id, resultado)
+        resultado = await enviar_comando_al_pcbot(int(usuario_id), comando)
     except Exception as e:
-        logger.error("error enviando reemplazo para pedido %s: %s", pedido_id, e)
-        return
+        logger.error("error enviando comando a pcbot: %s", str(e)[:200])
+        return False
 
-    # registrar asignacion en bd
-    ahora_str = datetime.now(timezone.utc).isoformat()
-    try:
-        ejecutar_sql(
-            f"insert into {TABLA_ASIGNACIONES} "
-            f"(pedido_id, pcbot_id, perfil_id, url, duracion_seg, inicio, estado, comando_id) "
-            f"values (?, ?, '', ?, ?, ?, 'activo', ?)",
-            (pedido_id, pcbot_id, url, duracion_seg, ahora_str, comando_id)
+    if not resultado.get("exito"):
+        logger.warning(
+            "no se pudo enviar comando a pcbot para usuario %s: %s",
+            usuario_id, resultado.get("error", "error desconocido"),
         )
-    except Exception as e:
-        logger.error("error registrando asignacion en bd: %s", e)
+        return False
+
+    # registrar asignacion - columnas reales: pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado
+    ahora_str = _ahora_str()
+    ejecutar_insercion(
+        "insert into pedido_asignaciones "
+        "(pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado) "
+        "values (?, ?, ?, ?, ?, ?, 'activo')",
+        (
+            pedido["id"],
+            perfil_elegido,
+            pcbot_id,
+            url,
+            duracion_int,
+            ahora_str,
+        ),
+    )
+
+    logger.info(
+        "perfil %s asignado a pedido %s en pcbot %s por %s seg",
+        perfil_elegido, pedido["id"], pcbot_id, duracion_int,
+    )
+    return True
 
 
-async def _cerrar_perfiles_sobrantes(pedido_id: int, asignaciones: list, cantidad: int):
-    """cierra perfiles sobrantes."""
-    if not asignaciones or cantidad <= 0:
-        return
+async def _finalizar_pedido(pedido: dict):
+    """finaliza un pedido expirado:
+    - envia detener a perfiles activos
+    - marca asignaciones como completadas
+    - cambia estado del pedido a completado
+    """
+    pedido_id = pedido["id"]
+    usuario_id = pedido.get("usuario_id")
 
-    cerrados = 0
-    for asig in asignaciones:
-        if cerrados >= cantidad:
-            break
-        comando_id = asig.get("comando_id")
-        if not comando_id:
-            continue
+    # obtener asignaciones activas
+    asignaciones = ejecutar_sql(
+        "select id, perfil_id, pcbot_id from pedido_asignaciones "
+        "where pedido_id = ? and estado = 'activo'",
+        (pedido_id,),
+    )
 
-        try:
-            await enviar_comando_al_pcbot(
-                usuario_id=None,
-                comando={
-                    "tipo": "detener",
-                    "parametros": {"comando_id": comando_id},
-                    "comando_id": str(uuid.uuid4())
-                }
-            )
-        except Exception as e:
-            logger.error("error cerrando perfil sobrante: %s", e)
-            continue
-
-        # marcar asignacion como completada
-        try:
-            ejecutar_sql(
-                f"update {TABLA_ASIGNACIONES} set estado='completado', "
-                f"fin=datetime('now') where id=?",
-                (asig["id"],)
-            )
-        except Exception:
-            pass
-        cerrados += 1
-
-
-def _actualizar_asignaciones_caidas(pcbot_id: str, asignaciones: list):
-    """marca como fallidas las asignaciones cuyo perfil ya no aparece en heartbeat."""
-    perfiles_heartbeat = _obtener_perfiles_heartbeat(pcbot_id)
-    if perfiles_heartbeat is None:
-        perfiles_heartbeat = set()
-
-    for asig in asignaciones:
-        perfil_id = asig.get("perfil_id", "")
-        if perfil_id and perfil_id not in perfiles_heartbeat:
+    if usuario_id:
+        for asig in asignaciones:
+            perfil_id = asig.get("perfil_id")
+            comando = {
+                "tipo": "detener",
+                "parametros": {"perfil_id": perfil_id},
+            }
             try:
-                ejecutar_sql(
-                    f"update {TABLA_ASIGNACIONES} set estado='fallido' where id=?",
-                    (asig["id"],)
-                )
+                await enviar_comando_al_pcbot(int(usuario_id), comando)
             except Exception as e:
-                logger.error("error actualizando asignacion caida: %s", e)
-
-
-async def _finalizar_pedido(pedido_id: int):
-    """finaliza un pedido: detiene perfiles activos, marca asignaciones y actualiza estado."""
-    try:
-        asignaciones = ejecutar_sql(
-            f"select id, pcbot_id, comando_id from {TABLA_ASIGNACIONES} "
-            f"where pedido_id = ? and estado = 'activo'",
-            (pedido_id,)
-        )
-    except Exception as e:
-        logger.error("error consultando asignaciones para finalizar pedido %s: %s", pedido_id, e)
-        return
-
-    for asig in asignaciones:
-        comando_id = asig.get("comando_id")
-        if comando_id:
-            try:
-                await enviar_comando_al_pcbot(
-                    usuario_id=None,
-                    comando={
-                        "tipo": "detener",
-                        "parametros": {"comando_id": comando_id},
-                        "comando_id": str(uuid.uuid4())
-                    }
+                logger.error(
+                    "error enviando detener perfil %s: %s",
+                    perfil_id, str(e)[:200],
                 )
-            except Exception:
-                pass
 
-        try:
-            ejecutar_sql(
-                f"update {TABLA_ASIGNACIONES} set estado='completado', "
-                f"fin=datetime('now') where id=?",
-                (asig["id"],)
-            )
-        except Exception:
-            pass
+    # marcar asignaciones como completadas
+    ahora_str = _ahora_str()
+    ejecutar_sql(
+        "update pedido_asignaciones set estado = 'completado', fin = ? "
+        "where pedido_id = ? and estado = 'activo'",
+        (ahora_str, pedido_id),
+    )
 
-    try:
-        ejecutar_sql(
-            "update pedidos set estado='completado' where id=?",
-            (pedido_id,)
-        )
-        logger.info("pedido %s finalizado y marcado como completado", pedido_id)
-    except Exception as e:
-        logger.error("error actualizando estado del pedido %s: %s", pedido_id, e)
+    # cambiar estado del pedido (columna fecha_fin no existe en pedidos, solo actualizar estado)
+    ejecutar_sql(
+        "update pedidos set estado = 'completado' where id = ?",
+        (pedido_id,),
+    )
 
-
-def _obtener_usuario_por_pcbot(pcbot_id: str) -> int:
-    """obtiene el usuario_id asociado a un pcbot."""
-    try:
-        row = ejecutar_sql_unico(
-            "select id from usuarios where pcbot_id = ?", (pcbot_id,)
-        )
-        return row["id"] if row else None
-    except Exception as e:
-        logger.error("error obteniendo usuario por pcbot %s: %s", pcbot_id, e)
-        return None
+    logger.info("pedido %s finalizado y marcado como completado", pedido_id)

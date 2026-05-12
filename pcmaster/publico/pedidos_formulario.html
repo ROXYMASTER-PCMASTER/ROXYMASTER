@@ -1,0 +1,78 @@
+<!-- formulario de nuevo pedido -->
+    <div class="card-pedido" id="card-formulario">
+      <div class="card-titulo">
+        <i class="fas fa-pen-fancy"></i> nuevo pedido
+      </div>
+
+      <!-- url y seguidores en fila -->
+      <div class="field-row">
+        <div class="pedido-field">
+          <label for="ped-url">url del directo</label>
+          <input type="text" id="ped-url" placeholder="https://twitch.tv/usuario" autocomplete="off">
+        </div>
+        <div class="pedido-field">
+          <label for="ped-seguidores">seguidores</label>
+          <input type="number" id="ped-seguidores" placeholder="ej: 1000" min="1" value="100" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- perfiles y minutos en fila -->
+      <div class="field-row">
+        <div class="pedido-field">
+          <label for="ped-perfiles">perfiles</label>
+          <input type="number" id="ped-perfiles" placeholder="10" min="1" max="1000" value="10" autocomplete="off">
+          <div class="field-hint">min 1, max 1000</div>
+        </div>
+        <div class="pedido-field">
+          <label for="ped-minutos">tiempo (min)</label>
+          <input type="number" id="ped-minutos" placeholder="15" min="1" value="15" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- tiempo rapido -->
+      <div class="pedido-field">
+        <label>tiempo rapido</label>
+        <div class="tiempo-opt-group">
+          <button type="button" class="btn-opt-tiempo" data-minutos="5" onclick="window.setTiempo(5)">5 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="15" onclick="window.setTiempo(15)">15 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="30" onclick="window.setTiempo(30)">30 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="60" onclick="window.setTiempo(60)">1 hora</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="120" onclick="window.setTiempo(120)">2 horas</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="240" onclick="window.setTiempo(240)">4 horas</button>
+        </div>
+      </div>
+
+      <!-- nivel de comentarios -->
+      <div class="pedido-field">
+        <label for="ped-comentarios">comentarios</label>
+        <select id="ped-comentarios">
+          <option value="basico">basico</option>
+          <option value="normal">normal</option>
+          <option value="intenso">intenso</option>
+        </select>
+      </div>
+
+      <!-- tipo: normal / vip -->
+      <div class="pedido-field">
+        <label>tipo</label>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn active-normal" data-tipo="normal" onclick="window.setTipo('normal')">normal</button>
+          <button type="button" class="toggle-btn" data-tipo="vip" onclick="window.setTipo('vip')">vip</button>
+        </div>
+      </div>
+
+      <!-- costo -->
+      <div class="costo-visor">
+        <div class="label">costo estimado</div>
+        <div class="valor" id="costo-valor">0.00 <span class="small">kbt</span></div>
+        <div class="detalle-linea" id="costo-detalle-linea">ingresa datos para calcular costo</div>
+      </div>
+
+      <!-- boton crear -->
+      <div class="btn-crear-wrapper">
+        <button class="btn-crear" id="btn-crear-pedido" onclick="window.crearPedido()">
+          <i class="fas fa-paper-plane"></i> crear pedido
+          <span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>
+        </button>
+      </div>
+    </div>

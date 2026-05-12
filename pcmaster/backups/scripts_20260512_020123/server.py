@@ -73,9 +73,6 @@ from api_referidos import router as router_referidos
 # router para computadoras
 from api_computadoras import router as router_computadoras
 
-# router para acciones de pedidos (eliminar, detener)
-from api_pedidos_acciones import router as router_pedidos_acciones
-
 from pydantic import BaseModel
 from api_auth import LoginRequest, RegisterRequest
 
@@ -207,14 +204,13 @@ app.include_router(router_referidos)
 app.include_router(router_version)
 app.include_router(heartbeat_router)
 app.include_router(router_computadoras)
-app.include_router(router_pedidos_acciones)
 
 logger.info(
     "routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, "
     "comandos, admin, superadmin, tokenomics, roxykey, mensajes, "
     "public_perfiles, public_finanzas, public_referidos, public_sistema, "
     "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, "
-    "retiros, referidos, version, computadoras, pedidos_acciones"
+    "retiros, referidos, version, computadoras"
 )
 
 
