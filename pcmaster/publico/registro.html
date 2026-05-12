@@ -193,11 +193,12 @@
       'use strict';
       const msg = document.getElementById('msg');
 
-      window.handleRegister = function(e) {
+      window.handleRegister = async function(e) {
         e.preventDefault();
         msg.className = 'msg-box';
         msg.style.display = 'none';
         const nombre = document.getElementById('nombre').value.trim();
+        const apellido = document.getElementById('apellido').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const confirm = document.getElementById('confirm').value;
@@ -216,9 +217,27 @@
           msg.textContent = 'las contraseñas no coinciden.';
           return false;
         }
-        // simula registro - reemplazar con api real
-        msg.className = 'msg-box success';
-        msg.textContent = 'cuenta creada exitosamente! (demo)';
+        try {
+          const username = (nombre + ' ' + apellido).trim();
+          const resp = await fetch('/api/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, username })
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data.exito) {
+            msg.className = 'msg-box error';
+            msg.textContent = data.detail || data.error || 'error al crear cuenta';
+            return false;
+          }
+          msg.className = 'msg-box success';
+          msg.textContent = 'cuenta creada exitosamente! redirigiendo al login...';
+          setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+        } catch (err) {
+          msg.className = 'msg-box error';
+          msg.textContent = 'error de conexion: ' + err.message;
+          return false;
+        }
         return false;
       };
 

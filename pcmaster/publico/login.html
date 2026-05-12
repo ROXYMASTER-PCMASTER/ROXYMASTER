@@ -140,7 +140,7 @@
       const msg = document.getElementById('msg');
       const form = document.getElementById('loginForm');
 
-      window.handleLogin = function(e) {
+      window.handleLogin = async function(e) {
         e.preventDefault();
         msg.className = 'msg-box';
         msg.style.display = 'none';
@@ -151,9 +151,28 @@
           msg.textContent = 'completa todos los campos.';
           return false;
         }
-        // simula login - reemplazar con api real
-        msg.className = 'msg-box success';
-        msg.textContent = 'iniciando sesion... (demo)';
+        try {
+          const resp = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data.exito) {
+            msg.className = 'msg-box error';
+            msg.textContent = data.detail || data.error || 'error al iniciar sesion';
+            return false;
+          }
+          // guardar token
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('usuario', JSON.stringify(data.usuario));
+          // redirigir al dashboard
+          window.location.href = 'dashboard_publico.html';
+        } catch (err) {
+          msg.className = 'msg-box error';
+          msg.textContent = 'error de conexion: ' + err.message;
+          return false;
+        }
         return false;
       };
 
