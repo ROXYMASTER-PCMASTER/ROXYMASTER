@@ -1,29 +1,26 @@
 {
-  "version": "1.0",
-  "ultima_actualizacion": "2026-05-11 23:56",
-  "contadores": {
-    "archivos": 49,
-    "tareas": 21,
-    "errores": 1,
-    "decisiones": 17
+  "ultima_actualizacion": "2026-05-12 11:25",
+  "modulos": {
+    "pedidos_vigilante": {
+      "ruta": "pcmaster/scripts/pedidos_vigilante.py",
+      "estado": "corregido",
+      "dependencias": ["heartbeat_cache", "ws_manager", "db"],
+      "bugs_corregidos": [
+        "enviar_comando_al_pcbot retorna dict, no bool: se creo _enviar_comando_seguro",
+        "datetime import incorrecto en heartbeat_cache: corregido a from datetime import datetime"
+      ]
+    },
+    "heartbeat_cache": {
+      "ruta": "pcmaster/scripts/heartbeat_cache.py",
+      "estado": "nuevo",
+      "descripcion": "cache en memoria del ultimo heartbeat de cada pcbot, independiente de ws_manager"
+    },
+    "proteccion_paginas_publicas": {
+      "estado": "corregido_20260512",
+      "archivos_modificados": ["marketplace.html", "perfiles.html"],
+      "descripcion": "se agrego script de redireccion iframe-check a marketplace.html y perfiles.html"
+    }
   },
-  "archivos_recientes": [
-    "pcmaster/scripts/db_pedidos_vigilante.py",
-    "pcmaster/scripts/pedidos_vigilante.py",
-    "pcmaster/scripts/server.py",
-    "pcmaster/scripts/db.py",
-    "pcmaster/scripts/ws_manager.py",
-    "pcmaster/scripts/orchestrator.py",
-    "pcmaster/scripts/api_pedidos.py"
-  ],
-  "modulos_activos": {
-    "server": "fastapi + websocket pcbot (punto de entrada)",
-    "orchestrator": "core de comandos, persistencia y envio ws a pcbot",
-    "ws_manager": "gestion de conexiones por usuario y pcbot_id",
-    "api_pedidos": "creacion de pedidos con descuento de tokens y envio a orchestrator",
-    "db_pedidos_vigilante": "crea tabla pedido_asignaciones para rastrear perfiles por pedido",
-    "pedidos_vigilante": "vigilante de pedidos activos: reemplaza perfiles caidos y finaliza pedidos vencidos",
-    "_monitorear_pedidos": "monitor en tiempo real de pedidos y comandos (loop 5s)",
-    "_fix_pcbot_id": "corrige usuarios con pcbot_id null desde tabla computadoras"
-  }
+  "cambios_pendientes": ["git push a origin main"],
+  "ultimos_backups": ["backups/publico_20260512_1124"]
 }
