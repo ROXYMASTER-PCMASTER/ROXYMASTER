@@ -355,3 +355,35 @@ async def reabrir_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_
     logger.info(f"[PEDIDO] pedido #{pedido_id} reabierto por usuario {uid}")
 
     return {"exito": True, "mensaje": f"pedido #{pedido_id} reabierto, sera reprocesado"}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/cancelar
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/cancelar")
+async def cancelar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """cancela un pedido sin reembolso y lo marca como finalizado."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para cancelar este pedido")
+    if pedido["estado"] not in ("pendiente", "enviado", "trabajando", "en-progreso", "en_progreso"):
+        raise HTTPException(status_code=400, detail="solo se pueden cancelar pedidos pendientes, enviados o en progreso")
+
+    costo = float(pedido["costo_tokens"])
+    ejecutar_sql("update pedidos set estado = 'finalizado' where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'cancelacion', 0, ?, ?)",
+        (uid, f"cancelacion sin reembolso pedido #{pedido_id}: {costo} tokens retenidos",
+         datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} cancelado por usuario {uid}, sin reembolso ({costo} tokens retenidos)")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} cancelado. no hay devolucion ni reembolso"}
