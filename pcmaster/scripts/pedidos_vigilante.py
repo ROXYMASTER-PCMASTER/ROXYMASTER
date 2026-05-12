@@ -44,7 +44,7 @@ async def _ciclo_vigilante():
     pedidos = ejecutar_sql(
         "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
         "nivel_comentarios, fecha_creacion, estado "
-        "from pedidos where estado = 'en_progreso'"
+        "from pedidos where estado in ('trabajando', 'en_progreso')"
     )
     if not pedidos:
         return

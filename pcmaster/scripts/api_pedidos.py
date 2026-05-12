@@ -238,7 +238,120 @@ async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
         (uid,),
     )
 
+    # mapear nombres de campos para compatibilidad con frontend
+    pedidos_mapeados = []
+    for p in pedidos:
+        pedidos_mapeados.append({
+            "id": p["id"],
+            "url": p["url"],
+            "seguidores": p["seguidores_streamer"],
+            "perfiles": p["cantidad_perfiles"],
+            "duracion": p["duracion_horas"],
+            "minutos": int(p["duracion_horas"] * 60),
+            "nivel_comentarios": p["nivel_comentarios"],
+            "tipo": p["tipo_pedido"],
+            "costo": p["costo_tokens"],
+            "costo_total": p["costo_tokens"],
+            "estado": p["estado"],
+            "comando_id": p["comando_id"],
+            "fecha_creacion": p["fecha_creacion"],
+            "created_at": p["fecha_creacion"],
+        })
+
     return {
         "exito": True,
-        "pedidos": pedidos,
+        "pedidos": pedidos_mapeados,
     }
+
+
+# ---------------------------------------------------------------------------
+# delete /api/pedidos/{pedido_id}
+# ---------------------------------------------------------------------------
+@router.delete("/{pedido_id}")
+async def eliminar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """elimina un pedido pendiente y reembolsa los tokens."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para eliminar este pedido")
+    if pedido["estado"] not in ("pendiente",):
+        raise HTTPException(status_code=400, detail="solo se pueden eliminar pedidos pendientes")
+
+    # reembolsar tokens
+    costo = float(pedido["costo_tokens"])
+    ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?", (costo, uid))
+    ejecutar_sql("delete from pedidos where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'reembolso', ?, ?, ?)",
+        (uid, costo, f"reembolso eliminacion pedido #{pedido_id}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} eliminado por usuario {uid}, reembolso {costo} tokens")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} eliminado, reembolso de {costo} tokens"}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/detener
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/detener")
+async def detener_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """detiene un pedido en curso y reembolsa el 50% de los tokens."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para detener este pedido")
+    if pedido["estado"] not in ("trabajando", "en_progreso", "enviado"):
+        raise HTTPException(status_code=400, detail="solo se pueden detener pedidos en curso")
+
+    costo = float(pedido["costo_tokens"])
+    reembolso = round(costo * 0.5, 4)
+
+    ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?", (reembolso, uid))
+    ejecutar_sql("update pedidos set estado = 'detenido' where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'reembolso_parcial', ?, ?, ?)",
+        (uid, reembolso, f"reembolso parcial (50%) detener pedido #{pedido_id}",
+         datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} detenido por usuario {uid}, reembolso {reembolso} tokens")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} detenido", "reembolso": reembolso}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/reabrir
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/reabrir")
+async def reabrir_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """reabre un pedido detenido o fallido y lo pone en pendiente para reprocesar."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para reabrir este pedido")
+    if pedido["estado"] not in ("detenido", "fallido"):
+        raise HTTPException(status_code=400, detail="solo se pueden reabrir pedidos detenidos o fallidos")
+
+    ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
+    logger.info(f"[PEDIDO] pedido #{pedido_id} reabierto por usuario {uid}")
+
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} reabierto, sera reprocesado"}

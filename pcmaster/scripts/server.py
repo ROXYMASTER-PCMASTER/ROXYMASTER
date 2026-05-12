@@ -284,6 +284,14 @@ async def dashboard_redirect():
     """redirige a la ruta correcta con prefijo /publico/."""
     return RedirectResponse(url="/publico/dashboard_publico.html")
 
+@app.get("/pedidos")
+async def pedidos_page():
+    """pagina de gestion de pedidos."""
+    pedidos_path = os.path.join(base_dir, "..", "publico", "pedidos.html")
+    if os.path.exists(pedidos_path):
+        return FileResponse(pedidos_path, media_type="text/html")
+    return RedirectResponse(url="/publico/pedidos.html")
+
 # endpoint registro
 @app.get("/registro")
 async def registro():
