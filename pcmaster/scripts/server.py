@@ -321,6 +321,57 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
             # recibir mensaje del pcbot (json plano, sin firma)
             data = await websocket.receive_json()
 
+            # --- SINCRONIZACION FORZADA: refrescar _conexiones_ws en CADA mensaje ---
+            # esto asegura que orchestrator._conexiones_ws tenga la conexion correcta
+            # incluso si el pcbot se reconecto sin enviar identify
+            try:
+                import orchestrator as _orch_refresh
+                if pcbot_id not in _orch_refresh._conexiones_ws:
+                    _orch_refresh._conexiones_ws[pcbot_id] = {
+                        "ws": websocket,
+                        "ultimo_heartbeat": datetime.now().isoformat(),
+                    }
+                    logger.info(f"[DIAG-SYNC-EACH] _conexiones_ws[{pcbot_id}] poblado por mensaje entrante tipo={data.get('tipo')}")
+                else:
+                    # refrescar heartbeat y ws por si cambio
+                    _orch_refresh._conexiones_ws[pcbot_id]["ws"] = websocket
+                    _orch_refresh._conexiones_ws[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()
+            except Exception as e:
+                logger.warning(f"[DIAG-SYNC-EACH] error refrescando _conexiones_ws: {e}")
+
+            # --- REGISTRO EN WS_MANAGER EN CADA MENSAJE (hasta que se logre) ---
+            # el pcbot nunca envia "identify", solo heartbeats, asi que registramos
+            # en ws_manager en cada mensaje hasta que _usuario_registrado_ws quede seteado.
+            if _usuario_registrado_ws is None:
+                try:
+                    from db import ejecutar_sql_unico as _sql_unico
+                    _user = _sql_unico(
+                        "select id from usuarios where pcbot_id = ?", (pcbot_id,)
+                    )
+                    if not _user:
+                        _conn = _sql_unico(
+                            "select usuario_id from computadoras where pcbot_id = ?",
+                            (pcbot_id,)
+                        )
+                        if _conn:
+                            _uid = _conn["usuario_id"]
+                            from db import ejecutar_sql as _sql_upd
+                            _sql_upd(
+                                "update usuarios set pcbot_id = ?, modo = 'conectado' where id = ?",
+                                (pcbot_id, _uid)
+                            )
+                            _user = {"id": _uid}
+                            logger.info(f"[DIAG-SYNC-WS] usuario {_uid} actualizado con pcbot_id={pcbot_id} via computadoras")
+                    if _user:
+                        _usuario_registrado_ws = _user["id"]
+                        from ws_manager import registrar_conexion
+                        registrar_conexion(_user["id"], pcbot_id, websocket)
+                        logger.info(f"[DIAG-SYNC-WS] usuario {_user['id']} registrado en ws_manager via mensaje tipo={data.get('tipo')}")
+                    else:
+                        logger.warning(f"[DIAG-SYNC-WS] NO SE ENCONTRO usuario para pcbot {pcbot_id} - ni en usuarios ni en computadoras")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC-WS] error registrando en ws_manager: {e}")
+
             # persistir datos del pcbot si es identify
             if data.get("tipo") == "identify":
                 logger.info(f"identify recibido de {pcbot_id}")

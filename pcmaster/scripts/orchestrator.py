@@ -103,48 +103,116 @@ async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None, coman
     logger.info(f"[ORCH-DIAG] crear_comando: comando_id={comando_id} tipo={tipo} pcbot_id='{pcbot_id}' _conexiones_ws keys={list(_conexiones_ws.keys())}")
 
     # intentar enviar inmediatamente si hay conexion activa
-    if pcbot_id and pcbot_id in _conexiones_ws:
-        logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en _conexiones_ws, intentando enviar")
-        try:
-            ok = await _enviar_a_pcbot(pcbot_id, comando)
-            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot resultado={ok}")
-        except Exception as e:
-            logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot exception: {e}")
-    else:
-        logger.info(f"[ORCH-DIAG] pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws. keys disponibles: {list(_conexiones_ws.keys())}")
+    enviado = False
+    if pcbot_id:
+        if pcbot_id in _conexiones_ws:
+            logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en _conexiones_ws, intentando enviar")
+            try:
+                ok = await _enviar_a_pcbot(pcbot_id, comando)
+                logger.info(f"[ORCH-DIAG] _enviar_a_pcbot resultado={ok}")
+                if ok:
+                    enviado = True
+            except Exception as e:
+                logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot exception: {e}")
+        else:
+            logger.info(f"[ORCH-DIAG] pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws. keys disponibles: {list(_conexiones_ws.keys())}")
 
-    return {"exito": True, "comando_id": comando_id, "estado": "pendiente"}
+        # fallback 2: intentar via ws_manager (busca el ws fresco por usuario)
+        if not enviado:
+            try:
+                from ws_manager import obtener_ws_por_pcbot
+                ws_mgr = obtener_ws_por_pcbot(pcbot_id)
+                if ws_mgr and not ws_mgr.closed:
+                    logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en ws_manager, intentando enviar directo")
+                    mensaje = {
+                        "tipo": comando["tipo"],
+                        "comando_id": comando["comando_id"],
+                        "parametros": comando["parametros"],
+                    }
+                    await ws_mgr.send_json(mensaje)
+                    # actualizar _conexiones_ws con este ws fresco
+                    _conexiones_ws[pcbot_id] = {"ws": ws_mgr, "ultimo_heartbeat": time.time()}
+                    ejecutar_sql(
+                        "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
+                        (_ahora_str(), comando_id),
+                    )
+                    enviado = True
+                    logger.info(f"[ORCH-DIAG] enviado OK a {pcbot_id} via ws_manager directo en crear_comando")
+                else:
+                    logger.info(f"[ORCH-DIAG] ws_manager: ws_mgr={'None' if not ws_mgr else 'closed'} para {pcbot_id}")
+            except Exception as e:
+                logger.warning(f"[ORCH-DIAG] fallback ws_manager en crear_comando exception: {e}")
+
+    return {"exito": True, "comando_id": comando_id, "estado": "enviado" if enviado else "pendiente"}
 
 
 # ---------------------------------------------------------------------------
 # enviar comando a un pcbot via ws
 # ---------------------------------------------------------------------------
 async def _enviar_a_pcbot(pcbot_id: str, comando: dict) -> bool:
-    """envia un comando directamente (json plano) a un pcbot conectado via websocket."""
+    """envia un comando directamente (json plano) a un pcbot conectado via websocket.
+    v2: incluye diagnostico de ws.closed y fallback via ws_manager."""
     conexion = _conexiones_ws.get(pcbot_id)
     if not conexion:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws")
         return False
     ws = conexion.get("ws") if isinstance(conexion, dict) else conexion
     if not ws:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: websocket es None para {pcbot_id}")
         return False
+
+    # DIAGNOSTICO: verificar estado del websocket antes de enviar
     try:
-        mensaje = {
-            "tipo": comando["tipo"],
-            "comando_id": comando["comando_id"],
-            "parametros": comando["parametros"],
-        }
-        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviando a {pcbot_id} tipo={comando.get('tipo')} comando_id={comando.get('comando_id')}")
+        ws_closed = ws.closed if hasattr(ws, 'closed') else 'unknown'
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws.closed={ws_closed} para {pcbot_id}")
+    except Exception as e:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: no se pudo leer ws.closed: {e}")
+
+    mensaje = {
+        "tipo": comando["tipo"],
+        "comando_id": comando["comando_id"],
+        "parametros": comando["parametros"],
+    }
+    logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviando a {pcbot_id} tipo={comando.get('tipo')} comando_id={comando.get('comando_id')}")
+
+    # intento 1: ws directo
+    try:
         await ws.send_json(mensaje)
         # marcar como enviado en db
         ejecutar_sql(
             "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
             (_ahora_str(), comando["comando_id"]),
         )
-        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id}")
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id} via ws directo")
         return True
     except Exception as e:
-        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION a {pcbot_id}: {e}")
-        return False
+        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION ws directo a {pcbot_id}: {e}")
+
+    # intento 2: fallback via ws_manager (buscar ws fresco)
+    logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: intentando fallback via ws_manager para {pcbot_id}")
+    try:
+        from ws_manager import obtener_ws_por_pcbot
+        ws_fallback = obtener_ws_por_pcbot(pcbot_id)
+        if ws_fallback:
+            ws_closed_fb = ws_fallback.closed if hasattr(ws_fallback, 'closed') else 'unknown'
+            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws_fallback.closed={ws_closed_fb} para {pcbot_id}")
+            if not ws_fallback.closed:
+                await ws_fallback.send_json(mensaje)
+                # refrescar _conexiones_ws con el ws fresco
+                _conexiones_ws[pcbot_id] = {"ws": ws_fallback, "ultimo_heartbeat": time.time()}
+                # marcar como enviado en db
+                ejecutar_sql(
+                    "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
+                    (_ahora_str(), comando["comando_id"]),
+                )
+                logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id} via ws_manager fallback")
+                return True
+        else:
+            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws_manager no tiene ws para {pcbot_id}")
+    except Exception as e2:
+        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION fallback ws_manager a {pcbot_id}: {e2}")
+
+    return False
 
 
 # ---------------------------------------------------------------------------

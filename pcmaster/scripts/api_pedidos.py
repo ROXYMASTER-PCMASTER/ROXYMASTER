@@ -160,6 +160,15 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     pcbot_id = obtener_pcbot_de_usuario(uid)
     logger.info(f"[PEDIDO-DIAG] uid={uid} pcbot_id='{pcbot_id}' comando_id={comando_id}")
 
+    # log del payload exacto que se enviara al pcbot (para depuracion)
+    payload_exacto = {
+        "tipo": "asignar",
+        "comando_id": comando_id,
+        "parametros": parametros_pedido,
+    }
+    logger.info(f"[PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='{pcbot_id}': {json.dumps(payload_exacto, ensure_ascii=False)}")
+    logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en orchestrator._conexiones_ws? CHEQUEAR LOGS")
+
     resultado_orch = await crear_comando(
         tipo="asignar",
         parametros=parametros_pedido,
