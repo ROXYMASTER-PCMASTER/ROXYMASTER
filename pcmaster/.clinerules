@@ -6,10 +6,22 @@
 - prohibido escribir palabras completas en mayúsculas (ni "ROXYMASTER", ni "PCMASTER", ni "INICIAR", ni ninguna).
 - antes de escribir cualquier archivo, verifica que no contenga mayúsculas prohibidas y reemplázalas.
 
+# arquitectura
+system = async_only
+forbidden = threading_core
+max_file_lines_new = 600
+max_file_lines_existing = freeze  # sin crecimiento adicional
+
 ## límites y modularidad
-- ningún archivo supera 400 líneas. si crece, dividir en dos módulos con sufijo _core y _ext.
-- todo modular por clases: una clase por responsabilidad, métodos async, imports mínimos, sin variables globales fuera de la clase.
-- codificación utf-8 sin bom en todos los archivos.
+- Ningún archivo nuevo superará las 600 líneas. Se recomienda mantenerlos entre 500 y 600 líneas siempre que sea razonable.
+- Los archivos existentes que ya excedan las 600 líneas no podrán crecer más. Cualquier funcionalidad nueva que afecte a esos archivos se implementará en submódulos nuevos (sufijo _ext, _tasks, _service, etc.) o mediante carga dinámica en el frontend. Los archivos existentes se refactorizarán progresivamente para reducirlos a ≤600 líneas, sin añadir nuevas líneas en el proceso.
+- Técnica de división en Python: cuando un módulo deba separarse, se crearán dos archivos con sufijos **_core.py** (lógica central) y **_ext.py** (extensiones y utilidades), manteniendo un único módulo lógico.
+- Todo modular por clases: una clase por responsabilidad, métodos async, imports mínimos, sin variables globales fuera de la clase.
+- Codificación UTF‑8 sin BOM en todos los archivos.
+
+rule: before_modify_server.py -> snapshot_required=true
+rule: file_lines>600 -> split(core/ext) || move_new_to_ext
+rule: existing_file_with_lines>600 && new_code_needed -> must_create_separate_module
 
 ## seguridad
 - usar async/await siempre. no threading para lógica core. solo asyncio.create_task.
@@ -48,10 +60,7 @@ si la tarea es trivial (1 endpoint simple, 1 script <30 lineas), omite el diagno
 
 # ROXYMASTER RULESET
 
-# arquitectura
-system = async_only
-forbidden = threading_core
-max_file_lines = 400
+
 
 # seguridad cambios
 before_edit_server = snapshot_required
@@ -93,8 +102,7 @@ split_large_files = core/ext
 async=true
 no_threading=true
 
-rule: before_modify_server.py -> snapshot_required=true
-rule: file_lines>400 -> split(core/ext)
+
 
 websocket:
 - timeout_required=true

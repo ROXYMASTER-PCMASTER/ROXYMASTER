@@ -1,0 +1,94 @@
+﻿# .clinerules para roxymaster v8.3 (minúsculas)
+## nomenclatura obligatoria
+todo en minúsculas: variables, funciones, rutas, comentarios, nombres de archivo.
+solo mayúsculas en siglas técnicas: json, utf-8, api, kbt, sql, html, css, http, ws, hmac, sha256, pbkdf2, jwt, aiohttp, fastapi, url, id, ip, pc.
+prohibido usar emojis en código, comentarios, logs, respuestas api, nombres de archivo, documentación.
+prohibido escribir palabras completas en mayúsculas (ni "ROXYMASTER", ni "PCMASTER", ni "INICIAR", ni ninguna).
+antes de escribir cualquier archivo, verifica que no contenga mayúsculas prohibidas y reemplázalas.
+
+## límites y modularidad
+ningún archivo supera 400 líneas. si crece, dividir en dos módulos con sufijo _core y _ext.
+todo modular por clases: una clase por responsabilidad, métodos async, imports mínimos, sin variables globales fuera de la clase.
+codificación utf-8 sin bom en todos los archivos.
+
+## división de archivos largos (_core / _ext)
+cuando un archivo supera 400 líneas, dividilo en dos partes: `nombre_core.py` y `nombre_ext.py`.  ambos archivos forman parte del mismo módulo lógico. no los trates como módulos independientes ni duplicados. son **una sola entidad partida en dos**.
+
+`nombre_core.py` contiene la clase principal y la lógica central. `nombre_ext.py` contiene funciones auxiliares, handlers adicionales o lógica de respaldo. importa explícitamente de `nombre_core` si necesita usar clases o variables definidas allí.
+en los imports, usá `from nombre_core import ...` para acceder a lo que necesites.
+
+la división debe ser limpia, sin funciones repetidas. si una función aparece en ambos, unificala en uno solo.
+ 
+documentá brevemente al inicio de cada archivo que pertenece al módulo dividido (ej. `# nombre_core.py - parte principal del modulo X` y `# nombre_ext.py - parte extendida del modulo X`).
+
+
+## seguridad
+usar async/await siempre. no threading para lógica core. solo asyncio.create_task.
+hmac en websockets (shs.py idéntico en cliente y servidor).
+contraseñas hasheadas con pbkdf2-hmac-sha256 ( 100000 iteraciones ). tokens de sesión con expiración de 7 días.
+validación de entradas en todos los endpoints.
+logs sin datos sensibles (nunca loguear contraseñas, tokens completos, ni claves).rutas dinámicas con variables de entorno, nunca hardcodeadas.
+
+## pipeline y autodiagnóstico 
+(nuevo) la carpeta del pipeline es C:\Users\PCMASTER\Desktop\tollkit_pipeline\. contiene las herramientas de monitoreo y reparación automática.
+antes de ejecutar cualquier orden de código, debes verificar el estado del sistema usando el pipeline:   analiza el log del vigilante: `Get-Content "C:\Users\PCMASTER\Desktop\tollkit_pipeline\vigilante_log.txt" -Tail 5`. si la última línea tiene "No se detectaron problemas. Todo ok.", el sistema está sano.
+revisa si hay órdenes pendientes del usuario: `Test-Path "C:\Users\PCMASTER\Desktop\orden_para_cline.txt"`. si existe, procesa cada línea como una acción prioritaria (dividir archivos, revisar loops, etc.) y luego ejecuta `run_pipeline.ps1`. después de aplicar cualquier cambio, vuelve a ejecutar el vigilante: `&"C:\Users\PCMASTER\Desktop\tollkit_pipeline\run_pipeline.ps1"`.
+si el vigilante detecta un error, escribe la causa probable y tres caminos alternativos en `error_pipeline.md`.   el arnés de pruebas (`test_harness.py`) se encuentra en la misma carpeta del pipeline y puede ser invocado manualmente si se requiere un chequeo completo de endpoints.
+
+## herramientas y comandos permitidos
+ 
+solo ejecutar comandos directos de powershell con execute_command.
+no usar herramientas de búsqueda sobre el código sin pedir permiso explícito. no modificar archivos existentes con búsquedas de texto. si hay que cambiar algo, 
+reescribir el archivo completo con write_to_file.
+cuando una operación falla tres veces consecutivas, detente y pide instrucciones.
+
+## manejo de errores (anti-bucle)
+
+cuando una misma estrategia falla dos veces consecutivas, cambiar inmediatamente de enfoque y documentar el cambio. cuando una tarea genera exactamente el mismo error tres veces consecutivas, detente. escribe error_repetido.md con: acción intentada, comando ejecutado, mensaje de error, razón probable del fallo, y tres caminos alternativos propuestos. cuando write_to_file falla con "User closed text editor", no reintentar write_to_file. usar execute_command con powershell (Set-Content o New-Item -Force) o heredoc @" "@. cuando el servidor o script no arranca tras dos correcciones, escribir errores_pendientes.txt con traceback y soluciones intentadas.
+cuando un bucle de ejecución (más de 4 ciclos sin progreso visible) se detecta, romper el bucle y pedir instrucciones explícitas.
+
+## búsquedas y archivos
+cuando no encuentras un archivo, función, variable o módulo importado, no intentes adivinar nombres alternativos. busca primero en el proyecto con search_file. si no existe, crea el recurso faltante o informa exactamente qué falta con su ruta esperada. cuando una búsqueda de archivo o texto no devuelve resultados, no asumas que el recurso no existe. prueba con rutas alternativas o busca en directorios padre antes de declararlo ausente.
+
+## respaldo obligatorio antes de cambios
+- antes de modificar server.py, orchestrator.py, db.py o cualquier archivo de configuración, copiá el original a C:\Users\PCMASTER\Desktop\roxymaster_backups\snapshots\ con el formato <archivo>_<YYYYMMDD_HHMM>.py.
+- si un cambio rompe algo, recuperá el snapshot más reciente desde esa carpeta y documentá la reversión en C:\Users\PCMASTER\Desktop\roxymaster_backups\reports\rollback_<YYYYMMDD>.md.
+
+## regla de oro
+# regla de sincronización con el repositorio
+si el `pull` amenaza con modificar `pcmaster/`, cancelar y pedir instrucciones.
+1. **backup local de `pcmaster/` antes de todo**  
+   - copiar la carpeta `pcmaster/` a `backups/pcmaster_YYYYMMDD_HHMMSS` (o ruta que uses habitualmente).  
+   - esto asegura que nunca se pierda el trabajo actual.
+
+2. **descarga de otros archivos (pcbot, etc.) solo si es inevitable**  
+   - si para subir `pcmaster/` hace falta tener la última versión de otros archivos (por conflicto), se puede hacer `git pull` pero **sin sobrescribir nunca `pcmaster/`**.  
+   - si el `pull` amenaza con modificar `pcmaster/`, cancelar y pedir instrucciones.
+
+3. **push de `pcmaster/` sin pérdida de datos**  
+   - solo se añade la carpeta `pcmaster/` y `.gitignore`: `git add pcmaster/ .gitignore`  
+   - prohibido `git add .` o `git add -A`.  
+   - commit y push normales:  
+
+
+## autoridad de pcmaster (maestro) y sincronizacion pcbot
+esta maquina es la unica autorizada y fuente de verdad para pcmaster/. contiene los datos originales y actualizados. ninguna otra maquina debe sobreescribir pcmaster/ desde el remoto. solo desde aqui se hace push de pcmaster/.
+
+pcbot/ puede coexistir localmente solo para que el servidor funcione, pero jamas se modifican ni suben cambios de pcbot/ desde esta maquina.
+
+reglas:
+- permitido: `git checkout origin/main -- pcbot/` para restaurar pcbot/ del remoto cuando el directorio fue eliminado localmente por limpieza o conflicto.
+- permitido: mantener pcbot/ en disco para operacion local del servidor.
+- prohibido: `git add pcbot/` bajo cualquier circunstancia. si el stage arrastra pcbot/ por error, ejecutar `git restore --staged pcbot/` antes del commit.
+- prohibido: modificar, crear o borrar archivos dentro de pcbot/. cualquier cambio en pcbot/ debe venir del remoto via checkout, no de edicion local.
+- el proceso de push siempre verifica con `git diff --cached --name-only` que ningun archivo de pcbot/ aparezca en el stage.
+- prohibido: `git pull` en cualquier rama. si el remoto tiene cambios nuevos en pcbot/, usar checkout selectivo (regla 1) sin afectar pcmaster/.
+
+
+## memoria larga local (nunca olvidar)
+la carpeta C:\Users\PCMASTER\Desktop\roxymaster\memoria_larga\ contiene todo el conocimiento acumulado del proyecto.
+al iniciar cada sesión, leé obligatoriamente:  memoria_larga\indice.json (índice maestro)
+memoria_larga\variables\estado_actual.json (valores vigentes de variables críticas)   los últimos 3 archivos .md en memoria_larga\errores\ (errores ya solucionados)memoria_larga\decisiones\bitacora.md (últimas decisiones tomadas) durante el trabajo:si aparece un error, buscá primero en memoria_larga\errores\ si ya fue resuelto.
+si el error es nuevo, resolvelo, y luego creá un archivo memoria_larga\errores\error_<fecha>_<descripcion>.md con: síntoma, causa, solución y variables afectadas.  si modificás una variable crítica (rutas, ips, puertos, ids), actualizá inmediatamente memoria_larga\variables\estado_actual.json.al finalizar cada tarea:
+agregá una entrada en memoria_larga\decisiones\bitacora.md con lo realizado y las decisiones tomadas.  actualizá memoria_larga\indice.json incrementando los contadores y reflejando los nuevos archivos.
+la memoria larga crece con el proyecto; nunca la borres ni la reinicies. es la única fuente de verdad entre sesiones.

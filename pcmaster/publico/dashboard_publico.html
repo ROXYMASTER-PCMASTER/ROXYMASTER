@@ -256,6 +256,9 @@
       <button class="sidebar-link" data-panel="marketplace" onclick="cargarPanel('marketplace',this)">
         <span class="icon">▲</span> marketplace
       </button>
+      <button class="sidebar-link" data-panel="pedidos" onclick="cargarPanel('pedidos',this)">
+        <span class="icon">★</span> pedidos
+      </button>
       <button class="sidebar-link" data-panel="referidos" onclick="cargarPanel('referidos',this)">
         <span class="icon">✦</span> referidos
         <span class="badge-nav" id="badge-ref">0</span>
@@ -266,9 +269,6 @@
       </button>
       <button class="sidebar-link" data-panel="ayuda" onclick="cargarPanel('ayuda',this)">
         <span class="icon">?</span> ayuda
-      </button>
-      <button class="sidebar-link" data-panel="endpoints" onclick="cargarPanel('endpoints',this)">
-        <span class="icon">#</span> endpoints
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -548,10 +548,10 @@
     dashboard: '/publico/panel_dashboard.html',
     wallet: '/publico/wallet.html',
     marketplace: '/publico/marketplace.html',
+    pedidos: '/publico/pedidos_core.html',
     referidos: '/publico/referidos.html',
     perfiles: '/publico/perfiles.html',
     ayuda: '/publico/ayuda.html',
-    endpoints: '/publico/endpoints.html',
   };
 
   function marcarActivo(btn) {
@@ -628,20 +628,65 @@
     scripts.forEach(function(code) {
       if (code.indexOf('// script src:') === 0) return;
       try {
-        var codigoMod = code.replace(
-          /document\.addEventListener\(['"]DOMContentLoaded['"],\s*(function\s*\(\))/g,
-          '$1'
-        );
-        codigoMod = codigoMod.replace(
-          /document\.addEventListener\(['"]DOMContentLoaded['"],\s*async\s*(function\s*\(\))/g,
-          'async $1'
-        );
-        codigoMod = codigoMod.replace(
-          /window\.addEventListener\(['"](load|DOMContentLoaded)['"],/g,
-          '// '
-        );
-        var fn = new Function('panel', codigoMod);
-        fn(panel);
+        // extraer codigo dentro de DOMContentLoaded listeners
+        var lines = code.split('\n');
+        var processed = [];
+        var inDomListener = false;
+        var braceCount = 0;
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (!inDomListener) {
+            if (/document\.addEventListener\(['"]DOMContentLoaded['"],\s*(async\s+)?function\s*\(\)/.test(line)) {
+              inDomListener = true;
+              braceCount = 0;
+              var openIdx = line.indexOf('{');
+              if (openIdx > -1) {
+                braceCount = 1;
+                var afterBrace = line.substring(openIdx + 1);
+                var closeIdx = afterBrace.indexOf('}');
+                if (closeIdx > -1) {
+                  braceCount--;
+                  if (braceCount === 0) {
+                    inDomListener = false;
+                    var innerCode = afterBrace.substring(0, closeIdx).trim();
+                    if (innerCode) processed.push(innerCode);
+                    continue;
+                  }
+                }
+              }
+              continue;
+            }
+            if (/window\.addEventListener\(['"](load|DOMContentLoaded)['"],/.test(line)) {
+              processed.push('// ' + line);
+              continue;
+            }
+            processed.push(line);
+          } else {
+            for (var j = 0; j < line.length; j++) {
+              if (line[j] === '{') braceCount++;
+              if (line[j] === '}') braceCount--;
+            }
+            if (braceCount <= 0) {
+              inDomListener = false;
+              var content = line;
+              var lastClose = content.lastIndexOf('}');
+              if (lastClose > -1) content = content.substring(0, lastClose);
+              var trimmed = content.trim();
+              if (trimmed.length > 0) processed.push(trimmed);
+            } else {
+              processed.push(line);
+            }
+          }
+        }
+        var codigoMod = processed.join('\n');
+        // inyectar como script tag en vez de new Function
+        // esto asegura que el codigo se ejecute en scope global (window.* se define correctamente)
+        var scriptTag = document.createElement('script');
+        scriptTag.type = 'text/javascript';
+        // agregar variable panel para compatibilidad con codigos que la usen
+        scriptTag.textContent = 'var panel = ' + JSON.stringify(panel) + ';\n' + codigoMod;
+        document.body.appendChild(scriptTag);
+        document.body.removeChild(scriptTag);
       } catch (e) {
         console.error('error ejecutando script para panel ' + panel + ':', e);
       }
@@ -650,6 +695,14 @@
 
   async function cargarPanel(panel, btn) {
     if (!panel) return;
+
+    // limpiar intervalo del panel anterior si es pedidos
+    if (panelActual === 'pedidos') {
+        if (typeof window.limpiarIntervaloPedidos === 'function') {
+            window.limpiarIntervaloPedidos();
+        }
+    }
+
     marcarActivo(btn);
     panelActual = panel;
     // actualizar url con pushstate
@@ -687,6 +740,29 @@
         }, 50);
       }
 
+      // inicializacion especifica del panel
+      var initMap = {
+        'pedidos': 'inicializarPanelPedidos',
+        'perfiles': 'inicializarPanelPerfiles',
+        'marketplace': 'inicializarPanelMarketplace',
+      };
+      var funcName = initMap[panel];
+      if (funcName) {
+        setTimeout(function() {
+          if (typeof window[funcName] === 'function') {
+            window[funcName]();
+          } else {
+            console.warn(funcName + ' no esta definido. asegurate de que el panel este cargado correctamente.');
+          }
+        }, 150);
+      }
+      // limpiar intervalo de pedidos al salir de ese panel
+      if (panel !== 'pedidos') {
+        if (typeof window.limpiarIntervaloPedidos === 'function') {
+          window.limpiarIntervaloPedidos();
+        }
+      }
+
       // cerrar sidebar en mobile
       var sidebar = document.getElementById('sidebar');
       var overlay = document.getElementById('sidebar-overlay');
@@ -721,7 +797,10 @@
     // usar helper obtenerToken que revisa url, localStorage y sessionStorage
     var token = obtenerToken();
     if (!token) {
-      window.location.href = '/publico/login.html';
+      var params = new URLSearchParams(window.location.search);
+      var tab = params.get('tab');
+      var redirect = '/publico/dashboard_publico.html' + (tab ? '?tab=' + tab : '');
+      window.location.href = '/publico/login.html?redirect=' + encodeURIComponent(redirect);
       return;
     }
     // obtener panel desde query string
@@ -732,8 +811,11 @@
       var btn = document.querySelector('.sidebar-link[data-panel="' + panelInicial + '"]');
       cargarPanel(panelInicial, btn);
     });
-  })();function abrirModal(id){var m=document.getElementById(id);if(m){m.classList.add("show");m.style.display="flex";}}
-function cerrarModal(id){var m=document.getElementById(id);if(m){m.classList.remove("show");m.style.display="none";}}
+  })();
+
+// modal helpers
+window.abrirModal = function(id){var m=document.getElementById(id);if(m){m.classList.add("show");m.style.display="flex";}};
+window.cerrarModal = function(id){var m=document.getElementById(id);if(m){m.classList.remove("show");m.style.display="none";}};
 document.addEventListener('click',function(e){
 if(e.target.id==='btnAgregarPerfil'){e.preventDefault();abrirModal('modalAgregarPerfil')}
 if(e.target.id==='btnCrearOrden'){e.preventDefault();abrirModal('modalCrearOrden')}

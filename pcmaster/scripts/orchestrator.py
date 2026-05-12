@@ -1,12 +1,15 @@
-﻿# orchestrator.py - cola de comandos y ws con pcbot. roxymaster v8.3
+# orchestrator.py - cola de comandos y ws con pcbot. roxymaster v8.3
 # todos los nombres en minusculas, utf-8 sin bom, <= 400 lineas
 
 import asyncio
 import json
 import time
 import uuid
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 
+import heartbeat_cache
 from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion, get_db_context
 from shs import firmar_payload, verificar_payload, secreto_bytes as secreto_sistema, generar_secreto_pcbot
 
@@ -61,18 +64,21 @@ def _ts() -> str:
 _cola_comandos: dict = {}  # {comando_id: {tipo, parametros, pcbot_id, futuro}}
 _conexiones_ws: dict = {}  # {pcbot_id: websocket}
 _pcbot_info: dict = {}  # {pcbot_id: {hostname, ip, perfiles, ...}}
+_pending_commands: dict = {}  # {comando_id: asyncio.Future} para esperar respuestas
 _secreto_pcbot_actual: str = ""  # secreto shs del pcbot conectado actualmente
 
 
 # ---------------------------------------------------------------------------
 # crear comando y encolarlo
 # ---------------------------------------------------------------------------
-async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None) -> dict:
+async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None, comando_id: str = None) -> dict:
     """
     crea un comando en la base de datos y lo encola para envio.
     tipos soportados: asignar, comentarios_activar, detener, estado, open_url.
+    si se proporciona comando_id, se usa ese; si no, se genera uno nuevo.
     """
-    comando_id = str(uuid.uuid4())[:12]
+    if not comando_id:
+        comando_id = str(uuid.uuid4())[:12]
     params_json = json.dumps(parametros, ensure_ascii=False)
 
     cmd_id_db = ejecutar_insercion(
@@ -95,43 +101,119 @@ async def crear_comando(tipo: str, parametros: dict, pcbot_id: str = None) -> di
 
     _cola_comandos[comando_id] = comando
 
-    # intentar enviar inmediatamente si hay conexion activa
-    if pcbot_id and pcbot_id in _conexiones_ws:
-        try:
-            await _enviar_a_pcbot(pcbot_id, comando)
-        except Exception as e:
-            pass  # se reintentara via heartbeat
+    logger.info(f"[ORCH-DIAG] crear_comando: comando_id={comando_id} tipo={tipo} pcbot_id='{pcbot_id}' _conexiones_ws keys={list(_conexiones_ws.keys())}")
 
-    return {"exito": True, "comando_id": comando_id, "estado": "pendiente"}
+    # intentar enviar inmediatamente si hay conexion activa
+    enviado = False
+    if pcbot_id:
+        if pcbot_id in _conexiones_ws:
+            logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en _conexiones_ws, intentando enviar")
+            try:
+                ok = await _enviar_a_pcbot(pcbot_id, comando)
+                logger.info(f"[ORCH-DIAG] _enviar_a_pcbot resultado={ok}")
+                if ok:
+                    enviado = True
+            except Exception as e:
+                logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot exception: {e}")
+        else:
+            logger.info(f"[ORCH-DIAG] pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws. keys disponibles: {list(_conexiones_ws.keys())}")
+
+        # fallback 2: intentar via ws_manager (busca el ws fresco por usuario)
+        if not enviado:
+            try:
+                from ws_manager import obtener_ws_por_pcbot
+                ws_mgr = obtener_ws_por_pcbot(pcbot_id)
+                if ws_mgr and not ws_mgr.closed:
+                    logger.info(f"[ORCH-DIAG] pcbot_id '{pcbot_id}' encontrado en ws_manager, intentando enviar directo")
+                    mensaje = {
+                        "tipo": comando["tipo"],
+                        "comando_id": comando["comando_id"],
+                        "parametros": comando["parametros"],
+                    }
+                    await ws_mgr.send_json(mensaje)
+                    # actualizar _conexiones_ws con este ws fresco
+                    _conexiones_ws[pcbot_id] = {"ws": ws_mgr, "ultimo_heartbeat": time.time()}
+                    ejecutar_sql(
+                        "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
+                        (_ahora_str(), comando_id),
+                    )
+                    enviado = True
+                    logger.info(f"[ORCH-DIAG] enviado OK a {pcbot_id} via ws_manager directo en crear_comando")
+                else:
+                    logger.info(f"[ORCH-DIAG] ws_manager: ws_mgr={'None' if not ws_mgr else 'closed'} para {pcbot_id}")
+            except Exception as e:
+                logger.warning(f"[ORCH-DIAG] fallback ws_manager en crear_comando exception: {e}")
+
+    return {"exito": True, "comando_id": comando_id, "estado": "enviado" if enviado else "pendiente"}
 
 
 # ---------------------------------------------------------------------------
 # enviar comando a un pcbot via ws
 # ---------------------------------------------------------------------------
 async def _enviar_a_pcbot(pcbot_id: str, comando: dict) -> bool:
-    """envia un comando directamente (json plano) a un pcbot conectado via websocket."""
-    ws = _conexiones_ws.get(pcbot_id)
+    """envia un comando directamente (json plano) a un pcbot conectado via websocket.
+    v2: incluye diagnostico de ws.closed y fallback via ws_manager."""
+    conexion = _conexiones_ws.get(pcbot_id)
+    if not conexion:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: pcbot_id='{pcbot_id}' NO encontrado en _conexiones_ws")
+        return False
+    ws = conexion.get("ws") if isinstance(conexion, dict) else conexion
     if not ws:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: websocket es None para {pcbot_id}")
         return False
 
+    # DIAGNOSTICO: verificar estado del websocket antes de enviar
     try:
-        mensaje = {
-            "tipo": "comando",
-            "comando_id": comando["comando_id"],
-            "accion": comando["tipo"],
-            "parametros": comando["parametros"],
-        }
+        ws_closed = ws.closed if hasattr(ws, 'closed') else 'unknown'
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws.closed={ws_closed} para {pcbot_id}")
+    except Exception as e:
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: no se pudo leer ws.closed: {e}")
 
+    mensaje = {
+        "tipo": comando["tipo"],
+        "comando_id": comando["comando_id"],
+        "parametros": comando["parametros"],
+    }
+    logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviando a {pcbot_id} tipo={comando.get('tipo')} comando_id={comando.get('comando_id')}")
+
+    # intento 1: ws directo
+    try:
         await ws.send_json(mensaje)
-
         # marcar como enviado en db
         ejecutar_sql(
             "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
             (_ahora_str(), comando["comando_id"]),
         )
+        logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id} via ws directo")
         return True
-    except Exception:
-        return False
+    except Exception as e:
+        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION ws directo a {pcbot_id}: {e}")
+
+    # intento 2: fallback via ws_manager (buscar ws fresco)
+    logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: intentando fallback via ws_manager para {pcbot_id}")
+    try:
+        from ws_manager import obtener_ws_por_pcbot
+        ws_fallback = obtener_ws_por_pcbot(pcbot_id)
+        if ws_fallback:
+            ws_closed_fb = ws_fallback.closed if hasattr(ws_fallback, 'closed') else 'unknown'
+            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws_fallback.closed={ws_closed_fb} para {pcbot_id}")
+            if not ws_fallback.closed:
+                await ws_fallback.send_json(mensaje)
+                # refrescar _conexiones_ws con el ws fresco
+                _conexiones_ws[pcbot_id] = {"ws": ws_fallback, "ultimo_heartbeat": time.time()}
+                # marcar como enviado en db
+                ejecutar_sql(
+                    "update comandos set estado = 'enviado', fecha_ejecucion = ? where comando_id = ?",
+                    (_ahora_str(), comando["comando_id"]),
+                )
+                logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: enviado OK a {pcbot_id} via ws_manager fallback")
+                return True
+        else:
+            logger.info(f"[ORCH-DIAG] _enviar_a_pcbot: ws_manager no tiene ws para {pcbot_id}")
+    except Exception as e2:
+        logger.warning(f"[ORCH-DIAG] _enviar_a_pcbot: EXCEPTION fallback ws_manager a {pcbot_id}: {e2}")
+
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -143,19 +225,27 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
     verifica firma, recibe heartbeats, envia comandos pendientes.
     """
     global _secreto_pcbot_actual
-    _conexiones_ws[pcbot_id] = websocket
-    print(f"[orchestrator] pcbot conectado: {pcbot_id}")
+    logger.info("[DIAG-001] Nueva conexion de pcbot: %s", pcbot_id)
+    _conexiones_ws[pcbot_id] = {"ws": websocket, "ultimo_heartbeat": time.time()}
+    logger.info(f"[CONEXION] Nueva conexion de pcbot: {pcbot_id}, estructura guardada: {_conexiones_ws[pcbot_id].keys()}")
+    logger.info(f"pcbot conectado via ws: {pcbot_id}")
 
     try:
         # handshake inicial
         datos_raw = await asyncio.wait_for(websocket.receive_text(), timeout=10)
         datos = json.loads(datos_raw)
 
-        # verificar firma (el pcbot usa secreto_sistema global solo para el primer handshake)
-        payload_str = datos.get("payload", "")
-        firma_recibida = datos.get("firma", "")
+        # soportar mensajes planos (sin envelope {payload, firma})
+        if "payload" not in datos:
+            datos_con_envelope = datos
+            datos = {"payload": json.dumps(datos_con_envelope), "firma": ""}
+            payload_str = datos["payload"]
+            firma_recibida = ""
+        else:
+            payload_str = datos.get("payload", "")
+            firma_recibida = datos.get("firma", "")
 
-        # paso 1: si la firma esta vacia, verificar si es handshake bootstrap (solicitar_secreto)
+        # verificar firma (handshake)
         if not firma_recibida:
             try:
                 payload_temp = json.loads(payload_str)
@@ -164,13 +254,12 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                 es_bootstrap = False
             if es_bootstrap:
                 firma_valida = True
-                print(f"[orchestrator] handshake bootstrap aceptado para {pcbot_id}")
+                logger.info(f"handshake bootstrap aceptado para {pcbot_id}")
             else:
                 firma_valida = False
         else:
             firma_valida = verificar_firma(payload_str, firma_recibida, _secreto)
             if not firma_valida:
-                # si falla con secreto global, intentar con secreto propio del pcbot (si existe)
                 secreto_pcbot = ejecutar_sql_unico(
                     "select secreto_shs from pcbots_registrados where pcbot_id = ? and secreto_shs != ''",
                     (pcbot_id,),
@@ -190,224 +279,108 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
             del _conexiones_ws[pcbot_id]
             return
 
-        info_sistema = json.loads(payload_str)
-        _pcbot_info[pcbot_id] = {
-            "hostname": info_sistema.get("hostname", pcbot_id),
-            "usuario": info_sistema.get("usuario", ""),
-            "ip_local": info_sistema.get("ip_local", ""),
-            "ip_tailscale": info_sistema.get("ip_tailscale", ""),
-            "ip_wan": info_sistema.get("ip_wan", ""),
-            "workspace_id": info_sistema.get("workspace_id", ""),
-            "perfiles_roxy": info_sistema.get("perfiles_roxy", []),
-            "perfiles_vip": info_sistema.get("perfiles_vip", []),
-            "perfiles": info_sistema.get("perfiles", []),
-            "navegadores": info_sistema.get("navegadores", []),
-            "browser_path": info_sistema.get("browser_path", ""),
-            "user_data_dir": info_sistema.get("user_data_dir", ""),
-            "debugging_port": info_sistema.get("debugging_port", 0),
-            "session_exists": info_sistema.get("session_exists", False),
-            "modo": info_sistema.get("modo", "desconocido"),
-            "version_agente": info_sistema.get("version_agente", ""),
-            "ultima_conexion": _ahora_str(),
-        }
-
-        # persistir en pcbots_registrados
+        # actualizar automaticamente el pcbot_id en la tabla users si ya existe asociacion en computadoras
         try:
-            import json as _json
-            existente = ejecutar_sql_unico(
-                "select id, secreto_shs from pcbots_registrados where pcbot_id = ?", (pcbot_id,)
+            with get_db_context() as conn:
+                row = conn.execute(
+                    "SELECT usuario_id FROM computadoras WHERE pcbot_id = ?",
+                    (pcbot_id,)
+                ).fetchone()
+                if row:
+                    usuario_id = row[0]
+                    conn.execute(
+                        "UPDATE usuarios SET pcbot_id = ? WHERE id = ?",
+                        (pcbot_id, usuario_id)
+                    )
+                    conn.commit()
+                    logger.info(f"actualizado pcbot_id en users para usuario {usuario_id} a {pcbot_id}")
+        except Exception as e:
+            logger.warning(f"no se pudo actualizar pcbot_id en users: {e}")
+
+        # ws_manager: registrar conexion post-handshake
+        try:
+            from ws_manager import registrar_conexion
+            _user_row = ejecutar_sql_unico(
+                "select id from usuarios where pcbot_id = ?", (pcbot_id,)
             )
-            perfiles_roxy_json = _json.dumps(info_sistema.get("perfiles_roxy", []), ensure_ascii=False)
-            perfiles_vip_json = _json.dumps(info_sistema.get("perfiles_vip", []), ensure_ascii=False)
-            navegadores_json = _json.dumps(info_sistema.get("navegadores", []), ensure_ascii=False)
+            if _user_row:
+                registrar_conexion(_user_row["id"], pcbot_id, websocket)
+                logger.info(f"[ORCH-DIAG] usuario {_user_row['id']} registrado en ws_manager via orchestrator (handshake)")
+        except Exception as e:
+            logger.warning(f"[ORCH-DIAG] error registrando ws_manager en orchestrator: {e}")
 
-            # --- auto-registro de secreto shs ---
-            solicitar_secreto = info_sistema.get("solicitar_secreto", False)
-            secreto_asignado = ""
-            if solicitar_secreto or (existente and not existente.get("secreto_shs")):
-                # generar nuevo secreto para este pcbot
-                secreto_asignado = generar_secreto_pcbot()
-                print(f"[orchestrator] generando nuevo secreto para {pcbot_id}")
-            elif existente and existente.get("secreto_shs"):
-                secreto_asignado = existente["secreto_shs"]
+        # Handshake exitoso
+        await websocket.send_json({"tipo": "handshake_ok", "pcbot_id": pcbot_id})
+        logger.info("[DIAG-002] Handshake completado, entrando al bucle de mensajes")
 
-            if existente:
-                if secreto_asignado:
-                    ejecutar_sql(
-                        """update pcbots_registrados set
-                           hostname = ?, usuario = ?, ip_local = ?, ip_tailscale = ?, ip_wan = ?,
-                           workspace_id = ?, perfiles_roxy = ?, perfiles_vip = ?, navegadores = ?,
-                           browser_path = ?, user_data_dir = ?, debugging_port = ?,
-                           session_exists = ?, modo = ?, version_agente = ?, estado = 'conectado',
-                           ultima_conexion = ?, secreto_shs = ?
-                           where pcbot_id = ?""",
-                        (
-                            info_sistema.get("hostname", pcbot_id),
-                            info_sistema.get("usuario", ""),
-                            info_sistema.get("ip_local", ""),
-                            info_sistema.get("ip_tailscale", ""),
-                            info_sistema.get("ip_wan", ""),
-                            info_sistema.get("workspace_id", ""),
-                            perfiles_roxy_json,
-                            perfiles_vip_json,
-                            navegadores_json,
-                            info_sistema.get("browser_path", ""),
-                            info_sistema.get("user_data_dir", ""),
-                            info_sistema.get("debugging_port", 0),
-                            1 if info_sistema.get("session_exists") else 0,
-                            info_sistema.get("modo", "desconocido"),
-                            info_sistema.get("version_agente", ""),
-                            _ahora_str(),
-                            secreto_asignado,
-                            pcbot_id,
-                        ),
-                    )
-                else:
-                    ejecutar_sql(
-                        """update pcbots_registrados set
-                           hostname = ?, usuario = ?, ip_local = ?, ip_tailscale = ?, ip_wan = ?,
-                           workspace_id = ?, perfiles_roxy = ?, perfiles_vip = ?, navegadores = ?,
-                           browser_path = ?, user_data_dir = ?, debugging_port = ?,
-                           session_exists = ?, modo = ?, version_agente = ?, estado = 'conectado',
-                           ultima_conexion = ?
-                           where pcbot_id = ?""",
-                        (
-                            info_sistema.get("hostname", pcbot_id),
-                            info_sistema.get("usuario", ""),
-                            info_sistema.get("ip_local", ""),
-                            info_sistema.get("ip_tailscale", ""),
-                            info_sistema.get("ip_wan", ""),
-                            info_sistema.get("workspace_id", ""),
-                            perfiles_roxy_json,
-                            perfiles_vip_json,
-                            navegadores_json,
-                            info_sistema.get("browser_path", ""),
-                            info_sistema.get("user_data_dir", ""),
-                            info_sistema.get("debugging_port", 0),
-                            1 if info_sistema.get("session_exists") else 0,
-                            info_sistema.get("modo", "desconocido"),
-                            info_sistema.get("version_agente", ""),
-                            _ahora_str(),
-                            pcbot_id,
-                        ),
-                    )
-            else:
-                if not secreto_asignado:
-                    secreto_asignado = generar_secreto_pcbot()
-                ejecutar_insercion(
-                    """insert into pcbots_registrados
-                       (pcbot_id, hostname, usuario, ip_local, ip_tailscale, ip_wan,
-                        workspace_id, perfiles_roxy, perfiles_vip, navegadores,
-                        browser_path, user_data_dir, debugging_port, session_exists,
-                        modo, version_agente, estado, ultima_conexion, secreto_shs)
-                       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'conectado', ?, ?)""",
-                    (
-                        pcbot_id,
-                        info_sistema.get("hostname", pcbot_id),
-                        info_sistema.get("usuario", ""),
-                        info_sistema.get("ip_local", ""),
-                        info_sistema.get("ip_tailscale", ""),
-                        info_sistema.get("ip_wan", ""),
-                        info_sistema.get("workspace_id", ""),
-                        perfiles_roxy_json,
-                        perfiles_vip_json,
-                        navegadores_json,
-                        info_sistema.get("browser_path", ""),
-                        info_sistema.get("user_data_dir", ""),
-                        info_sistema.get("debugging_port", 0),
-                        1 if info_sistema.get("session_exists") else 0,
-                        info_sistema.get("modo", "desconocido"),
-                        info_sistema.get("version_agente", ""),
-                        _ahora_str(),
-                        secreto_asignado,
-                    ),
-                )
-
-            # enviar identify_ok con el secreto shs si se genero nuevo
-            if secreto_asignado:
-                ts = _ts()
-                payload_ok = json.dumps({
-                    "tipo": "identify_ok",
-                    "secreto_shs": secreto_asignado,
-                    "timestamp": ts,
-                })
-                firma_ok = firmar(payload_ok, _secreto)
-                await websocket.send_json({"payload": payload_ok, "firma": firma_ok, "timestamp": ts})
-                print(f"[orchestrator] secreto shs enviado a {pcbot_id}")
-                # a partir de ahora el pcbot usa su secreto propio
-                _secreto_pcbot_actual = secreto_asignado
-
-            # persistir perfiles individuales en tabla perfiles
-            for perfil in info_sistema.get("perfiles", []):
-                if isinstance(perfil, dict):
-                    perfil_id = perfil.get("id", "") or perfil.get("nombre_perfil", "")
-                    perfil_nombre = perfil.get("name", "") or perfil.get("nombre_perfil", "") or perfil_id
-                    perfil_estado = perfil.get("status", "") or perfil.get("estado", "desconocido")
-                    perfil_hash = perfil.get("hash", "")
-                    perfil_tipo = perfil.get("tipo", "local")
-
-                    existente_perfil = ejecutar_sql_unico(
-                        "select id from perfiles where nombre_perfil = ? and usuario_id is null",
-                        (perfil_nombre,),
-                    )
-                    if existente_perfil:
-                        ejecutar_sql(
-                            "update perfiles set estado = ?, ultimo_heartbeat = ? where nombre_perfil = ?",
-                            (perfil_estado, _ahora_str(), perfil_nombre),
-                        )
-                    else:
-                        ejecutar_insercion(
-                            "insert into perfiles (nombre_perfil, tipo, estado, ultimo_heartbeat) values (?, ?, ?, ?)",
-                            (perfil_nombre, perfil_tipo, perfil_estado, _ahora_str()),
-                        )
-        except Exception as _e:
-            print(f"[orchestrator] error persistiendo handshake: {_e}")
-
-        # enviar comandos pendientes para este pcbot
-        await _enviar_pendientes(pcbot_id)
-
-        # bucle de heartbeats y comandos
+        # Bucle principal de recepción de mensajes
         while True:
             try:
-                msg_raw = await asyncio.wait_for(websocket.receive_text(), timeout=30)
-                msg = json.loads(msg_raw)
+                logger.info(f"[DEBUG] Ciclo vivo, websocket.closed={websocket.closed}")
+                if websocket.closed:
+                    logger.warning(f"[DEBUG] websocket cerrado para {pcbot_id}, saliendo del bucle")
+                    break
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=120)
+                logger.info(f"[DEBUG] Mensaje RAW recibido: {raw[:200]}")
+                logger.info(f"[WS-RECV] Mensaje recibido de {pcbot_id}: {raw[:200]}")
+                logger.info(f"[WS-STATE] websocket.closed = {websocket.closed}, remote_address = {websocket.remote_address}")
+                logger.info("[DIAG-003] Mensaje RECIBIDO (longitud %d): %s", len(raw), raw[:200])
+                datos = json.loads(raw)
+                logger.info(f"[WS-TIPO] tipo = {datos.get('tipo')}")
+                logger.info("[DIAG-004] Tipo de mensaje: %s", datos.get("tipo"))
 
-                # verificar firma: primero con secreto global, luego con secreto propio del pcbot
-                firma_ok = verificar_firma(msg.get("payload", ""), msg.get("firma", ""), _secreto)
-                if not firma_ok and _secreto_pcbot_actual:
-                    firma_ok = verificar_firma(
-                        msg.get("payload", ""),
-                        msg.get("firma", ""),
-                        _secreto_pcbot_actual,
-                    )
-                if not firma_ok:
+                # --- Manejo de respuestas de comandos ---
+                if datos.get("tipo") == "respuesta_recargar_perfiles":
+                    req_id = datos.get("comando_id")
+                    logger.info("[DIAG-005] !Respuesta recargar_perfiles detectada! request_id=%s", req_id)
+                    logger.info(f"[WS-PEND] req_id={req_id}, presente en _pending_commands? {req_id in _pending_commands}")
+                    if req_id and req_id in _pending_commands:
+                        _pending_commands[req_id].set_result(datos)
+                        logger.info("[DIAG-006] Futuro encontrado, resolviendo")
+                    else:
+                        logger.warning("[DIAG-007] request_id no encontrado en pendientes")
+                    continue  # no procesar como otro tipo de mensaje
+
+                if datos.get("tipo") == "heartbeat":
+                    # actualizar heartbeat
+                    _conexiones_ws[pcbot_id]["ultimo_heartbeat"] = time.time()
+                    heartbeat_cache.registrar_heartbeat(pcbot_id, datos)
+                    await websocket.send_json({"tipo": "ack"})
                     continue
 
-                datos = json.loads(msg.get("payload", "{}"))
-                tipo = datos.get("tipo", "")
-
-                if tipo == "heartbeat":
-                    await _procesar_heartbeat(pcbot_id, datos)
-                elif tipo == "respuesta":
-                    await _procesar_respuesta(pcbot_id, datos)
-                elif tipo == "alerta":
-                    await _procesar_alerta(pcbot_id, datos)
+                # Otros comandos (asignar, detener, etc.) se manejarían aquí
+                # Por ahora solo logueamos
+                logger.debug(f"Mensaje no manejado de {pcbot_id}: {datos.get('tipo')}")
 
             except asyncio.TimeoutError:
-                print(f"[orchestrator] timeout de 30s sin mensaje de {pcbot_id}, marcando como inactivo")
-                _pcbot_info[pcbot_id]["estado"] = "inactivo"
-                # desconectar
+                logger.warning(f"[WS-TIMEOUT] No se recibio ningun mensaje en los ultimos 60 segundos de {pcbot_id}")
+                # Timeout en recepción, enviar heartbeat de control para verificar conexión
+                try:
+                    await websocket.send_json({"tipo": "ping"})
+                except:
+                    break
+            except websockets.ConnectionClosed:
                 break
-            except Exception:
-                break
+            except json.JSONDecodeError:
+                logger.warning(f"Mensaje json invalido de {pcbot_id}")
+                continue
 
     except asyncio.TimeoutError:
-        print(f"[orchestrator] timeout handshake con {pcbot_id}")
+        logger.warning(f"Timeout en handshake de {pcbot_id}")
+    except websockets.ConnectionClosed:
+        pass
     except Exception as e:
-        print(f"[orchestrator] error con pcbot {pcbot_id}: {e}")
+        logger.error(f"Error en conexion con {pcbot_id}: {e}")
     finally:
+        # Limpiar conexión
         _conexiones_ws.pop(pcbot_id, None)
-        print(f"[orchestrator] pcbot desconectado: {pcbot_id}")
+        # limpiar ws_manager
+        try:
+            from ws_manager import eliminar_conexion
+            eliminar_conexion(pcbot_id=pcbot_id)
+        except Exception:
+            pass
+        logger.info(f"pcbot desconectado: {pcbot_id}")
 
 
 # ---------------------------------------------------------------------------
@@ -419,6 +392,7 @@ async def _enviar_pendientes(pcbot_id: str):
         "select * from comandos where pcbot_id = ? and estado = 'pendiente' order by fecha_creacion",
         (pcbot_id,),
     )
+    logger.info(f"[ORCH-DIAG] _enviar_pendientes: pcbot_id={pcbot_id} cantidad={len(pendientes)}")
     for cmd in pendientes:
         comando = {
             "comando_id": cmd["comando_id"],
@@ -426,7 +400,8 @@ async def _enviar_pendientes(pcbot_id: str):
             "parametros": json.loads(cmd["parametros"]) if cmd["parametros"] else {},
             "estado": cmd["estado"],
         }
-        await _enviar_a_pcbot(pcbot_id, comando)
+        ok = await _enviar_a_pcbot(pcbot_id, comando)
+        logger.info(f"[ORCH-DIAG] _enviar_pendientes: reenvio cmd {cmd['comando_id']} ok={ok}")
 
 
 # ---------------------------------------------------------------------------
@@ -447,7 +422,7 @@ async def _enviar_heartbeat_control(websocket):
 # procesar heartbeat del pcbot
 # ---------------------------------------------------------------------------
 async def _procesar_heartbeat(pcbot_id: str, datos: dict):
-    """procesa heartbeat del pcbot: actualiza info y tokens minados."""
+    """procesa heartbeat del pcbot: actualiza info, perfiles y tokens minados."""
     _pcbot_info[pcbot_id] = _pcbot_info.get(pcbot_id, {})
     _pcbot_info[pcbot_id]["ultimo_heartbeat"] = _ahora_str()
     _pcbot_info[pcbot_id]["uptime_segundos"] = datos.get("uptime", 0)
@@ -470,16 +445,58 @@ async def _procesar_heartbeat(pcbot_id: str, datos: dict):
     except Exception as _he:
         print(f"[orchestrator] error persistiendo heartbeat: {_he}")
 
-    # actualizar tabla de perfiles con heartbeat
+    # actualizar tabla perfiles_roxy con heartbeat y estado de perfiles
+    # el pcbot envia "perfiles": [{"profile_id": ..., "activo": bool, "tiempo_conectado_seg": ...}]
     for perfil in datos.get("perfiles", []):
-        perfil_id = perfil.get("id", "")
+        perfil_id = perfil.get("profile_id", perfil.get("id", ""))
+        activo = perfil.get("activo", 1)
+        tiempo_seg = perfil.get("tiempo_conectado_seg", 0)
         if perfil_id:
-            with get_db_context() as conn:
-                conn.execute(
-                    "update perfiles set horas_conexion = horas_conexion + 0.0333, ultimo_heartbeat = ? where nombre_perfil = ?",
-                    (_ahora_str(), perfil_id),
+            try:
+                # verificar si existe en perfiles_roxy
+                existente = ejecutar_sql_unico(
+                    "select id from perfiles_roxy where id = ?", (perfil_id,)
                 )
-                conn.commit()
+                if existente:
+                    with get_db_context() as conn:
+                        conn.execute(
+                            """update perfiles_roxy set activo = ?, tiempo_activo_seg = ?,
+                               ultimo_heartbeat = ?, pcbot_id = ? where id = ?""",
+                            (1 if activo else 0, tiempo_seg, _ahora_str(), pcbot_id, perfil_id),
+                        )
+                        conn.commit()
+                else:
+                    # insertar perfil si aun no existe (asociar a usuario del pcbot)
+                    usuario_id = _pcbot_info.get(pcbot_id, {}).get("usuario_id")
+                    if not usuario_id:
+                        user_row = ejecutar_sql_unico(
+                            "select id from usuarios where pcbot_id = ? limit 1", (pcbot_id,)
+                        )
+                        usuario_id = user_row["id"] if user_row else None
+                    if usuario_id:
+                        with get_db_context() as conn:
+                            conn.execute(
+                                """insert or ignore into perfiles_roxy
+                                   (id, usuario_id, nombre, activo, tiempo_activo_seg,
+                                    ultimo_heartbeat, pcbot_id, creado_en)
+                                   values (?, ?, ?, ?, ?, ?, ?, ?)""",
+                                (perfil_id, usuario_id, f"perfil_{perfil_id}",
+                                 1 if activo else 0, tiempo_seg,
+                                 _ahora_str(), pcbot_id, _ahora_str()),
+                            )
+                            conn.commit()
+            except Exception as e:
+                logger.warning(f"error actualizando perfil {perfil_id}: {e}")
+
+    # si no se enviaron perfiles, marcar los de este pcbot como inactivos
+    if not datos.get("perfiles"):
+        try:
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 where pcbot_id = ? and ultimo_heartbeat < ?",
+                (pcbot_id, (datetime.now().timestamp() - 180)),  # 3 min sin heartbeat = inactivo
+            )
+        except Exception as e:
+            logger.warning(f"error marcando perfiles inactivos: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -497,9 +514,27 @@ async def _procesar_respuesta(pcbot_id: str, datos: dict):
             ("completado" if exito else "fallido", json.dumps(resultado, ensure_ascii=False), _ahora_str(), comando_id),
         )
 
+        # actualizar pedidos si el comando esta asociado a uno
+        try:
+            pedido = ejecutar_sql_unico(
+                "select id from pedidos where comando_id = ?", (comando_id,)
+            )
+            if pedido:
+                nuevo_estado = "completado" if exito else "fallido"
+                ejecutar_sql(
+                    "update pedidos set estado = ? where id = ?",
+                    (nuevo_estado, pedido["id"]),
+                )
+                logger.info(f"pedido {pedido['id']} actualizado a {nuevo_estado} via comando {comando_id}")
+        except Exception as e:
+            logger.warning(f"error actualizando pedido por comando {comando_id}: {e}")
+
+    # resolver futuros pendientes para respuestas de recargar_perfiles
+    if comando_id in _pending_commands:
+        _pending_commands[comando_id].set_result(datos)
+
     # limpiar de cola si estaba
     _cola_comandos.pop(comando_id, None)
-
 
 # ---------------------------------------------------------------------------
 # procesar alerta del pcbot
@@ -649,9 +684,22 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
     wrapper de compatibilidad para server.py."""
     tipo = mensaje.get("tipo", "")
 
+    # DIAGNOSTICO: log de heartbeats
     if tipo == "heartbeat":
+        logger.info("[HB-DEBUG] Heartbeat recibido de %s, datos=%s", pcbot_id, str(mensaje)[:150])
+        logger.info("[HB] Heartbeat recibido de %s, enviando ack", pcbot_id)
         await _procesar_heartbeat(pcbot_id, mensaje)
         await _enviar_pendientes(pcbot_id)
+    elif tipo == "respuesta_recargar_perfiles":
+        req_id = mensaje.get("comando_id")
+        logger.info("[DIAG-005] !Respuesta recargar_perfiles detectada! request_id=%s", req_id)
+        logger.info(f"[WS-PEND] req_id={req_id}, presente en _pending_commands? {req_id in _pending_commands}")
+        if req_id and req_id in _pending_commands:
+            _pending_commands[req_id].set_result(mensaje)
+            logger.info("[DIAG-006] Futuro encontrado, resolviendo")
+        else:
+            logger.warning("[DIAG-007] request_id no encontrado en pendientes")
+        return {"tipo": "ack_recargar", "pcbot_id": pcbot_id, "timestamp": _ahora_str()}
     elif tipo == "respuesta":
         await _procesar_respuesta(pcbot_id, mensaje)
     elif tipo == "alerta":
@@ -669,15 +717,87 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
 
     return {"tipo": "ack", "pcbot_id": pcbot_id, "timestamp": _ahora_str()}
 
+async def enviar_comando_asignar(usuario_id: int, parametros: dict) -> dict:
+    """envia un comando 'asignar' al pcbot del usuario via ws_manager.
+    wrapper de alto nivel para api_pedidos.
+    estructura: {"tipo": "asignar", "parametros": {...}}"""
+    from ws_manager import enviar_comando_al_pcbot
+    comando = {
+        "tipo": "asignar",
+        "parametros": parametros,
+        "comando_id": parametros.get("comando_id", ""),
+    }
+    return await enviar_comando_al_pcbot(usuario_id, comando)
+
+
 async def enviar_comando_pcbot(usuario_id: int, comando: dict) -> bool:
-    """Envía un comando al pcbot conectado del usuario."""
-    from ws_manager import ws_connections  # asumimos que existe un dict con clave usuario_id
-    conn = ws_connections.get(usuario_id)
+    """envia un comando al pcbot conectado del usuario."""
+    from ws_manager import ws_connections
+    conn = ws_connections.get(str(usuario_id))
     if not conn:
         return False
     try:
-        await conn.send_text(json.dumps(comando))
+        ws = conn.get("ws") if isinstance(conn, dict) else conn
+        await ws.send_json(comando)
         return True
     except:
         return False
 
+
+async def enviar_recargar_perfiles(pcbot_id: str, roxy_api_key: str) -> dict:
+    """envia comando recargar_perfiles a un pcbot especifico.
+    devuelve dict con exito y comando_id si se pudo enviar."""
+    if pcbot_id not in _conexiones_ws:
+        return {"exito": False, "error": "pcbot no conectado", "pcbot_id": pcbot_id}
+    comando_id = str(uuid.uuid4())[:12]
+    comando = {
+        "comando_id": comando_id,
+        "tipo": "recargar_perfiles",
+        "parametros": {"roxy_api_key": roxy_api_key},
+        "pcbot_id": pcbot_id,
+        "estado": "pendiente",
+    }
+    _cola_comandos[comando_id] = comando
+    try:
+        ok = await _enviar_a_pcbot(pcbot_id, comando)
+        return {"exito": ok, "comando_id": comando_id, "pcbot_id": pcbot_id}
+    except Exception as e:
+        return {"exito": False, "error": str(e), "pcbot_id": pcbot_id}
+
+
+async def enviar_comando_recargar_perfiles(pcbot_id: str, api_key: str) -> dict:
+    """envia comando recargar_perfiles al pcbot y espera respuesta."""
+    logger.info("[DIAG-100] Enviando comando a %s", pcbot_id)
+
+    if pcbot_id not in _conexiones_ws:
+        return {"ok": False, "error": "pcbot no conectado"}
+
+    conexion = _conexiones_ws[pcbot_id]
+    ws = conexion.get("ws") if isinstance(conexion, dict) else conexion
+    if not ws:
+        return {"ok": False, "error": "websocket no encontrado"}
+
+    request_id = str(uuid.uuid4())
+    futuro = asyncio.Future()
+    _pending_commands[request_id] = futuro
+
+    logger.info("[DIAG-101] WebSocket obtenido, id=%s", request_id)
+
+    try:
+        comando = {
+            "tipo": "recargar_perfiles",
+            "comando_id": request_id,
+            "parametros": {"roxy_api_key": api_key},
+        }
+        await ws.send_json(comando)
+        logger.info(f"[COMANDO] Enviado correctamente a {pcbot_id}, esperando futuro {request_id}")
+        logger.info("[DIAG-102] Comando enviado, esperando respuesta...")
+        respuesta = await asyncio.wait_for(futuro, timeout=30)
+        logger.info("[DIAG-104] Respuesta recibida correctamente")
+        return respuesta
+    except asyncio.TimeoutError:
+        logger.error("[DIAG-103] Timeout despues de 30s")
+        return {"ok": False, "error": "timeout esperando respuesta del pcbot"}
+    finally:
+        logger.info(f"[FINAL] Limpiando futuro {request_id}")
+        _pending_commands.pop(request_id, None)

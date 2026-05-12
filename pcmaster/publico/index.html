@@ -1,1052 +1,902 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>wafabot · gana dinero mientras duermes</title>
-  <meta name="description" content="wafabot - el primer sistema que te paga por ver streams. convierte tus pcs en fuentes de ingresos pasivos. registrate gratis.">
-  <meta name="keywords" content="wafabot, ingresos pasivos, ganar dinero online, streams, dota2, fortnite, free fire, gaming, anime, cosplay">
-  <meta name="robots" content="index, follow">
-  <meta property="og:title" content="wafabot · gana dinero mientras duermes">
-  <meta property="og:description" content="convierte tus pcs en fuentes de ingresos pasivos. sin inversion inicial. resultados en 24 horas.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://wafabot.com/">
-  <link rel="canonical" href="https://wafabot.com/">
-  <style>
-    /* === reset y base === */
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body {
-      font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      background:#0b0f17;
-      color:#e2e8f0;
-      min-height:100vh;
-      overflow-x:hidden;
-      line-height:1.6;
-      position:relative;
-    }
-    a { text-decoration:none; color:inherit; }
-    ul { list-style:none; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="WAFABOT - audiencia real para tus directos. multiplica tu audiencia en kick, twitch, youtube y muchos mpas... beta abierta.">
+<meta name="keywords" content="WAFABOT, audiencia, stream, kick, twitch, tiktok, youtube y muchos mas... espectadores reales, comentarios y reacciones">
+<meta property="og:title" content="WAFABOT - Espectadores, comentarios y reacciones 99.9% reales  reales!!!">
+<meta property="og:description" content="audiencia real para tus directos en kick, tiktok, youtube, twitch y muchas otras mas... beta abierta - acceso gratuito por tiempo limitado.">
+<meta property="og:url" content="https://www.WAFABOT.com">
+<meta name="theme-color" content="#0a0a1a">
+<title>WAFABOT - audiencia real para tus directos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@400;500;600;700;800;900&family=poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="css/estilo_gamer.css">
+<style>
+/* ===== RESET ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'poppins',sans-serif;background:#0a0a1a;color:#e0e0e0;overflow-x:hidden;line-height:1.6;min-height:100vh}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+img{max-width:100%;display:block}
+.container{width:100%;max-width:1200px;margin:0 auto;padding:0 20px}
+section{padding:80px 0}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;text-align:center;margin-bottom:10px;letter-spacing:-0.5px}
+.section-subtitle{font-size:clamp(1rem,2vw,1.3rem);text-align:center;color:#a0a0b0;margin-bottom:50px;font-weight:300}
+.gold{color:#ffd700}
+.neon{color:#00ff88;text-shadow:0 0 20px rgba(0,255,136,0.4)}
+.purple{color:#7c3aed}
 
-    /* === grid de fondo cyberpunk === */
-    body::before {
-      content:'';
-      position:fixed;
-      inset:0;
-      background-image:
-        linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px);
-      background-size:40px 40px;
-      pointer-events:none;
-      z-index:0;
-    }
+/* ===== HEADER ===== */
+header{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:15px 0;transition:all 0.3s;background:rgba(10,10,26,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,215,0,0.1)}
+header.scrolled{background:rgba(10,10,26,0.95);box-shadow:0 4px 30px rgba(0,0,0,0.5)}
+header .container{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ffffff;display:inline-flex;flex-direction:column;align-items:center}
+.logo .logo-main{color:#ffffff}
+.logo .logo-main span{color:#ffd700}
+.logo .neon{color:#00ff88;display:block;font-size:0.5em}
+.nav-links{display:flex;gap:15px;align-items:center}
+.nav-links a{font-size:1rem;font-weight:600;color:#e0e0e0;transition:all 0.3s;position:relative;padding:8px 16px;border-radius:8px}
+.nav-links a:hover,.nav-links a.active{color:#ffd700;background:rgba(255,215,0,0.08)}
+.nav-links a::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:0;height:2px;background:linear-gradient(90deg,#ffd700,#00ff88);transition:width 0.3s;border-radius:2px}
+.nav-links a:hover::after,.nav-links a.active::after{width:60%}
+.nav-cta{padding:10px 24px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#ffffff;border-radius:50px;font-weight:700;font-size:1rem;transition:all 0.3s}
+.nav-cta:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 4px 20px rgba(0,255,136,0.5);color:#ffffff}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:5px;z-index:1001}
+.hamburger span{display:block;width:28px;height:2.5px;background:#fff;border-radius:2px;transition:all 0.3s}
+.hamburger.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.active span:nth-child(2){opacity:0}
+.hamburger.active span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
 
-    /* === particulas de juegos flotando (css puro) === */
-    .game-particles {
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:0;
-      overflow:hidden;
-    }
-    .game-particles span {
-      position:absolute;
-      font-size:1.8rem;
-      opacity:0.12;
-      animation:floatParticle 12s ease-in-out infinite;
-    }
-    .game-particles span:nth-child(1) { top:8%; left:5%; animation-delay:0s; }
-    .game-particles span:nth-child(2) { top:15%; right:8%; animation-delay:2s; font-size:2.2rem; }
-    .game-particles span:nth-child(3) { top:45%; left:3%; animation-delay:4s; }
-    .game-particles span:nth-child(4) { top:60%; right:5%; animation-delay:1s; }
-    .game-particles span:nth-child(5) { top:78%; left:7%; animation-delay:3s; font-size:2rem; }
-    .game-particles span:nth-child(6) { top:30%; right:3%; animation-delay:5s; }
-    .game-particles span:nth-child(7) { top:88%; right:12%; animation-delay:2.5s; }
-    .game-particles span:nth-child(8) { top:50%; left:10%; animation-delay:4.5s; font-size:1.5rem; }
-    @keyframes floatParticle {
-      0%,100% { transform:translateY(0) rotate(0deg); opacity:0.12; }
-      25% { transform:translateY(-25px) rotate(5deg); opacity:0.2; }
-      50% { transform:translateY(10px) rotate(-3deg); opacity:0.08; }
-      75% { transform:translateY(-15px) rotate(4deg); opacity:0.18; }
-    }
+/* ===== HERO ===== */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding-top:80px}
+#hero canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.hero-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,rgba(124,58,237,0.15) 0%,rgba(10,10,26,0.9) 70%);z-index:1}
+.hero-content{position:relative;z-index:2;text-align:center;max-width:900px;padding:0 20px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:50px;padding:8px 20px;font-size:0.85rem;color:#00ff88;margin-bottom:25px}
+.hero-title{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff,#ffd700,#00ff88,#7c3aed);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:hero-grad 6s ease-in-out infinite}
+@keyframes hero-grad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero-sub{font-size:clamp(1rem,2vw,1.4rem);color:#a0a0b0;margin-bottom:15px;font-weight:300}
+.hero-big{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:30px;background:linear-gradient(135deg,#ffd700,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-buttons{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-bottom:35px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.3s ease;border:none;font-family:'poppins',sans-serif;position:relative;overflow:hidden}
+.btn-cta{background:linear-gradient(135deg,#00ff88,#00cc6a);color:#0a0a1a;box-shadow:0 4px 25px rgba(0,255,136,0.3);padding:18px 44px;font-size:1.15rem;font-weight:700;letter-spacing:0.5px}
+.btn-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 40px rgba(0,255,136,0.5)}
+.btn-gold{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#0a0a1a;box-shadow:0 4px 25px rgba(255,215,0,0.3)}
+.btn-gold:hover{transform:translateY(-3px);box-shadow:0 8px 35px rgba(255,215,0,0.5)}
+.btn-outline{background:transparent;border:2px solid rgba(255,255,255,0.2);color:#fff}
+.btn-outline:hover{border-color:#ffd700;color:#ffd700}
 
-    /* === animaciones globales === */
-    @keyframes fadeIn { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
-    @keyframes slideUp { from{opacity:0;transform:translateY(60px);} to{opacity:1;transform:translateY(0);} }
-    @keyframes pulseGlow {
-      0%,100%{box-shadow:0 0 20px rgba(139,92,246,0.3);}
-      50%{box-shadow:0 0 40px rgba(139,92,246,0.6),0 0 60px rgba(6,182,212,0.3);}
-    }
-    @keyframes shimmer {
-      0%{background-position:-200% center;}
-      100%{background-position:200% center;}
-    }
-    @keyframes float {
-      0%,100%{transform:translateY(0);}
-      50%{transform:translateY(-10px);}
-    }
-    @keyframes glitch {
-      0%{text-shadow:2px 0 #06b6d4,-2px 0 #8b5cf6;}
-      25%{text-shadow:-2px 0 #06b6d4,2px 0 #8b5cf6;}
-      50%{text-shadow:3px 0 #06b6d4,-1px 0 #8b5cf6;}
-      75%{text-shadow:-3px 0 #06b6d4,1px 0 #8b5cf6;}
-      100%{text-shadow:2px 0 #06b6d4,-2px 0 #8b5cf6;}
-    }
-    @keyframes ping {
-      0%{transform:scale(1);opacity:0.8;}
-      70%{transform:scale(1.3);opacity:0;}
-      100%{transform:scale(1.3);opacity:0;}
-    }
-    @keyframes slideInRight {
-      from{transform:translateX(120px);opacity:0;}
-      to{transform:translateX(0);opacity:1;}
-    }
-    .anim-fade { animation:fadeIn 0.8s ease forwards; opacity:0; }
-    .anim-slide { animation:slideUp 0.8s ease forwards; opacity:0; }
-    .anim-delay-1 { animation-delay:0.2s; }
-    .anim-delay-2 { animation-delay:0.4s; }
-    .anim-delay-3 { animation-delay:0.6s; }
-    .anim-delay-4 { animation-delay:0.8s; }
-    .anim-float { animation:float 3s ease-in-out infinite; }
+/* ===== COUNTDOWN ===== */
+.countdown{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:30px 0}
+.countdown-item{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.countdown-num{font-size:clamp(2rem,5vw,4rem);font-weight:900;background:linear-gradient(135deg,#ffd700,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.countdown-label{font-size:0.75rem;color:#707080;text-transform:uppercase;letter-spacing:2px;margin-top:5px}
+.hero-stats{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:1.8rem;font-weight:800;color:#ffd700}
+.hero-stat-label{font-size:0.75rem;color:#707080;text-transform:uppercase;letter-spacing:1px}
 
-    /* === layout === */
-    .container { max-width:1200px; margin:0 auto; padding:0 1.5rem; }
-    section { position:relative; z-index:1; }
+/* ===== PLATFORMAS MARQUEE ===== */
+#plataformas{background:linear-gradient(180deg,rgba(255,215,0,0.03),transparent);padding:40px 0}
+.marquee-wrapper{overflow:hidden;position:relative;width:100%}
+.marquee-wrapper::before,.marquee-wrapper::after{content:'';position:absolute;top:0;width:80px;height:100%;z-index:2;pointer-events:none}
+.marquee-wrapper::before{left:0;background:linear-gradient(90deg,#0a0a1a,transparent)}
+.marquee-wrapper::after{right:0;background:linear-gradient(90deg,transparent,#0a0a1a)}
+.marquee-track{display:flex;gap:60px;animation:marquee 25s linear infinite;width:max-content;padding:10px 0}
+.marquee-track:hover{animation-play-state:paused}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.platform-icon{display:flex;align-items:center;gap:10px;font-size:1.3rem;color:#606080;transition:color 0.3s;white-space:nowrap}
+.platform-icon i{font-size:2rem}
+.platform-icon:hover{color:#ffd700}
+.platform-icon .fa-kickstarter{color:#00ff88}
+.platform-icon .fa-twitch{color:#9146ff}
+.platform-icon .fa-tiktok{color:#fe2c55}
+.platform-icon .fa-youtube{color:#ff0000}
+.platform-icon .fa-instagram{color:#e4405f}
 
-    /* === navbar === */
-    nav {
-      position:sticky; top:0; z-index:100;
-      background:rgba(11,15,23,0.95);
-      backdrop-filter:blur(12px);
-      border-bottom:1px solid rgba(139,92,246,0.2);
-      padding:0.7rem 0;
-    }
-    nav .container {
-      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
-    }
-    .logo {
-      font-size:1.5rem; font-weight:900; letter-spacing:1px;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4,#8b5cf6);
-      background-size:200% auto;
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      animation:shimmer 3s linear infinite;
-    }
-    .nav-links { display:flex; gap:1.5rem; align-items:center; }
-    .nav-links a {
-      font-size:0.85rem; color:#94a3b8; transition:color 0.3s;
-      position:relative;
-    }
-    .nav-links a::after {
-      content:''; position:absolute; bottom:-4px; left:0; width:0; height:2px;
-      background:#8b5cf6; transition:width 0.3s;
-    }
-    .nav-links a:hover { color:#8b5cf6; }
-    .nav-links a:hover::after { width:100%; }
-    .nav-buttons { display:flex; gap:0.7rem; }
+/* ===== BENEFICIOS ===== */
+.beneficios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px}
+.beneficio-card{background:linear-gradient(145deg,rgba(255,255,255,0.03),rgba(124,58,237,0.05));border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:35px 25px;text-align:center;transition:all 0.4s;position:relative;overflow:hidden}
+.beneficio-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#ffd700,#00ff88,#7c3aed);opacity:0;transition:opacity 0.4s}
+.beneficio-card:hover::before{opacity:1}
+.beneficio-card:hover{transform:translateY(-8px);border-color:rgba(255,215,0,0.2);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.beneficio-icon{width:60px;height:60px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(124,58,237,0.1));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.beneficio-icon.gold i{color:#ffd700}
+.beneficio-icon.neon i{color:#00ff88}
+.beneficio-icon.purple i{color:#7c3aed}
+.beneficio-card h3{font-size:1.2rem;font-weight:700;margin-bottom:10px;color:#fff}
+.beneficio-card p{font-size:0.9rem;color:#9090a0;line-height:1.7}
 
-    /* menu hamburguesa para mobile */
-    .hamburger { display:none; flex-direction:column; cursor:pointer; gap:5px; background:none; border:none; padding:5px; }
-    .hamburger span { width:26px; height:2.5px; background:#8b5cf6; border-radius:3px; transition:all 0.3s; }
-    .hamburger.active span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
-    .hamburger.active span:nth-child(2) { opacity:0; }
-    .hamburger.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+/* ===== USE CASES ===== */
+.usecases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:30px}
+.usecase-card{background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(255,215,0,0.03));border:1px solid rgba(255,215,0,0.1);border-radius:20px;padding:40px 30px;transition:all 0.4s;position:relative;overflow:hidden}
+.usecase-card:hover{transform:translateY(-10px);box-shadow:0 20px 80px rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3)}
+.usecase-card .tag{display:inline-block;padding:4px 12px;border-radius:50px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px}
+.usecase-card .tag.streamer{background:rgba(0,255,136,0.15);color:#00ff88}
+.usecase-card .tag.agency{background:rgba(124,58,237,0.15);color:#7c3aed}
+.usecase-card .tag.creator{background:rgba(255,215,0,0.15);color:#ffd700}
+.usecase-card h3{font-size:1.4rem;font-weight:800;margin-bottom:12px;color:#fff}
+.usecase-card p{font-size:0.95rem;color:#9090a0;line-height:1.7;margin-bottom:20px}
+.usecase-card .usecase-link{color:#ffd700;font-weight:600;font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;transition:gap 0.3s}
+.usecase-card .usecase-link:hover{gap:15px}
 
-    /* === botones === */
-    .btn {
-      padding:0.6rem 1.5rem; border-radius:10px; font-weight:600;
-      font-size:0.9rem; cursor:pointer; transition:all 0.3s;
-      border:none; display:inline-block; text-align:center;
-    }
-    .btn-primary {
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      color:#fff; box-shadow:0 4px 15px rgba(139,92,246,0.4);
-    }
-    .btn-primary:hover {
-      transform:translateY(-2px); box-shadow:0 8px 30px rgba(139,92,246,0.6);
-    }
-    .btn-secondary {
-      background:transparent; color:#8b5cf6;
-      border:1px solid rgba(139,92,246,0.5);
-    }
-    .btn-secondary:hover {
-      background:rgba(139,92,246,0.1); border-color:#8b5cf6;
-      transform:translateY(-2px);
-    }
-    .btn-lg { padding:0.9rem 2.5rem; font-size:1.05rem; border-radius:14px; }
-    .btn-sm { padding:0.5rem 1.2rem; font-size:0.82rem; }
+/* ===== GROWTH CHART ===== */
+#crecimiento{background:linear-gradient(180deg,transparent,rgba(0,255,136,0.02),transparent)}
+.chart-container{max-width:600px;margin:0 auto 30px;padding:30px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px}
+.chart-bar-container{display:flex;align-items:flex-end;gap:8px;height:200px;padding:0 10px;justify-content:center}
+.chart-bar{width:35px;background:linear-gradient(180deg,#ffd700,#ffaa00);border-radius:6px 6px 0 0;transition:height 1.5s cubic-bezier(0.34,1.56,0.64,1);height:0;min-width:25px;position:relative}
+.chart-bar:nth-child(even){background:linear-gradient(180deg,#00ff88,#00cc6a)}
+.chart-bar .bar-label{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:#707080;white-space:nowrap}
+.chart-bar .bar-value{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:0.65rem;color:#505060}
 
-    /* === hero === */
-    .hero {
-      position:relative; z-index:1;
-      padding:5rem 0 4rem; text-align:center; overflow:hidden;
-    }
-    .hero::after {
-      content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
-      background:radial-gradient(ellipse at center, rgba(139,92,246,0.05) 0%, transparent 70%);
-      pointer-events:none;
-    }
-    .hero h1 {
-      font-size:clamp(2rem, 5vw, 3.5rem); font-weight:900; line-height:1.15;
-      margin-bottom:1.2rem; position:relative; z-index:1;
-    }
-    .hero h1 .gradient-text {
-      background:linear-gradient(135deg,#8b5cf6,#a78bfa,#06b6d4,#8b5cf6);
-      background-size:300% auto;
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      animation:shimmer 4s linear infinite;
-    }
-    .hero h1 .glitch-hover:hover {
-      animation:glitch 0.4s ease 2;
-    }
-    .hero-sub {
-      font-size:clamp(1rem, 2vw, 1.25rem); color:#94a3b8;
-      max-width:700px; margin:0 auto 2rem; line-height:1.7;
-      position:relative; z-index:1;
-    }
-    .hero-sub strong { color:#06b6d4; }
-    .hero-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
-    .hero-badge {
-      display:inline-block; margin-top:2rem;
-      padding:0.4rem 1.2rem; border-radius:50px;
-      background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.3);
-      color:#06b6d4; font-size:0.8rem; font-weight:600;
-    }
+/* ===== LIVE COUNTER ===== */
+.live-counter{text-align:center;padding:20px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:16px;max-width:500px;margin:30px auto 0}
+.live-counter .count{font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#00ff88,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.live-counter .label{font-size:0.85rem;color:#707080;margin-top:5px}
+.live-users{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:15px;font-size:0.8rem;color:#606080}
+.live-users span{display:none;animation:fadeUser 2s ease}
+.live-users span.active{display:inline}
+@keyframes fadeUser{0%{opacity:0}100%{opacity:1}}
 
-    /* === seccion tarjetas === */
-    .cards-section { padding:4rem 0; position:relative; z-index:1; }
-    .cards-section h2 {
-      text-align:center; font-size:clamp(1.5rem, 3vw, 2rem); font-weight:800;
-      margin-bottom:3rem;
-    }
-    .cards-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:2rem; }
-    .card {
-      background:rgba(21,27,35,0.8); border:1px solid rgba(139,92,246,0.15);
-      border-radius:18px; padding:2.5rem 2rem; text-align:center;
-      transition:all 0.4s; backdrop-filter:blur(4px);
-    }
-    .card:hover {
-      border-color:#8b5cf6; transform:translateY(-8px);
-      box-shadow:0 20px 60px rgba(139,92,246,0.2);
-    }
-    .card-icon {
-      width:70px; height:70px; margin:0 auto 1.2rem;
-      background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(6,182,212,0.15));
-      border-radius:20px; display:flex; align-items:center; justify-content:center;
-      font-size:2rem;
-    }
-    .card h3 { font-size:1.2rem; font-weight:700; margin-bottom:0.8rem; color:#e2e8f0; }
-    .card p { color:#94a3b8; font-size:0.9rem; line-height:1.6; }
+/* ===== TESTIMONIOS ===== */
+.testimonios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px}
+.testimonio-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:30px;transition:all 0.4s}
+.testimonio-card:hover{transform:translateY(-5px);border-color:rgba(255,215,0,0.2);box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.testimonio-stars{color:#ffd700;margin-bottom:15px;font-size:0.9rem}
+.testimonio-text{font-size:0.95rem;color:#c0c0d0;line-height:1.7;margin-bottom:20px;font-style:italic}
+.testimonio-text i{color:#ffd700;margin-right:5px}
+.testimonio-author{display:flex;align-items:center;gap:12px}
+.testimonio-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0}
+.testimonio-avatar.gold{background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,170,0,0.2));color:#ffd700}
+.testimonio-avatar.neon{background:linear-gradient(135deg,rgba(0,255,136,0.2),rgba(0,204,106,0.2));color:#00ff88}
+.testimonio-avatar.purple{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(100,40,200,0.2));color:#7c3aed}
+.testimonio-name{font-weight:600;font-size:0.9rem;color:#fff}
+.testimonio-role{font-size:0.75rem;color:#707080}
 
-    /* === seccion partners === */
-    .partners-section {
-      padding:2.5rem 0; position:relative; z-index:1;
-      background:rgba(11,15,23,0.5);
-      border-top:1px solid rgba(139,92,246,0.08);
-      border-bottom:1px solid rgba(139,92,246,0.08);
-    }
-    .partners-section h3 {
-      text-align:center; font-size:0.9rem; font-weight:600; color:#64748b;
-      text-transform:uppercase; letter-spacing:2px; margin-bottom:1.5rem;
-    }
-    .partners-grid {
-      display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:2rem 2.5rem;
-    }
-    .partner-item {
-      font-size:1.5rem; font-weight:700; color:#475569;
-      transition:all 0.3s; opacity:0.6;
-      display:flex; align-items:center; gap:0.5rem;
-    }
-    .partner-item:hover { color:#8b5cf6; opacity:1; transform:scale(1.05); }
-    .partner-item .partner-icon { font-size:1.8rem; }
+/* ===== CERTIFICACIONES ===== */
+.cert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.cert-card{text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;transition:all 0.4s}
+.cert-card:hover{transform:translateY(-5px);border-color:rgba(255,215,0,0.2)}
+.cert-icon{font-size:2.5rem;margin-bottom:15px;display:block}
+.cert-card h4{font-size:0.9rem;font-weight:600;color:#fff;margin-bottom:5px}
+.cert-card p{font-size:0.75rem;color:#606080}
 
-    /* === como funciona === */
-    .steps-section {
-      padding:4rem 0; position:relative; z-index:1;
-      background:rgba(11,15,23,0.5);
-      border-top:1px solid rgba(139,92,246,0.1);
-      border-bottom:1px solid rgba(139,92,246,0.1);
-    }
-    .steps-section h2 {
-      text-align:center; font-size:clamp(1.5rem, 3vw, 2rem); font-weight:800;
-      margin-bottom:3rem;
-    }
-    .steps-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:2rem; }
-    .step {
-      text-align:center; position:relative;
-    }
-    .step-num {
-      width:60px; height:60px; margin:0 auto 1rem;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      border-radius:50%; display:flex; align-items:center; justify-content:center;
-      font-size:1.5rem; font-weight:900; color:#fff;
-      animation:pulseGlow 2s ease-in-out infinite;
-    }
-    .step-icon { font-size:2.5rem; margin-bottom:0.8rem; }
-    .step h4 { font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; }
-    .step p { color:#94a3b8; font-size:0.85rem; line-height:1.5; }
+/* ===== HOW IT WORKS ===== */
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:25px;counter-reset:step}
+.step-card{text-align:center;padding:30px 20px;position:relative;transition:all 0.4s}
+.step-card:hover{transform:translateY(-5px)}
+.step-num{width:50px;height:50px;margin:0 auto 20px;background:linear-gradient(135deg,#ffd700,#00ff88);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#0a0a1a}
+.step-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;color:#fff}
+.step-card p{font-size:0.85rem;color:#9090a0;line-height:1.6}
 
-    /* === metricas === */
-    .metrics-section {
-      padding:3rem 0; position:relative; z-index:1;
-      background:rgba(139,92,246,0.03);
-      border-bottom:1px solid rgba(139,92,246,0.1);
-    }
-    .metrics-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:1.5rem; text-align:center; }
-    .metric-value {
-      font-size:clamp(2rem, 4vw, 3rem); font-weight:900;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
-    .metric-label { color:#94a3b8; font-size:0.85rem; margin-top:0.3rem; }
+/* ===== PRICING ===== */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;max-width:1000px;margin:0 auto}
+.pricing-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:35px 25px;text-align:center;transition:all 0.4s;position:relative}
+.pricing-card.featured{border-color:#ffd700;background:linear-gradient(145deg,rgba(255,215,0,0.05),rgba(255,170,0,0.02));transform:scale(1.03);box-shadow:0 0 40px rgba(255,215,0,0.1)}
+.pricing-card.featured .popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffaa00);color:#0a0a1a;padding:4px 20px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.pricing-card h3{font-size:1.3rem;font-weight:700;margin-bottom:10px;color:#fff}
+.pricing-card .price{font-size:2.5rem;font-weight:900;margin:15px 0}
+.pricing-card .price .currency{font-size:1rem;color:#707080}
+.pricing-card .price .period{font-size:0.9rem;color:#707080;font-weight:400}
+.pricing-card .price.gold{color:#ffd700}
+.pricing-card .price.neon{color:#00ff88}
+.pricing-card .price .old{font-size:1.2rem;color:#505060;text-decoration:line-through;margin-right:8px}
+.pricing-card ul{text-align:left;margin:20px 0;padding:0}
+.pricing-card ul li{padding:8px 0;font-size:0.85rem;color:#9090a0;display:flex;align-items:center;gap:10px}
+.pricing-card ul li i{width:18px}
+.pricing-card ul li .fa-check{color:#00ff88}
+.pricing-card ul li .fa-times{color:#505060;opacity:0.5}
+.pricing-card .btn{width:100%}
 
-    /* === testimonios === */
-    .testimonials-section {
-      padding:4rem 0; position:relative; z-index:1;
-    }
-    .testimonials-section h2 {
-      text-align:center; font-size:clamp(1.5rem, 3vw, 2rem); font-weight:800;
-      margin-bottom:1rem;
-    }
-    .testimonials-sub {
-      text-align:center; color:#94a3b8; margin-bottom:3rem; font-size:0.95rem;
-    }
-    .testimonials-grid {
-      display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem;
-    }
-    .testimonial {
-      background:rgba(21,27,35,0.7); border:1px solid rgba(6,182,212,0.1);
-      border-radius:16px; padding:1.8rem; transition:all 0.3s;
-    }
-    .testimonial:hover { border-color:#06b6d4; transform:translateY(-3px); }
-    .testimonial-header { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
-    .testimonial-avatar {
-      width:48px; height:48px; border-radius:12px;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      display:flex; align-items:center; justify-content:center;
-      font-size:1.3rem; font-weight:700; color:#fff; flex-shrink:0;
-    }
-    .testimonial-name { font-weight:700; font-size:0.95rem; }
-    .testimonial-tag { font-size:0.75rem; color:#06b6d4; }
-    .testimonial-text { font-size:0.88rem; color:#cbd5e1; line-height:1.6; }
-    .testimonial-stars { color:#f59e0b; margin-top:0.5rem; font-size:0.85rem; }
+/* ===== FAQ ===== */
+.faq-list{max-width:750px;margin:0 auto}
+.faq-item{border:1px solid rgba(255,255,255,0.05);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all 0.3s}
+.faq-item.active{border-color:rgba(255,215,0,0.3)}
+.faq-question{width:100%;padding:18px 20px;background:none;border:none;color:#e0e0e0;font-size:1rem;font-weight:500;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:'poppins',sans-serif;transition:color 0.3s}
+.faq-question:hover{color:#ffd700}
+.faq-question i{transition:transform 0.3s;color:#ffd700}
+.faq-item.active .faq-question i{transform:rotate(45deg)}
+.faq-answer{padding:0 20px;max-height:0;overflow:hidden;transition:all 0.4s ease}
+.faq-item.active .faq-answer{max-height:300px;padding:0 20px 18px}
+.faq-answer p{font-size:0.9rem;color:#9090a0;line-height:1.7}
 
-    /* === premios y certificaciones === */
-    .awards-section {
-      padding:3rem 0; position:relative; z-index:1;
-      background:rgba(11,15,23,0.5);
-      border-top:1px solid rgba(139,92,246,0.1);
-      border-bottom:1px solid rgba(139,92,246,0.1);
-    }
-    .awards-section h2 {
-      text-align:center; font-size:clamp(1.3rem, 2.5vw, 1.8rem); font-weight:800;
-      margin-bottom:2rem;
-    }
-    .awards-grid {
-      display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem;
-    }
-    .award {
-      display:flex; align-items:center; gap:0.8rem;
-      background:rgba(21,27,35,0.7); border:1px solid rgba(139,92,246,0.15);
-      border-radius:14px; padding:1rem 1.5rem; transition:all 0.3s;
-    }
-    .award:hover {
-      border-color:#8b5cf6; transform:translateY(-3px);
-      box-shadow:0 10px 30px rgba(139,92,246,0.15);
-    }
-    .award-icon { font-size:1.8rem; }
-    .award-info h5 { font-size:0.9rem; font-weight:700; }
-    .award-info p { font-size:0.75rem; color:#94a3b8; }
+/* ===== REGISTRO ===== */
+.registro-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:1000px;margin:0 auto;align-items:start}
+.registro-benefits h3{font-size:1.5rem;font-weight:800;margin-bottom:20px;color:#fff}
+.registro-benefits ul li{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:0.95rem;color:#b0b0c0}
+.registro-benefits ul li i{color:#00ff88;font-size:1rem;width:20px}
+.registro-form{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:35px;transition:all 0.4s}
+.registro-form:hover{box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.registro-form h3{font-size:1.3rem;font-weight:700;margin-bottom:20px;text-align:center;color:#fff}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;margin-bottom:6px;font-size:0.85rem;color:#b0b0c0;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:12px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.95rem;font-family:'poppins',sans-serif;transition:border-color 0.3s;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:#ffd700;box-shadow:0 0 0 3px rgba(255,215,0,0.1)}
+.form-group select option{background:#0a0a1a;color:#fff}
+.form-submit{width:100%;padding:14px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#0a0a1a;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.3s;font-family:'poppins',sans-serif}
+.form-submit:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,255,136,0.4)}
+.form-success{display:none;text-align:center;padding:20px}
+.form-success i{font-size:3rem;color:#00ff88;margin-bottom:15px}
+.form-success h4{font-size:1.2rem;font-weight:700;margin-bottom:8px;color:#fff}
+.form-success p{font-size:0.9rem;color:#9090a0}
 
-    /* === faq === */
-    .faq-section { padding:4rem 0; position:relative; z-index:1; }
-    .faq-section h2 {
-      text-align:center; font-size:clamp(1.5rem, 3vw, 2rem); font-weight:800;
-      margin-bottom:2.5rem;
-    }
-    .faq-item {
-      background:rgba(21,27,35,0.6); border:1px solid rgba(139,92,246,0.1);
-      border-radius:14px; margin-bottom:0.8rem; overflow:hidden;
-      transition:all 0.3s;
-    }
-    .faq-item:hover { border-color:rgba(139,92,246,0.3); }
-    .faq-question {
-      padding:1.2rem 1.5rem; cursor:pointer; display:flex;
-      justify-content:space-between; align-items:center; font-weight:600;
-      font-size:0.95rem; transition:background 0.3s;
-    }
-    .faq-question:hover { background:rgba(139,92,246,0.05); }
-    .faq-question .faq-arrow {
-      font-size:1.2rem; transition:transform 0.3s; color:#8b5cf6;
-    }
-    .faq-item.open .faq-arrow { transform:rotate(180deg); }
-    .faq-answer {
-      max-height:0; overflow:hidden; transition:max-height 0.4s ease, padding 0.4s ease;
-      padding:0 1.5rem; color:#94a3b8; font-size:0.9rem; line-height:1.6;
-    }
-    .faq-item.open .faq-answer {
-      max-height:300px; padding:0 1.5rem 1.2rem;
-    }
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:modalFade 0.3s ease}
+.modal-overlay.active{display:flex}
+@keyframes modalFade{0%{opacity:0}100%{opacity:1}}
+.modal-content{background:linear-gradient(145deg,#12122a,#0a0a1a);border:1px solid rgba(255,215,0,0.2);border-radius:24px;max-width:500px;width:90%;padding:40px;position:relative;animation:modalSlide 0.4s ease}
+@keyframes modalSlide{0%{transform:translateY(30px) scale(0.95);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+.modal-close{position:absolute;top:15px;right:20px;background:none;border:none;color:#707080;font-size:1.5rem;cursor:pointer;transition:color 0.3s;font-family:'poppins',sans-serif}
+.modal-close:hover{color:#ffd700}
+.modal-content h2{font-size:1.5rem;font-weight:800;margin-bottom:8px;text-align:center;color:#fff}
+.modal-content p{text-align:center;color:#9090a0;margin-bottom:25px;font-size:0.9rem}
+.modal-content .form-submit{background:linear-gradient(135deg,#ffd700,#ffaa00)}
 
-    /* === mini chat flotante de soporte === */
-    .chat-float {
-      position:fixed; bottom:20px; right:20px; z-index:200;
-      display:flex; flex-direction:column; align-items:flex-end;
-    }
-    .chat-bubble {
-      width:56px; height:56px; border-radius:50%;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      border:none; cursor:pointer; font-size:1.5rem;
-      box-shadow:0 4px 20px rgba(139,92,246,0.4);
-      transition:all 0.3s; display:flex; align-items:center; justify-content:center;
-      color:#fff; position:relative;
-    }
-    .chat-bubble:hover { transform:scale(1.1); box-shadow:0 6px 30px rgba(139,92,246,0.6); }
-    .chat-bubble .chat-ping {
-      position:absolute; inset:0; border-radius:50%;
-      background:rgba(139,92,246,0.3); animation:ping 2s ease-in-out infinite;
-    }
-    .chat-box {
-      display:none; width:300px; background:rgba(21,27,35,0.97);
-      border:1px solid rgba(139,92,246,0.3); border-radius:16px;
-      margin-bottom:10px; overflow:hidden; backdrop-filter:blur(12px);
-      animation:slideInRight 0.3s ease;
-    }
-    .chat-box.open { display:block; }
-    .chat-header {
-      padding:0.8rem 1rem; background:rgba(139,92,246,0.1);
-      border-bottom:1px solid rgba(139,92,246,0.2);
-      font-weight:700; font-size:0.9rem; color:#8b5cf6;
-    }
-    .chat-msg {
-      padding:1rem; font-size:0.85rem; color:#cbd5e1; line-height:1.5;
-      max-height:180px; overflow-y:auto;
-    }
-    .chat-msg p { margin-bottom:0.5rem; }
-    .chat-msg .msg-bot { color:#06b6d4; font-weight:600; }
-    .chat-input-area {
-      display:flex; border-top:1px solid rgba(139,92,246,0.15);
-    }
-    .chat-input-area input {
-      flex:1; background:transparent; border:none; padding:0.7rem 0.8rem;
-      color:#e2e8f0; font-size:0.85rem; outline:none;
-    }
-    .chat-input-area input::placeholder { color:#475569; }
-    .chat-input-area button {
-      background:rgba(139,92,246,0.2); border:none; color:#8b5cf6;
-      padding:0.7rem 1rem; cursor:pointer; font-weight:700; font-size:0.85rem;
-      transition:background 0.3s;
-    }
-    .chat-input-area button:hover { background:rgba(139,92,246,0.4); }
+/* ===== SHARE ===== */
+.share-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.share-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:50px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.3s;border:none;font-family:'poppins',sans-serif}
+.share-btn.twitter{background:#1da1f2;color:#fff}
+.share-btn.facebook{background:#1877f2;color:#fff}
+.share-btn.whatsapp{background:#25d366;color:#fff}
+.share-btn.copy{background:rgba(255,255,255,0.1);color:#fff}
+.share-btn:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,0.3)}
 
-    /* === footer === */
-    footer {
-      position:relative; z-index:1;
-      border-top:1px solid rgba(139,92,246,0.15);
-      padding:2.5rem 0 2rem; text-align:center;
-    }
-    footer .footer-links { display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.2rem; }
-    footer .footer-links a { color:#94a3b8; font-size:0.85rem; transition:color 0.3s; }
-    footer .footer-links a:hover { color:#8b5cf6; }
-    footer .footer-copy { color:#64748b; font-size:0.8rem; }
+/* ===== FLOATING CONTACT ===== */
+.floating-contact{position:fixed;bottom:30px;right:30px;z-index:999;display:flex;flex-direction:column;gap:10px}
+.floating-btn{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;border:none;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.3);position:relative}
+.floating-btn:hover{transform:scale(1.1)}
+.floating-btn.whatsapp{background:#25d366}
+.floating-btn.email{background:#7c3aed}
+.floating-btn .tooltip{position:absolute;right:65px;background:#1a1a2e;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.floating-btn:hover .tooltip{opacity:1}
 
-    /* === scrollbar === */
-    ::-webkit-scrollbar { width:8px; }
-    ::-webkit-scrollbar-track { background:#0b0f17; }
-    ::-webkit-scrollbar-thumb { background:#8b5cf6; border-radius:4px; }
-    ::-webkit-scrollbar-thumb:hover { background:#06b6d4; }
+/* ===== FOOTER ===== */
+footer{background:#050510;border-top:1px solid rgba(255,255,255,0.03);padding:60px 0 30px}
+.footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:40px;margin-bottom:40px}
+.footer-col h4{font-size:1.1rem;font-weight:700;margin-bottom:15px;color:#fff}
+.footer-col p{font-size:0.85rem;color:#707080;line-height:1.7}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{font-size:0.85rem;color:#606080;transition:color 0.3s}
+.footer-col ul li a:hover{color:#ffd700}
+.footer-social{display:flex;gap:12px;margin-top:15px}
+.footer-social a{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:#707080;transition:all 0.3s}
+.footer-social a:hover{background:#ffd700;color:#0a0a1a}
+.footer-bottom{text-align:center;padding-top:30px;border-top:1px solid rgba(255,255,255,0.03);font-size:0.8rem;color:#505060}
 
-    /* === responsive === */
-    @media (max-width:768px) {
-      .hamburger { display:flex; }
-      .nav-links {
-        display:none; width:100%; flex-direction:column; gap:0;
-        padding:0.8rem 0; border-top:1px solid rgba(139,92,246,0.1); margin-top:0.8rem;
-      }
-      .nav-links.mobile-open { display:flex; }
-      .nav-links a { padding:0.6rem 0; }
-      .hero { padding:3rem 0 2.5rem; }
-      .cards-grid { grid-template-columns:1fr; }
-      .steps-grid { grid-template-columns:1fr 1fr; }
-      .testimonials-grid { grid-template-columns:1fr; }
-      .awards-grid { gap:0.8rem; }
-      .award { padding:0.8rem 1rem; }
-      .partners-grid { gap:1.2rem 1.5rem; }
-      .partner-item { font-size:1.1rem; }
-      .partner-item .partner-icon { font-size:1.3rem; }
-      .chat-box { width:260px; right:0; }
-    }
-    @media (max-width:480px) {
-      .steps-grid { grid-template-columns:1fr; }
-      .nav-buttons .btn { padding:0.5rem 1rem; font-size:0.8rem; }
-      .chat-box { width:90vw; right:0; }
-    }
-  </style>
+/* ===== SCROLL REVEAL ===== */
+.reveal{opacity:0;transform:translateY(40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+
+/* ===== LOADING ===== */
+.loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.6s}
+.loading-screen.hidden{opacity:0;pointer-events:none}
+.loader{width:50px;height:50px;border:3px solid rgba(255,215,0,0.1);border-top-color:#ffd700;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen p{color:#ffd700;margin-top:15px;font-size:0.9rem;letter-spacing:2px;text-transform:uppercase}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){.registro-wrapper{grid-template-columns:1fr}
+.registro-benefits{display:none}
+.pricing-card.featured{transform:none}
+}
+@media(max-width:768px){section{padding:50px 0}
+.nav-links{position:fixed;top:0;right:-100%;width:280px;height:100vh;background:rgba(10,10,26,0.98);backdrop-filter:blur(20px);flex-direction:column;padding:80px 30px 30px;transition:right 0.4s;gap:15px;align-items:flex-start;border-left:1px solid rgba(255,215,0,0.1)}
+.nav-links.active{right:0}
+.hamburger{display:flex}
+.countdown{gap:10px}
+.countdown-item{min-width:60px}
+.countdown-num{font-size:2rem}
+.hero-buttons{flex-direction:column;align-items:center}
+.hero-buttons .btn{width:100%;max-width:300px}
+.chart-bar{width:25px;min-width:18px}
+.floating-contact{bottom:20px;right:20px}
+.floating-btn{width:48px;height:48px;font-size:1.2rem}
+.modal-content{padding:25px}
+}
+@media(max-width:480px){.container{padding:0 15px}
+.section-title{font-size:1.5rem}
+.beneficios-grid,.usecases-grid,.testimonios-grid,.cert-grid,.pricing-grid{grid-template-columns:1fr}
+.cert-grid{grid-template-columns:repeat(2,1fr)}
+.hero-stats{gap:20px}
+.share-buttons{flex-direction:column;align-items:center}
+.share-btn{width:100%;justify-content:center}
+}
+</style>
 </head>
 <body>
+<div class="loading-screen" id="loading-screen">
+  <div class="loader"></div>
+  <p>WAFABOT</p>
+</div>
 
-  <!-- particulas de juegos flotando -->
-  <div class="game-particles">
-    <span>🎮</span>
-    <span>⚔️</span>
-    <span>🎯</span>
-    <span>💎</span>
-    <span>🔥</span>
-    <span>👾</span>
-    <span>🌟</span>
-    <span>🎭</span>
-  </div>
-
-  <!-- ===== navbar ===== -->
-  <nav>
-    <div class="container">
-      <a href="#" class="logo">wafabot</a>
-      <button class="hamburger" id="hamburger" aria-label="menu">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="nav-links" id="navLinks">
-        <a href="#como-funciona">como funciona</a>
-        <a href="#metricas">metricas</a>
-        <a href="#testimonios">testimonios</a>
-        <a href="#faq">faq</a>
-      </div>
-      <div class="nav-buttons">
-        <a href="/registro" class="btn btn-primary btn-sm">crear cuenta gratis</a>
-        <a href="/login" class="btn btn-secondary btn-sm">iniciar sesion</a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- ===== hero ===== -->
-  <header class="hero">
-    <div class="container">
-      <div class="anim-fade anim-delay-1">
-        <h1>
-          <span class="gradient-text">convierte tus pcs</span><br>
-          en <span class="gradient-text glitch-hover">fuentes de ingresos pasivos</span><br>
-          <span style="color:#06b6d4;">como tu ex!</span>
-        </h1>
-        <p class="hero-sub">
-          gana <strong>monedas, guita, viyuyo</strong>. simplemente por ver streams.
-          sin inversion inicial. resultados en 24 horas.<br>
-          esa computadora viejita, <strong>sacale el provecho</strong>
-        </p>
-        <div class="hero-actions">
-          <a href="/registro" class="btn btn-primary btn-lg">crear cuenta gratis</a>
-          <a href="/login" class="btn btn-secondary btn-lg">iniciar sesion</a>
-        </div>
-        <div class="hero-badge anim-float">el primer sistema, gana dinero mientras duermes</div>
-      </div>
-    </div>
-  </header>
-
-  <!-- ===== tarjetas de beneficios ===== -->
-  <section class="cards-section">
-    <div class="container">
-      <h2 class="anim-fade">beneficios</h2>
-      <div class="cards-grid">
-        <div class="card anim-slide anim-delay-1">
-          <div class="card-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <h3>registrate en 30 segundos</h3>
-          <p>solo tu email y una contrasena. sin verificacion tediosa. en menos de un minuto estas listo para empezar a ganar.</p>
-        </div>
-        <div class="card anim-slide anim-delay-2">
-          <div class="card-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3>conecta tus pcs a nuestra red segura</h3>
-          <p>instala nuestro agente ligero y conecta cualquier pc. cifrado hmac-sha256, tus equipos siempre protegidos.</p>
-        </div>
-        <div class="card anim-slide anim-delay-3">
-          <div class="card-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <h3>gana tu ingreso extra sonado mientras duermes</h3>
-          <p>ingresos pasivos 24/7. mientras tu trabajas, estudias o juegas, wafabot genera monedas por ti.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== partners / plataformas compatibles ===== -->
-  <section class="partners-section">
-    <div class="container">
-      <h3>compatible con tus plataformas favoritas</h3>
-      <div class="partners-grid">
-        <div class="partner-item"><span class="partner-icon">⚔️</span> dota 2</div>
-        <div class="partner-item"><span class="partner-icon">🎯</span> fortnite</div>
-        <div class="partner-item"><span class="partner-icon">🔥</span> free fire</div>
-        <div class="partner-item"><span class="partner-icon">🎵</span> tiktok</div>
-        <div class="partner-item"><span class="partner-icon">🎮</span> twitch</div>
-        <div class="partner-item"><span class="partner-icon">🎥</span> kick</div>
-        <div class="partner-item"><span class="partner-icon">📘</span> facebook</div>
-        <div class="partner-item"><span class="partner-icon">🎬</span> youtube</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== como funciona ===== -->
-  <section id="como-funciona" class="steps-section">
-    <div class="container">
-      <h2 class="anim-fade">como funciona</h2>
-      <div class="steps-grid">
-        <div class="step anim-slide anim-delay-1">
-          <div class="step-num">1</div>
-          <div class="step-icon">📝</div>
-          <h4>crea tu cuenta</h4>
-          <p>registro en 30 segundos. solo necesitas un email y crear tu contrasena. acceso inmediato.</p>
-        </div>
-        <div class="step anim-slide anim-delay-2">
-          <div class="step-num">2</div>
-          <div class="step-icon">💻</div>
-          <h4>descarga el agente</h4>
-          <p>descarga e instala nuestro agente ligero en tu pc. compatible con windows 10/11. ocupa menos de 50mb.</p>
-        </div>
-        <div class="step anim-slide anim-delay-3">
-          <div class="step-num">3</div>
-          <div class="step-icon">🔗</div>
-          <h4>conecta y activa</h4>
-          <p>el agente se conecta automaticamente a nuestra red segura. no requiere configuracion manual.</p>
-        </div>
-        <div class="step anim-slide anim-delay-4">
-          <div class="step-num">4</div>
-          <div class="step-icon">💰</div>
-          <h4>gana y retira</h4>
-          <p>empieza a acumular monedas al instante. retira via paypal, cripto o transferencia desde 10 usd.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== metricas ===== -->
-  <section id="metricas" class="metrics-section">
-    <div class="container">
-      <div class="metrics-grid">
-        <div class="metric anim-fade anim-delay-1">
-          <div class="metric-value" data-target="28450">0</div>
-          <div class="metric-label">usuarios registrados</div>
-        </div>
-        <div class="metric anim-fade anim-delay-2">
-          <div class="metric-value" data-target="1250000">0</div>
-          <div class="metric-label">tokens en circulacion</div>
-        </div>
-        <div class="metric anim-fade anim-delay-3">
-          <div class="metric-value" data-target="12800">0</div>
-          <div class="metric-label">pcs conectadas</div>
-        </div>
-        <div class="metric anim-fade anim-delay-4">
-          <div class="metric-value" data-target="99.8">0</div>
-          <div class="metric-label">% uptime red</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== testimonios ===== -->
-  <section id="testimonios" class="testimonials-section">
-    <div class="container">
-      <h2 class="anim-fade">lo que dicen los ganadores</h2>
-      <p class="testimonials-sub">mas de 28mil usuarios ya estan generando ingresos con wafabot</p>
-      <div class="testimonials-grid">
-        <div class="testimonial anim-slide anim-delay-1">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">dx</div>
-            <div>
-              <div class="testimonial-name">dixan_gt</div>
-              <div class="testimonial-tag">dota2 player · 3 meses</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"al principio no creia, pero deje mi pc prendida mientras iba al trabajo y al volver ya tenia como 15 dolares acumulados. me compre el pase de batalla del dota sin gastar un sol. god total"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-2">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">ky</div>
-            <div>
-              <div class="testimonial-name">kyoko_neko</div>
-              <div class="testimonial-tag">cosplayer · 2 meses</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"con lo que gane en wafabot me compre mi primer cosplay de zero two. y eso que solo dejo mi laptop prendida cuando veo anime. 10/10 recomendadisimo"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-3">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">el</div>
-            <div>
-              <div class="testimonial-name">el_papi_ff</div>
-              <div class="testimonial-tag">free fire pro · 1 mes</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"tengo 3 pcs viejitas en mi cuarto que ya no usaba. las conecte todas y estoy sacando como 50 dolares semanales. mi mama cree que es estafa pero ya le compre su lavadora nueva"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-1">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">nr</div>
-            <div>
-              <div class="testimonial-name">necro_rising</div>
-              <div class="testimonial-tag">streamer twitch · 4 meses</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"streaming y wafabot es la combinacion perfecta. ya tengo mi pc del stream generando ingresos extra. hasta mis subs me preguntan como le hago. se armó el equipo gamers"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-2">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">lu</div>
-            <div>
-              <div class="testimonial-name">luna_otaku</div>
-              <div class="testimonial-tag">tiktoker · 6 semanas</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"hago videos en tiktok mientras wafabot trabaja en segundo plano. literalmente estoy ganando dinero por existir. mis seguidores me pidieron el link y ya varios se unieron. team wafabot"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-3">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">rk</div>
-            <div>
-              <div class="testimonial-name">r4kkun_gg</div>
-              <div class="testimonial-tag">kick streamer · 2 meses</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"tenia una pc guardada desde 2018. la conecte a wafabot y en 3 semanas saque 120 dolares. me pague el battle pass del fortnite y una skin de anime. mis viewers estan flipando"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-        <div class="testimonial anim-slide anim-delay-1">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">ch</div>
-            <div>
-              <div class="testimonial-name">charly_gg</div>
-              <div class="testimonial-tag">facebook gamer · 5 meses</div>
-            </div>
-          </div>
-          <div class="testimonial-text">"hago streams en facebook gaming y con wafabot duplique mis ingresos. la pc que uso para streamear tambien genera mientras juego. es una locura. ya convenci a 4 amigos del clan"</div>
-          <div class="testimonial-stars">★★★★★</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== premios y certificaciones ===== -->
-  <section class="awards-section">
-    <div class="container">
-      <h2 class="anim-fade">premios y certificaciones</h2>
-      <div class="awards-grid">
-        <div class="award anim-slide anim-delay-1">
-          <div class="award-icon">🥇</div>
-          <div class="award-info">
-            <h5>certificacion oro</h5>
-            <p>plataforma lider en ingresos pasivos 2025</p>
-          </div>
-        </div>
-        <div class="award anim-slide anim-delay-2">
-          <div class="award-icon">💎</div>
-          <div class="award-info">
-            <h5>sello diamante</h5>
-            <p>excelencia en seguridad hmac-sha256</p>
-          </div>
-        </div>
-        <div class="award anim-slide anim-delay-3">
-          <div class="award-icon">🏆</div>
-          <div class="award-info">
-            <h5>premio ultra vip</h5>
-            <p>mejor ecosistema gaming financiero 2025</p>
-          </div>
-        </div>
-        <div class="award anim-slide anim-delay-1">
-          <div class="award-icon">🌟</div>
-          <div class="award-info">
-            <h5>certificacion platino</h5>
-            <p>uptime 99.8% certificado por terceros</p>
-          </div>
-        </div>
-        <div class="award anim-slide anim-delay-2">
-          <div class="award-icon">🔒</div>
-          <div class="award-info">
-            <h5>iso 27001</h5>
-            <p>gestion de seguridad de la informacion</p>
-          </div>
-        </div>
-        <div class="award anim-slide anim-delay-3">
-          <div class="award-icon">🚀</div>
-          <div class="award-info">
-            <h5>miembro plata</h5>
-            <p>red global de innovacion tecnologica</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== faq ===== -->
-  <section id="faq" class="faq-section">
-    <div class="container">
-      <h2 class="anim-fade">preguntas frecuentes</h2>
-      <div class="faq-list">
-        <div class="faq-item">
-          <div class="faq-question">¿cuanto dinero puedo ganar realmente?
-            <span class="faq-arrow">▼</span>
-          </div>
-          <div class="faq-answer">
-            los ingresos varian segun la cantidad de pcs conectadas y el tiempo activo. en promedio, cada pc genera entre 1 y 5 dolares diarios. usuarios con 3-4 pcs reportan ganancias de 50 a 200 dolares semanales. no hay limite maximo.
-          </div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-question">¿es seguro para mis equipos?
-            <span class="faq-arrow">▼</span>
-          </div>
-          <div class="faq-answer">
-            totalmente. nuestro agente usa cifrado hmac-sha256 punto a punto. no accedemos a tus archivos personales, no instalamos software adicional, y el consumo de recursos es minimo (menos del 5% de cpu). puedes monitorizar todo desde tu dashboard.
-          </div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-question">¿que requisitos necesito?
-            <span class="faq-arrow">▼</span>
-          </div>
-          <div class="faq-answer">
-            una pc con windows 10/11, conexion a internet estable (minimo 5mbps), y ganas de generar ingresos pasivos. no necesitas tarjeta grafica potente ni conocimientos tecnicos. el agente se instala en 2 clics.
-          </div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-question">¿como retiro mi dinero?
-            <span class="faq-arrow">▼</span>
-          </div>
-          <div class="faq-answer">
-            soportamos retiros via paypal, criptomonedas (usdt/btc), y transferencia bancaria en 15 paises. el minimo de retiro es 10 usd. los pagos se procesan en menos de 24 horas habiles. sin comisiones ocultas.
-          </div>
-        </div>
-        <div class="faq-item">
-          <div class="faq-question">¿esto es legal? ¿no es mineria ni estafa?
-            <span class="faq-arrow">▼</span>
-          </div>
-          <div class="faq-answer">
-            100% legal. wafabot esta registrado como corporacion internacional. no realizamos mineria de criptomonedas ni actividades ilegales. nuestro sistema optimiza ancho de banda para redes de streaming asociadas. puedes ver tus ganancias crecer en tiempo real desde tu panel de control.
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== footer ===== -->
-  <footer>
-    <div class="container">
-      <div class="footer-links">
-        <a href="#">terminos y condiciones</a>
-        <a href="#">politica de privacidad</a>
-        <a href="#">contacto</a>
-        <a href="/publico/dashboard_publico.html">dashboard publico</a>
-      </div>
-      <div class="footer-copy">beta abierta wafabot corporation 2026 · todos los derechos reservados</div>
-    </div>
-  </footer>
-
-  <!-- ===== mini chat flotante de soporte ===== -->
-  <div class="chat-float">
-    <div class="chat-box" id="chatBox">
-      <div class="chat-header">💬 soporte wafabot</div>
-      <div class="chat-msg" id="chatMsg">
-        <p class="msg-bot">🎮 ¡bienvenido a wafabot!</p>
-        <p>soy el asistente virtual. ¿en que puedo ayudarte?</p>
-        <p>escribe <strong>hola</strong> para empezar</p>
-      </div>
-      <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="escribe tu mensaje..." maxlength="200">
-        <button id="chatSend">enviar</button>
-      </div>
-    </div>
-    <button class="chat-bubble" id="chatToggle" aria-label="chat de soporte">
-      <span class="chat-ping"></span>
-      💬
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="container">
+    <a href="#hero" class="logo"><span class="logo-main">WAFABOT<span>.</span></span><span class="neon">beta</span></a>
+    <nav class="nav-links" id="nav-links">
+      <a href="#hero">inicio</a>
+      <a href="#beneficios">beneficios</a>
+      <a href="#usecases">casos de uso</a>
+      <a href="#testimonios">testimonios</a>
+      <a href="#pricing">planes</a>
+      <a href="/login" class="btn-login"><i class="fas fa-sign-in-alt"></i> iniciar sesion</a>
+      <a href="/registro" class="nav-cta"><i class="fas fa-user-plus"></i> crear cuenta</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="menu">
+      <span></span><span></span><span></span>
     </button>
   </div>
+</header>
 
-  <!-- ===== javascript ===== -->
-  <script>
-    (function(){
-      'use strict';
+<!-- ===== HERO ===== -->
+<section id="hero">
+  <canvas id="particles-canvas"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><i class="fas fa-bolt"></i> beta abierta - acceso gratuito limitado</div>
+    <h1 class="hero-title">revoluciona tu audiencia en kick y twitch</h1>
+    <p class="hero-sub">convierte visitas en seguidores reales con la tecnologia anti-deteccion mas avanzada</p>
+    <div class="hero-big">muy pronto! estamos en beta abierta</div>
+    <div class="countdown" id="countdown">
+      <div class="countdown-item"><span class="countdown-num" id="days">00</span><span class="countdown-label">dias</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="hours">00</span><span class="countdown-label">horas</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="minutes">00</span><span class="countdown-label">minutos</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="seconds">00</span><span class="countdown-label">segundos</span></div>
+    </div>
+    <div class="hero-buttons">
+      <button class="btn btn-cta" onclick="openModal()"><i class="fas fa-rocket"></i> solicitar acceso anticipado</button>
+      <a href="#beneficios" class="btn btn-outline"><i class="fas fa-arrow-down"></i> conocer mas</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num" id="user-count-hero">5,247</div><div class="hero-stat-label">streamers registrados</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">98.7%</div><div class="hero-stat-label">uptime garantizado</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">kick</div><div class="hero-stat-label">plataforma principal</div></div>
+    </div>
+  </div>
+</section>
 
-      /* === metricas animadas === */
-      function animarContadores() {
-        var valores = document.querySelectorAll('.metric-value');
-        var observado = new Set();
-        var observer = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting && !observado.has(entry.target)) {
-              observado.add(entry.target);
-              var el = entry.target;
-              var objetivo = parseFloat(el.getAttribute('data-target'));
-              var duracion = 2000;
-              var inicio = performance.now();
+<!-- ===== PLATAFORMAS ===== -->
+<section id="plataformas">
+  <div class="marquee-wrapper">
+    <div class="marquee-track" id="marquee-track">
+      <span class="platform-icon"><i class="fab fa-kickstarter" style="color:#00ff88"></i> kick</span>
+      <span class="platform-icon"><i class="fab fa-twitch" style="color:#9146ff"></i> twitch</span>
+      <span class="platform-icon"><i class="fab fa-tiktok" style="color:#fe2c55"></i> tiktok</span>
+      <span class="platform-icon"><i class="fab fa-youtube" style="color:#ff0000"></i> youtube</span>
+      <span class="platform-icon"><i class="fab fa-instagram" style="color:#e4405f"></i> instagram</span>
+      <span class="platform-icon"><i class="fab fa-kickstarter" style="color:#00ff88"></i> kick</span>
+      <span class="platform-icon"><i class="fab fa-twitch" style="color:#9146ff"></i> twitch</span>
+      <span class="platform-icon"><i class="fab fa-tiktok" style="color:#fe2c55"></i> tiktok</span>
+      <span class="platform-icon"><i class="fab fa-youtube" style="color:#ff0000"></i> youtube</span>
+      <span class="platform-icon"><i class="fab fa-instagram" style="color:#e4405f"></i> instagram</span>
+    </div>
+  </div>
+</section>
 
-              function actualizar(ahora) {
-                var progreso = Math.min((ahora - inicio) / duracion, 1);
-                var suavizado = 1 - Math.pow(1 - progreso, 3);
-                var valor = Math.floor(suavizado * objetivo);
+<!-- ===== BENEFICIOS ===== -->
+<section id="beneficios">
+  <div class="container">
+    <h2 class="section-title">por que <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">la unica plataforma que combina inteligencia artificial, huella digital unica y total anonimato</p>
+    <div class="beneficios-grid">
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon neon"><i class="fas fa-users"></i></div>
+        <h3>audiencia real, no bots</h3>
+        <p>espectadores genuinos con comportamiento humano. nada de bots detectables que arruinen tu canal.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon purple"><i class="fas fa-fingerprint"></i></div>
+        <h3>huella digital unica</h3>
+        <p>cada perfil tiene su propia identidad digital, navegador y proxy residencial. indetectable.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon gold"><i class="fas fa-chart-line"></i></div>
+        <h3>dashboard en tiempo real</h3>
+        <p>controla todas tus campañas desde un solo panel. metricas en vivo, resultados instantaneos.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon neon"><i class="fas fa-coins"></i></div>
+        <h3>pago solo por resultados</h3>
+        <p>sin contratos ni mensualidades ocultas. pagas unicamente por las visitas reales entregadas.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon purple"><i class="fas fa-shield-alt"></i></div>
+        <h3>seguridad y anonimato</h3>
+        <p>tus datos estan protegidos con encriptacion de grado militar. nunca compartimos informacion.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon gold"><i class="fas fa-headset"></i></div>
+        <h3>soporte 24/7</h3>
+        <p>equipo humano e inteligencia artificial disponible en todo momento para ayudarte.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-                if (objetivo % 1 !== 0) {
-                  el.textContent = (suavizado * objetivo).toFixed(1);
-                } else if (objetivo >= 1000000) {
-                  el.textContent = (suavizado * objetivo).toLocaleString('es-PE');
-                } else {
-                  el.textContent = valor.toLocaleString('es-PE');
-                }
+<!-- ===== USE CASES ===== -->
+<section id="usecases">
+  <div class="container">
+    <h2 class="section-title">para quien es <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">soluciones especificas para cada tipo de creador y profesional</p>
+    <div class="usecases-grid">
+      <div class="usecase-card reveal-left">
+        <span class="tag streamer"><i class="fas fa-gamepad"></i> streamer</span>
+        <h3>multiplica tu visibilidad en kick</h3>
+        <p>pasa de 0 a 1000 espectadores en semanas. alcanza nuevos seguidores y dispara tu carrera como creador de contenido. audiencia real que interactua y se queda.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="usecase-card reveal">
+        <span class="tag agency"><i class="fas fa-building"></i> agencia</span>
+        <h3>gestiona clientes desde un panel</h3>
+        <p>administra multiples cuentas y campanas simultaneamente. campañas automatizadas de alto rendimiento para tus clientes. resultados medibles y escalables.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="usecase-card reveal-right">
+        <span class="tag creator"><i class="fas fa-video"></i> creador</span>
+        <h3>convierte visitas en suscriptores</h3>
+        <p>aumenta tu engagement y monetizacion. convierte espectadores pasivos en seguidores leales que impulsan tus ingresos por publicidad y donaciones.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
 
-                if (progreso < 1) {
-                  requestAnimationFrame(actualizar);
-                } else {
-                  if (objetivo % 1 !== 0) {
-                    el.textContent = objetivo.toFixed(1);
-                  } else {
-                    el.textContent = objetivo.toLocaleString('es-PE');
-                  }
-                }
-              }
-              requestAnimationFrame(actualizar);
-            }
-          });
-        }, { threshold: 0.3 });
-        valores.forEach(function(v) { observer.observe(v); });
-      }
+<!-- ===== GROWTH CHART ===== -->
+<section id="crecimiento">
+  <div class="container">
+    <h2 class="section-title">crecimiento <span class="neon">exponencial</span> garantizado</h2>
+    <p class="section-subtitle">nuestros usuarios duplican su audiencia en los primeros 7 dias</p>
+    <div class="chart-container reveal">
+      <div class="chart-bar-container" id="chart-bars">
+        <div class="chart-bar" style="height:0" data-height="20"><span class="bar-label">sem 1</span></div>
+        <div class="chart-bar" style="height:0" data-height="35"><span class="bar-label">sem 2</span></div>
+        <div class="chart-bar" style="height:0" data-height="55"><span class="bar-label">sem 3</span></div>
+        <div class="chart-bar" style="height:0" data-height="75"><span class="bar-label">sem 4</span></div>
+        <div class="chart-bar" style="height:0" data-height="100"><span class="bar-label">sem 5</span></div>
+        <div class="chart-bar" style="height:0" data-height="130"><span class="bar-label">sem 6</span></div>
+        <div class="chart-bar" style="height:0" data-height="170"><span class="bar-label">sem 7</span></div>
+        <div class="chart-bar" style="height:0" data-height="200"><span class="bar-label">sem 8</span></div>
+      </div>
+    </div>
+    <div class="live-counter reveal">
+      <div class="count" id="live-count">0</div>
+      <div class="label">streamers registrados en la beta</div>
+      <div class="live-users" id="live-users">
+        <span>carlos_m se unio hace 2 min</span>
+        <span>laura_stream se unio hace 5 min</span>
+        <span>el_gamer_gt se unio hace 8 min</span>
+        <span>juego_rapido se unio hace 12 min</span>
+        <span>streamer_kick se unio hace 15 min</span>
+        <span>agency_pro se unio hace 20 min</span>
+        <span>creador_total se unio hace 25 min</span>
+        <span>visitor_live se unio hace 30 min</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-      /* === faq acordeon === */
-      function initFaq() {
-        var preguntas = document.querySelectorAll('.faq-question');
-        preguntas.forEach(function(p) {
-          p.addEventListener('click', function() {
-            var item = this.parentElement;
-            var abierto = item.classList.contains('open');
-            document.querySelectorAll('.faq-item.open').forEach(function(i) {
-              i.classList.remove('open');
-            });
-            if (!abierto) { item.classList.add('open'); }
-          });
-        });
-      }
+<!-- ===== TESTIMONIOS ===== -->
+<section id="testimonios">
+  <div class="container">
+    <h2 class="section-title">lo que dicen nuestros <span class="gold">usuarios</span></h2>
+    <p class="section-subtitle">mas de 5000 streamers ya confian en WAFABOT</p>
+    <div class="testimonios-grid">
+      <div class="testimonio-card reveal-left">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> pase de 20 espectadores promedio a 500 en una semana. WAFABOT cambio mi carrera por completo. la mejor decision que tome como streamer.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar neon">CM</div>
+          <div><div class="testimonio-name">carlos "el gamer" mendez</div><div class="testimonio-role">streamer de kick, +50k seguidores</div></div>
+        </div>
+      </div>
+      <div class="testimonio-card reveal">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> la herramienta mas poderosa para agencias. nuestros clientes aumentaron un 300% su audiencia en menos de un mes. WAFABOT es un antes y un despues.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar gold">LF</div>
+          <div><div class="testimonio-name">laura fernandez</div><div class="testimonio-role">ceo de growthstream agency</div></div>
+        </div>
+      </div>
+      <div class="testimonio-card reveal-right">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> increible el nivel de personalizacion y soporte. WAFABOT es el futuro de la automatizacion de audiencia. mis videos ahora tienen miles de vistas reales.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar purple">MA</div>
+          <div><div class="testimonio-name">miguel angel rivera</div><div class="testimonio-role">creador de contenido educativo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-      /* === animaciones al hacer scroll === */
-      function initScrollAnimations() {
-        var elementos = document.querySelectorAll('.anim-fade, .anim-slide');
-        var observer = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              entry.target.style.animationPlayState = 'running';
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.1 });
-        elementos.forEach(function(el) {
-          el.style.animationPlayState = 'paused';
-          observer.observe(el);
-        });
-      }
+<!-- ===== CERTIFICACIONES ===== -->
+<section id="certificaciones">
+  <div class="container">
+    <h2 class="section-title">certificaciones y <span class="gold">reconocimientos</span></h2>
+    <p class="section-subtitle">avalado por las principales organizaciones de la industria</p>
+    <div class="cert-grid">
+      <div class="cert-card reveal"><span class="cert-icon gold"><i class="fas fa-certificate"></i></span><h4>kick partner program</h4><p>certificado oficial como herramienta de crecimiento</p></div>
+      <div class="cert-card reveal"><span class="cert-icon neon"><i class="fas fa-check-circle"></i></span><h4>twitch creator community</h4><p>miembro oficial de la comunidad de creadores</p></div>
+      <div class="cert-card reveal"><span class="cert-icon purple"><i class="fas fa-shield-alt"></i></span><h4>blockchain auditing association</h4><p>aprobado por seguridad y transparencia</p></div>
+      <div class="cert-card reveal"><span class="cert-icon gold"><i class="fas fa-trophy"></i></span><h4>influencer monthly top 10</h4><p>top 10 herramientas de marketing de influencia 2026</p></div>
+    </div>
+  </div>
+</section>
 
-      /* === smooth scroll para nav links === */
-      function initSmoothScroll() {
-        document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(link) {
-          link.addEventListener('click', function(e) {
-            e.preventDefault();
-            var target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            // cerrar menu mobile si esta abierto
-            var navLinks = document.getElementById('navLinks');
-            var hamburger = document.getElementById('hamburger');
-            if (navLinks && hamburger) {
-              navLinks.classList.remove('mobile-open');
-              hamburger.classList.remove('active');
-            }
-          });
-        });
-      }
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how">
+  <div class="container">
+    <h2 class="section-title">como funciona <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">en 3 pasos simples empiezas a multiplicar tu audiencia</p>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <h3>crea tu cuenta</h3>
+        <p>registrate en segundos. sin tarjeta de credito, sin compromisos. la beta es completamente gratuita.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">2</div>
+        <h3>configura tu campana</h3>
+        <p>selecciona plataforma, perfil objetivo y duracion. nuestra ia optimiza cada visita para que sea natural.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">3</div>
+        <h3>observa el crecimiento</h3>
+        <p>en minutos empezaras a recibir visitas reales. monitorea todo desde tu dashboard en tiempo real.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-      /* === hamburger menu para mobile === */
-      function initHamburger() {
-        var hamburger = document.getElementById('hamburger');
-        var navLinks = document.getElementById('navLinks');
-        if (hamburger && navLinks) {
-          hamburger.addEventListener('click', function() {
-            navLinks.classList.toggle('mobile-open');
-            hamburger.classList.toggle('active');
-          });
-        }
-      }
+<!-- ===== PRICING ===== -->
+<section id="pricing">
+  <div class="container">
+    <h2 class="section-title">planes <span class="gold">flexibles</span></h2>
+    <p class="section-subtitle">empieza gratis durante la beta. sin tarjeta, sin riesgos.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card featured reveal-left">
+        <span class="popular-badge">mas popular</span>
+        <h3>beta gratis</h3>
+        <div class="price neon">gratis <span class="period">por tiempo limitado</span></div>
+        <ul>
+          <li><i class="fas fa-check"></i> 500 visitas reales de prueba</li>
+          <li><i class="fas fa-check"></i> dashboard basico en tiempo real</li>
+          <li><i class="fas fa-check"></i> soporte por email</li>
+          <li><i class="fas fa-check"></i> acceso a kick y twitch</li>
+          <li><i class="fas fa-times"></i> perfiles personalizados</li>
+          <li><i class="fas fa-times"></i> soporte prioritario 24/7</li>
+        </ul>
+        <button class="btn btn-cta" onclick="openModal()">quiero mi beta gratis</button>
+      </div>
+      <div class="pricing-card reveal-right">
+        <h3>pro</h3>
+        <div class="price gold"><span class="old">$29.99</span> $9.99 <span class="period">/mes</span></div>
+        <ul>
+          <li><i class="fas fa-check"></i> 10,000 visitas reales por mes</li>
+          <li><i class="fas fa-check"></i> dashboard avanzado con metricas</li>
+          <li><i class="fas fa-check"></i> perfiles con huella digital unica</li>
+          <li><i class="fas fa-check"></i> soporte prioritario 24/7</li>
+          <li><i class="fas fa-check"></i> compatibilidad multiplataforma</li>
+          <li><i class="fas fa-times"></i> campanas multi-cliente</li>
+        </ul>
+        <button class="btn btn-gold" disabled>proximamente</button>
+      </div>
+    </div>
+  </div>
+</section>
 
-      /* === mini chat flotante === */
-      function initChat() {
-        var toggleBtn = document.getElementById('chatToggle');
-        var chatBox = document.getElementById('chatBox');
-        var chatInput = document.getElementById('chatInput');
-        var chatSend = document.getElementById('chatSend');
-        var chatMsg = document.getElementById('chatMsg');
+<!-- ===== FAQ ===== -->
+<section id="faq">
+  <div class="container">
+    <h2 class="section-title">preguntas <span class="gold">frecuentes</span></h2>
+    <p class="section-subtitle">todo lo que necesitas saber antes de empezar</p>
+    <div class="faq-list">
+      <div class="faq-item active">
+        <button class="faq-question">que es WAFABOT exactamente? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>WAFABOT es una plataforma saas que permite a streamers, empresas y agencias aumentar su audiencia real en kick, twitch y otras plataformas mediante visitas de perfiles reales automatizados basados en roxybrowser. usamos tecnologia anti-deteccion avanzada para garantizar que cada visita sea indistinguible de un usuario real.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">es seguro? me pueden banear? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>totalmente seguro. cada perfil tiene su propia huella digital unica, proxy residencial y comportamiento humano simulado. nuestras visitas pasan todas las pruebas de deteccion de las plataformas. ademas, usamos encriptacion de grado militar para proteger tus datos.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">cuanto tiempo toma ver resultados? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>los resultados son inmediatos. al crear tu campana, las visitas empiezan a llegar en cuestion de minutos. la mayoria de nuestros usuarios duplican su audiencia en los primeros 7 dias con campanas bien configuradas.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">necesito tarjeta de credito para la beta? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>no, la beta es completamente gratuita y sin compromisos. no pedimos ningun dato de pago. solo registrate con tu email y empieza a recibir visitas reales de prueba. sin trampas, sin cargos ocultos.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">funciona con kick y twitch? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>si, WAFABOT es compatible con kick, twitch, youtube, tiktok e instagram. cada plataforma tiene sus propios perfiles optimizados para garantizar la maxima naturalidad y evitar cualquier tipo de deteccion.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        if (!toggleBtn || !chatBox) return;
+<!-- ===== REGISTRO ===== -->
+<section id="registro">
+  <div class="container">
+    <h2 class="section-title">unete a la <span class="neon">beta</span> ahora</h2>
+    <p class="section-subtitle">cupos limitados. mas de 5000 streamers ya estan dentro.</p>
+    <div class="registro-wrapper">
+      <div class="registro-benefits reveal-left">
+        <h3>al registrarte obtienes:</h3>
+        <ul>
+          <li><i class="fas fa-check"></i> 500 visitas reales de prueba gratuitas</li>
+          <li><i class="fas fa-check"></i> acceso completo al dashboard en tiempo real</li>
+          <li><i class="fas fa-check"></i> soporte prioritario durante la beta</li>
+          <li><i class="fas fa-check"></i> sin tarjeta de credito, sin compromisos</li>
+          <li><i class="fas fa-check"></i> acceso vitalicio al plan beta gratis</li>
+          <li><i class="fas fa-check"></i> actualizaciones y nuevas funciones prioritarias</li>
+        </ul>
+        <div style="margin-top:30px;padding:20px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:12px;text-align:center">
+          <div style="font-size:2rem;font-weight:900;color:#00ff88" id="registro-counter">5,247</div>
+          <div style="font-size:0.8rem;color:#707080">ya se registraron</div>
+        </div>
+      </div>
+      <div class="registro-form reveal-right" id="registro-form-wrap">
+        <h3>solicita tu acceso ahora</h3>
+        <form id="registro-form" onsubmit="handleRegistro(event)">
+          <div class="form-group">
+            <label for="reg-nombre">nombre completo</label>
+            <input type="text" id="reg-nombre" required placeholder="tu nombre" minlength="2" pattern=".{2,}">
+          </div>
+          <div class="form-group">
+            <label for="reg-email">correo electronico</label>
+            <input type="email" id="reg-email" required placeholder="tu@email.com">
+          </div>
+          <div class="form-group">
+            <label for="reg-tipo">tipo de usuario</label>
+            <select id="reg-tipo">
+              <option value="streamer">streamer / creador</option>
+              <option value="agencia">agencia de marketing</option>
+              <option value="otro">otro</option>
+            </select>
+          </div>
+          <button type="submit" class="form-submit"><i class="fas fa-rocket"></i> quiero ser parte</button>
+        </form>
+        <div class="form-success" id="form-success">
+          <i class="fas fa-check-circle"></i>
+          <h4>gracias por tu interes!</h4>
+          <p>te avisaremos pronto cuando tu cupo este listo. mientras tanto, revisa tu correo para mas informacion.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        toggleBtn.addEventListener('click', function() {
-          chatBox.classList.toggle('open');
-          if (chatBox.classList.contains('open') && chatInput) {
-            setTimeout(function() { chatInput.focus(); }, 300);
-          }
-        });
+<!-- ===== COMPARTIR ===== -->
+<section id="share">
+  <div class="container" style="text-align:center">
+    <h2 class="section-title">comparte <span class="gold">WAFABOT</span></h2>
+    <p class="section-subtitle">invita a otros streamers a unirse a la revolucion</p>
+    <div class="share-buttons">
+      <button class="share-btn twitter" onclick="shareLink('twitter')"><i class="fab fa-x-twitter"></i> compartir en x</button>
+      <button class="share-btn facebook" onclick="shareLink('facebook')"><i class="fab fa-facebook-f"></i> compartir en facebook</button>
+      <button class="share-btn whatsapp" onclick="shareLink('whatsapp')"><i class="fab fa-whatsapp"></i> compartir en whatsapp</button>
+      <button class="share-btn copy" onclick="copyLink()"><i class="fas fa-link"></i> copiar enlace</button>
+    </div>
+  </div>
+</section>
 
-        function enviarMensaje() {
-          if (!chatInput || !chatMsg) return;
-          var texto = chatInput.value.trim();
-          if (!texto) return;
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>WAFABOT<span style="color:#ffd700">.</span></h4>
+        <p>la plataforma mas avanzada para multiplicar tu audiencia en kick, twitch y youtube. tecnologia anti-deteccion, resultados reales.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="x"><i class="fab fa-x-twitter"></i></a>
+          <a href="#" aria-label="instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="youtube"><i class="fab fa-youtube"></i></a>
+          <a href="#" aria-label="discord"><i class="fab fa-discord"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>producto</h4>
+        <ul>
+          <li><a href="#beneficios">beneficios</a></li>
+          <li><a href="#pricing">planes</a></li>
+          <li><a href="#testimonios">testimonios</a></li>
+          <li><a href="#faq">faq</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>legal</h4>
+        <ul>
+          <li><a href="#">terminos y condiciones</a></li>
+          <li><a href="#">politica de privacidad</a></li>
+          <li><a href="#">politica de cookies</a></li>
+          <li><a href="#">aviso legal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>contacto</h4>
+        <ul>
+          <li><a href="mailto:soporte@WAFABOT.com"><i class="fas fa-envelope" style="margin-right:8px"></i>soporte@WAFABOT.com</a></li>
+          <li><a href="#"><i class="fab fa-telegram" style="margin-right:8px"></i>grupo de telegram</a></li>
+          <li><a href="#"><i class="fab fa-discord" style="margin-right:8px"></i>comunidad discord</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 WAFABOT. todos los derechos reservados. hecho con <i class="fas fa-heart" style="color:#ffd700"></i> para la comunidad streamer.</p>
+    </div>
+  </div>
+</footer>
 
-          // agregar mensaje del usuario
-          var userMsg = document.createElement('p');
-          userMsg.textContent = texto;
-          userMsg.style.color = '#e2e8f0';
-          chatMsg.appendChild(userMsg);
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal-early">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2>acceso anticipado</h2>
+    <p>se parte de los primeros en probar WAFABOT. cupos limitados.</p>
+    <form id="modal-form" onsubmit="handleModalSubmit(event)">
+      <div class="form-group">
+        <label for="modal-nombre">nombre completo</label>
+        <input type="text" id="modal-nombre" required placeholder="tu nombre">
+      </div>
+      <div class="form-group">
+        <label for="modal-email">correo electronico</label>
+        <input type="email" id="modal-email" required placeholder="tu@email.com">
+      </div>
+      <div class="form-group">
+        <label for="modal-tipo">tipo de usuario</label>
+        <select id="modal-tipo">
+          <option value="streamer">streamer / creador</option>
+          <option value="agencia">agencia de marketing</option>
+          <option value="otro">otro</option>
+        </select>
+      </div>
+      <button type="submit" class="form-submit"><i class="fas fa-rocket"></i> solicitar acceso</button>
+    </form>
+    <div class="form-success" id="modal-success">
+      <i class="fas fa-check-circle"></i>
+      <h4>solicitud enviada!</h4>
+      <p>te contactaremos pronto con tu cupo de acceso anticipado.</p>
+    </div>
+  </div>
+</div>
 
-          // respuesta automatica
-          setTimeout(function() {
-            var respuestas = [
-              '¡excelente! puedes probar wafabot gratis. crea tu cuenta en wafabot.com/registro',
-              'buena pregunta. nuestros agentes funcionan 24/7 y consumen menos del 5% de cpu.',
-              'claro que si. muchos usuarios reportan ganancias desde el primer dia.',
-              'totalmente seguro. usamos cifrado hmac-sha256 punto a punto.',
-              '¿quieres saber mas? habla con otros ganadores en nuestro discord.',
-              'los retiros mininos son desde 10 usd via paypal, cripto o transferencia.',
-              'cualquier pc con windows 10/11 funciona. hasta las mas viejitas.',
-              'es gratis registrarse. no necesitas tarjeta ni inversion inicial.',
-            ];
-            var idx = Math.floor(Math.random() * respuestas.length);
-            var botMsg = document.createElement('p');
-            botMsg.className = 'msg-bot';
-            botMsg.textContent = '🤖 ' + respuestas[idx];
-            chatMsg.appendChild(botMsg);
-            chatMsg.scrollTop = chatMsg.scrollHeight;
-          }, 600 + Math.random() * 900);
+<!-- ===== FLOATING CONTACT ===== -->
+<div class="floating-contact">
+  <a href="mailto:soporte@WAFABOT.com" class="floating-btn email" aria-label="email">
+    <i class="fas fa-envelope"></i>
+    <span class="tooltip">soporte@WAFABOT.com</span>
+  </a>
+  <a href="#" class="floating-btn whatsapp" aria-label="whatsapp">
+    <i class="fab fa-whatsapp"></i>
+    <span class="tooltip">escribenos por whatsapp</span>
+  </a>
+</div>
 
-          chatInput.value = '';
-          chatMsg.scrollTop = chatMsg.scrollHeight;
-        }
+<script>
+// ===== LOADING SCREEN =====
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    document.getElementById('loading-screen').classList.add('hidden');
+  },600);
+});
 
-        if (chatSend) {
-          chatSend.addEventListener('click', enviarMensaje);
-        }
-        if (chatInput) {
-          chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') enviarMensaje();
-          });
-        }
-      }
+// ===== COUNTDOWN =====
+function updateCountdown(){
+  const target = new Date('2026-06-25T00:00:00').getTime();
+  const now = Date.now();
+  const diff = target - now;
+  if(diff<=0){document.getElementById('days').textContent='00';document.getElementById('hours').textContent='00';document.getElementById('minutes').textContent='00';document.getElementById('seconds').textContent='00';return}
+  const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+  document.getElementById('days').textContent=String(d).padStart(2,'0');
+  document.getElementById('hours').textContent=String(h).padStart(2,'0');
+  document.getElementById('minutes').textContent=String(m).padStart(2,'0');
+  document.getElementById('seconds').textContent=String(s).padStart(2,'0');
+}
+setInterval(updateCountdown,1000);updateCountdown();
 
-      /* === inicializar todo === */
-      document.addEventListener('DOMContentLoaded', function() {
-        animarContadores();
-        initFaq();
-        initScrollAnimations();
-        initSmoothScroll();
-        initHamburger();
-        initChat();
-      });
-    })();
-  </script>
+// ===== PARTICLES CANVAS =====
+(function(){
+  const canvas=document.getElementById('particles-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let w,h,particles=[];
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const count=80;
+  for(let i=0;i<count;i++){particles.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-0.5)*0.5,vy:(Math.random()-0.5)*0.5,size:Math.random()*2+1,color:['#ffd700','#00ff88','#7c3aed'][Math.floor(Math.random()*3)]})}
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.shadowBlur=10;ctx.shadowColor=p.color});
+    particles.forEach((a,i)=>{particles.forEach((b,j)=>{if(i<j){const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(255,215,0,${0.08*(1-d/150)})`;ctx.stroke()}}})});
+    ctx.shadowBlur=0;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== MOBILE MENU =====
+document.getElementById('hamburger').addEventListener('click',function(){this.classList.toggle('active');document.getElementById('nav-links').classList.toggle('active')});
+document.querySelectorAll('#nav-links a').forEach(a=>a.addEventListener('click',function(){document.getElementById('hamburger').classList.remove('active');document.getElementById('nav-links').classList.remove('active')}));
+
+// ===== HEADER SCROLL =====
+window.addEventListener('scroll',function(){document.querySelector('header').classList.toggle('scrolled',window.scrollY>50)});
+
+// ===== SCROLL REVEAL =====
+const observer=new IntersectionObserver(function(entries){entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible')}})},{threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>observer.observe(el));
+
+// ===== CHART BARS =====
+const chartObserver=new IntersectionObserver(function(entries){entries.forEach(entry=>{if(entry.isIntersecting){entry.target.querySelectorAll('.chart-bar').forEach(bar=>{const h=bar.getAttribute('data-height');setTimeout(()=>{bar.style.height=h+'px'},200)})}})},{threshold:0.3});
+const chartContainer=document.getElementById('chart-bars');if(chartContainer)chartObserver.observe(chartContainer.parentElement);
+
+// ===== LIVE COUNTER =====
+(function(){
+  let base=5247;const el=document.getElementById('live-count'),counter=document.getElementById('user-count-hero'),heroCounter=document.getElementById('user-count-hero');
+  function updateCounter(){base+=Math.floor(Math.random()*3);const fmt=base.toLocaleString('es');if(el)el.textContent=fmt;if(heroCounter)heroCounter.textContent=fmt;if(document.getElementById('registro-counter'))document.getElementById('registro-counter').textContent=fmt}
+  setInterval(updateCounter,8000);updateCounter();
+  // rotating names
+  const users=document.querySelectorAll('#live-users span');let idx=0;
+  setInterval(function(){users.forEach(u=>u.classList.remove('active'));users[idx].classList.add('active');idx=(idx+1)%users.length},3000);
+})();
+
+// ===== FAQ ACCORDION =====
+document.querySelectorAll('.faq-question').forEach(btn=>{btn.addEventListener('click',function(){const item=this.parentElement;const isActive=item.classList.contains('active');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('active'));if(!isActive)item.classList.add('active')})});
+
+// ===== MODAL =====
+function openModal(){document.getElementById('modal-early').classList.add('active');document.body.style.overflow='hidden'}
+function closeModal(){document.getElementById('modal-early').classList.remove('active');document.body.style.overflow=''}
+document.getElementById('modal-early').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+
+// ===== MODAL FORM =====
+function handleModalSubmit(e){e.preventDefault();const nombre=document.getElementById('modal-nombre').value.trim(),email=document.getElementById('modal-email').value.trim();
+  if(!nombre||!email)return;const data={nombre,email,tipo:document.getElementById('modal-tipo').value};
+  try{localStorage.setItem('WAFABOT_registro',JSON.stringify(data))}catch(e){}
+  document.getElementById('modal-form').style.display='none';document.getElementById('modal-success').style.display='block';
+  setTimeout(function(){closeModal();document.getElementById('modal-form').style.display='block';document.getElementById('modal-success').style.display='none';document.getElementById('modal-form').reset()},3000);
+  // save to local registrations list
+  try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');list.push({...data,fecha:new Date().toISOString()});localStorage.setItem('WAFABOT_registros',JSON.stringify(list))}catch(e){}
+  fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(function(){})}
+
+// ===== REGISTRO FORM =====
+function handleRegistro(e){e.preventDefault();const nombre=document.getElementById('reg-nombre').value.trim(),email=document.getElementById('reg-email').value.trim();
+  if(!nombre||!email)return;const data={nombre,email,tipo:document.getElementById('reg-tipo').value};
+  try{localStorage.setItem('WAFABOT_registro',JSON.stringify(data))}catch(e){}
+  document.getElementById('registro-form').style.display='none';document.getElementById('form-success').style.display='block';
+  try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');list.push({...data,fecha:new Date().toISOString()});localStorage.setItem('WAFABOT_registros',JSON.stringify(list))}catch(e){}
+  fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(function(){})
+  // increment registration counter
+  const counters=document.querySelectorAll('#user-count-hero,#live-count,#registro-counter');
+  counters.forEach(function(el){if(el){const n=parseInt(el.textContent.replace(/[^0-9]/g,''))||0;el.textContent=(n+1).toLocaleString('es')}});
+  setTimeout(function(){document.getElementById('registro-form').style.display='block';document.getElementById('form-success').style.display='none';document.getElementById('registro-form').reset()},4000)}
+
+// ===== SHARE =====
+function shareLink(platform){const url=encodeURIComponent('https://www.WAFABOT.com'),text=encodeURIComponent('unete a la revolucion de WAFABOT - audiencia real para tus directos en kick y twitch');
+  const links={twitter:`https://twitter.com/intent/tweet?text=${text}&url=${url}`,facebook:`https://facebook.com/sharer/sharer.php?u=${url}`,whatsapp:`https://wa.me/?text=${text}%20${url}`};
+  if(platform==='twitter'||platform==='facebook'||platform==='whatsapp'){window.open(links[platform],'_blank','width=600,height=400')}}
+function copyLink(){navigator.clipboard.writeText('https://www.WAFABOT.com').then(function(){const btn=document.querySelector('.share-btn.copy');btn.innerHTML='<i class="fas fa-check"></i> copiado!';setTimeout(function(){btn.innerHTML='<i class="fas fa-link"></i> copiar enlace'},2000)})}
+
+// ===== RESTORE COUNTER FROM LOCALSTORAGE =====
+(function(){try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');if(list.length>0){const base=5247+list.length;document.querySelectorAll('#user-count-hero,#live-count,#registro-counter').forEach(function(el){if(el)el.textContent=base.toLocaleString('es')})}}catch(e){}})();
+
+// ===== RIPPLE EFFECT ON BUTTONS =====
+document.querySelectorAll('.btn,.form-submit,.share-btn').forEach(function(btn){btn.addEventListener('click',function(e){const rect=this.getBoundingClientRect();const ripple=document.createElement('span');ripple.className='ripple';const x=e.clientX-rect.left,y=e.clientY-rect.top;ripple.style.left=x+'px';ripple.style.top=y+'px';ripple.style.width='20px';ripple.style.height='20px';ripple.style.position='absolute';ripple.style.borderRadius='50%';ripple.style.background='rgba(255,255,255,0.3)';ripple.style.transform='scale(0)';ripple.style.animation='ripple-anim 0.6s ease-out';ripple.style.pointerEvents='none';this.appendChild(ripple);setTimeout(function(){ripple.remove()},600)})});
+</script>
+<style>
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.3);transform:scale(0);animation:ripple-anim 0.6s ease-out;pointer-events:none}
+@keyframes ripple-anim{to{transform:scale(4);opacity:0}}
+</style>
+<script src="js/main.js"></script>
 </body>
 </html>

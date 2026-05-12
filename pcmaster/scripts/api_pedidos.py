@@ -1,153 +1,427 @@
-# api_pedidos.py - flujo de pedidos con estados. roxymaster v8.3
-# utf-8 sin bom, nombres en minusculas, <= 400 lineas
+# api_pedidos.py - router de pedidos de servicios para streamers.
+# roxymaster v8.3 - utf-8 sin bom, nombres en minusculas, <= 400 lineas
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
+import uuid
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from auth import verificar_token
-from db import ejecutar_sql, ejecutar_sql_unico
+from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
+from tokenomics_core import (
+    calcular_costo_streamer,
+    _cargar_params,
+)
+from auth import verificar_token_opcional
+from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
+from orchestrator import crear_comando as orc_crear_comando
 
 logger = logging.getLogger("roxymaster.api_pedidos")
+
 router = APIRouter(prefix="/api/pedidos", tags=["pedidos"])
 
 
-class PedidoCrear(BaseModel):
-    tipo: str  # "comando", "kbt", "servicio"
-    descripcion: str
-    metadata: Optional[dict] = None
+def _usuario_requerido(sesion: dict) -> int:
+    """valida que la sesion tenga usuario_id y lo devuelve."""
+    if not sesion:
+        raise HTTPException(status_code=401, detail="autenticacion requerida")
+    uid = sesion.get("usuario_id")
+    if not uid:
+        raise HTTPException(status_code=401, detail="token invalido")
+    return uid
 
 
-class PedidoActualizar(BaseModel):
-    estado: str  # "pendiente", "en_progreso", "completado", "cancelado"
-    notas: Optional[str] = None
+# ---------------------------------------------------------------------------
+# post /api/pedidos/calcular_costo
+# ---------------------------------------------------------------------------
+@router.post("/calcular_costo")
+async def calcular_costo_endpoint(request: Request, sesion: dict = Depends(verificar_token_opcional)):
+    """calcula el costo de un pedido en tokens."""
+    uid = _usuario_requerido(sesion)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="cuerpo invalido")
+
+    seguidores = int(body.get("seguidores", 0))
+    perfiles = int(body.get("perfiles", 0))
+    horas = float(body.get("horas", 0))
+    nivel_comentarios = body.get("nivel_comentarios", "basico")
+    tipo_pedido = body.get("tipo_pedido", "vistas")
+
+    if seguidores <= 0 or perfiles <= 0 or horas <= 0:
+        raise HTTPException(status_code=400, detail="seguidores, perfiles y horas deben ser > 0")
+
+    costo = calcular_costo_streamer(seguidores, perfiles, horas)
+    costo_tokens = costo["tokens"]
+
+    # aplicar multiplicador vip (x2.0)
+    multiplicador_vip = 2.0 if tipo_pedido == "vip" else 1.0
+    costo_tokens *= multiplicador_vip
+
+    return {
+        "exito": True,
+        "costo_usd": costo["usd"] * multiplicador_vip,
+        "costo_soles": costo["soles"] * multiplicador_vip,
+        "costo_tokens": costo_tokens,
+        "seguidores": seguidores,
+        "perfiles": perfiles,
+        "horas": horas,
+        "nivel_comentarios": nivel_comentarios,
+        "tipo_pedido": tipo_pedido,
+    }
 
 
+# ---------------------------------------------------------------------------
+# post /api/pedidos/crear
+# ---------------------------------------------------------------------------
 @router.post("/crear")
-async def crear_pedido(pedido: PedidoCrear, token: str = Depends(verificar_token)):
-    """crea un nuevo pedido."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    ahora = datetime.now().isoformat()
-    meta_str = json.dumps(pedido.metadata) if pedido.metadata else "{}"
+async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_opcional)):
+    """crea un pedido de servicio, descuenta tokens y envia comando al pcbot."""
+    uid = _usuario_requerido(sesion)
     try:
-        pid = ejecutar_sql(
-            """insert into pedidos (usuario_id, tipo, descripcion, metadata, estado, creado_en, actualizado_en)
-               values (?, ?, ?, ?, 'pendiente', ?, ?) returning id""",
-            (usuario["id"], pedido.tipo, pedido.descripcion, meta_str, ahora, ahora),
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="cuerpo invalido")
+
+    url = body.get("url", "").strip()
+    seguidores = int(body.get("seguidores", 0))
+    perfiles = int(body.get("perfiles", 0))
+    # aceptar 'minutos' (frontend) o 'horas' (api directa)
+    minutos = float(body.get("minutos", 0) or body.get("horas", 0) or 0)
+    if body.get("horas") and not body.get("minutos"):
+        horas = float(body.get("horas", 0))
+    else:
+        horas = minutos / 60.0  # convertir minutos a horas
+    nivel_comentarios = body.get("nivel_comentarios", "basico")
+    # aceptar 'tipo' (frontend) o 'tipo_pedido' (api directa)
+    tipo_pedido = body.get("tipo_pedido") or body.get("tipo", "vistas")
+
+    if not url:
+        raise HTTPException(status_code=400, detail="url requerida")
+    if seguidores <= 0 or perfiles <= 0 or horas <= 0:
+        raise HTTPException(status_code=400, detail="seguidores, perfiles y horas deben ser > 0")
+
+    # calcular costo
+    costo = calcular_costo_streamer(seguidores, perfiles, horas)
+    costo_tokens = costo["tokens"]
+
+    # aplicar multiplicador vip (x2.0)
+    multiplicador_vip = 2.0 if tipo_pedido == "vip" else 1.0
+    costo_tokens *= multiplicador_vip
+
+    # verificar saldo
+    wallet = ejecutar_sql_unico("select balance from wallets where usuario_id = ?", (uid,))
+    if not wallet or float(wallet["balance"]) < costo_tokens:
+        raise HTTPException(status_code=400, detail="saldo insuficiente")
+
+    # descuento de tokens
+    ejecutar_sql(
+        "update wallets set balance = balance - ? where usuario_id = ?",
+        (costo_tokens, uid),
+    )
+
+    # generar comando_id
+    comando_id = f"pedido_{uuid.uuid4().hex[:12]}"
+
+    logger.info(f"[PEDIDO-DIAG] uid={uid} url={url} perfiles={perfiles} horas={horas} costo={costo_tokens}")
+
+    # LOG-ANTES: antes de insertar pedido en bd
+    logger.info(f"[PEDIDO-LOG] paso 1/6: insertando pedido en bd uid={uid} url={url}")
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pedido_id = ejecutar_insercion(
+        """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
+           duracion_horas, nivel_comentarios, tipo_pedido, costo_tokens, estado,
+           comando_id, fecha_creacion)
+           values (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?)""",
+        (uid, url, seguidores, perfiles, horas, nivel_comentarios, tipo_pedido,
+         costo_tokens, comando_id, ahora),
+    )
+
+    # LOG-DESPUES: resultado de insercion
+    logger.info(f"[PEDIDO-LOG] paso 2/6: pedido insertado id={pedido_id}")
+    if not pedido_id:
+        logger.error(f"[PEDIDO-LOG] paso 2/6 FALLO: no se obtuvo pedido_id. revirtiendo descuento")
+        # revertir descuento
+        ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?",
+                     (costo_tokens, uid))
+        raise HTTPException(status_code=500, detail="error al crear pedido")
+
+    # registrar transaccion
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'pedido', ?, ?, ?)",
+        (uid, costo_tokens,
+         f"pedido #{pedido_id}: {perfiles} perfiles x {horas}h para {seguidores} seguidores",
+         ahora),
+    )
+
+    # enviar comando al pcbot
+    duracion_minutos = int(horas * 60)
+
+    parametros_pedido = {
+        "url": url,
+        "cantidad": perfiles,
+        "duracion": duracion_minutos,
+        "nivel_comentarios": nivel_comentarios,
+    }
+
+    # LOG-ANTES: consultar pcbot_id
+    logger.info(f"[PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid={uid}) - conexiones activas en ws_manager")
+    pcbot_id = obtener_pcbot_de_usuario(uid)
+    logger.info(f"[PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='{pcbot_id}' tipo={type(pcbot_id).__name__}")
+
+    # log del payload exacto que se enviara al pcbot (para depuracion)
+    payload_exacto = {
+        "tipo": "asignar",
+        "comando_id": comando_id,
+        "parametros": parametros_pedido,
+    }
+    logger.info(f"[PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='{pcbot_id}': {json.dumps(payload_exacto, ensure_ascii=False)}")
+    logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en ws_manager? CHEQUEAR LOGS")
+
+    # LOG-ANTES: enviar comando
+    logger.info(f"[PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id={uid}) pcbot_id='{pcbot_id}' comando_id={comando_id}")
+    resultado_orch = await enviar_comando_al_pcbot(
+        usuario_id=uid,
+        comando={
+            "tipo": "asignar",
+            "comando_id": comando_id,
+            "parametros": parametros_pedido,
+        },
+    )
+    logger.info(f"[PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={json.dumps(resultado_orch, ensure_ascii=False)}")
+
+    if not resultado_orch.get("exito"):
+        logger.warning(
+            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO envio a pcbot via ws_manager. "
+            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error', 'sin error')}. "
+            f"intentando fallback via orchestrator..."
         )
-        if isinstance(pid, (list, tuple)):
-            pid = pid[0]
-        elif hasattr(pid, "fetchone"):
-            row = pid.fetchone()
-            pid = row[0] if row else None
-        elif isinstance(pid, int):
-            pass
-        else:
-            pid = pid.get("id") if isinstance(pid, dict) else getattr(pid, "id", None)
-        logger.info(f"pedido creado: id={pid}, tipo={pedido.tipo}")
-        return {"exito": True, "pedido_id": pid, "mensaje": "pedido creado correctamente"}
-    except Exception as e:
-        logger.error(f"error al crear pedido: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.get("/listar")
-async def listar_pedidos(
-    estado: Optional[str] = Query(None),
-    token: str = Depends(verificar_token),
-):
-    """lista pedidos, opcionalmente filtrados por estado."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    try:
-        if estado:
-            rows = ejecutar_sql(
-                "select id, tipo, descripcion, estado, creado_en from pedidos where usuario_id = ? and estado = ? order by creado_en desc",
-                (usuario["id"], estado),
+        # FALLBACK: intentar via orchestrator.crear_comando directamente
+        try:
+            # buscar pcbot_id del usuario en la tabla usuarios
+            usuario = ejecutar_sql_unico(
+                "select pcbot_id from usuarios where id = ?",
+                (uid,)
             )
-        else:
-            rows = ejecutar_sql(
-                "select id, tipo, descripcion, estado, creado_en from pedidos where usuario_id = ? order by creado_en desc",
-                (usuario["id"],),
-            )
-        pedidos = []
-        for r in rows:
-            pedidos.append({"id": r[0], "tipo": r[1], "descripcion": r[2], "estado": r[3], "creado_en": r[4]})
-        return {"exito": True, "pedidos": pedidos}
-    except Exception as e:
-        logger.error(f"error al listar pedidos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+            if usuario and usuario["pcbot_id"]:
+                orc_pcbot_id = usuario["pcbot_id"]
+                logger.info(f"[PEDIDO-FALLBACK] intentando orc_crear_comando con pcbot_id='{orc_pcbot_id}' uid={uid}")
+                orc_result = await orc_crear_comando(
+                    tipo="asignar",
+                    parametros=parametros_pedido,
+                    pcbot_id=orc_pcbot_id,
+                    comando_id=comando_id,
+                )
+                if orc_result.get("exito"):
+                    logger.info(f"[PEDIDO-FALLBACK] orc_crear_comando EXITO: {json.dumps(orc_result)}")
+                    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
+                    return {
+                        "exito": True,
+                        "pedido_id": pedido_id,
+                        "costo_tokens": costo_tokens,
+                        "comando_id": comando_id,
+                        "comando_enviado": True,
+                        "mensaje": "pedido creado y comando encolado en orchestrator",
+                    }
+                else:
+                    logger.warning(f"[PEDIDO-FALLBACK] orc_crear_comando fallo: {orc_result}")
+            else:
+                logger.warning(f"[PEDIDO-FALLBACK] usuario {uid} no tiene pcbot_id asignado")
+        except Exception as e:
+            logger.error(f"[PEDIDO-FALLBACK] excepcion en orchestrator fallback: {e}")
 
-
-@router.put("/{pedido_id}")
-async def actualizar_pedido(pedido_id: int, datos: PedidoActualizar, token: str = Depends(verificar_token)):
-    """actualiza el estado de un pedido."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    estados_validos = ["pendiente", "en_progreso", "completado", "cancelado"]
-    if datos.estado not in estados_validos:
-        raise HTTPException(status_code=400, detail=f"estado invalido. usar: {', '.join(estados_validos)}")
-    ahora = datetime.now().isoformat()
-    try:
-        ejecutar_sql(
-            "update pedidos set estado = ?, notas = ?, actualizado_en = ? where id = ? and usuario_id = ?",
-            (datos.estado, datos.notas, ahora, pedido_id, usuario["id"]),
-        )
-        logger.info(f"pedido {pedido_id} actualizado a {datos.estado}")
-        return {"exito": True, "mensaje": f"pedido {pedido_id} actualizado a '{datos.estado}'"}
-    except Exception as e:
-        logger.error(f"error al actualizar pedido {pedido_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/{pedido_id}")
-async def obtener_pedido(pedido_id: int, token: str = Depends(verificar_token)):
-    """obtiene detalles de un pedido especifico."""
-    usuario = obtener_usuario_por_token(token)
-    if not usuario:
-        raise HTTPException(status_code=401, detail="token invalido")
-    try:
-        row = ejecutar_sql_unico(
-            "select id, tipo, descripcion, metadata, estado, notas, creado_en, actualizado_en from pedidos where id = ? and usuario_id = ?",
-            (pedido_id, usuario["id"]),
-        )
-        if not row:
-            raise HTTPException(status_code=404, detail="pedido no encontrado")
+        # si el fallback tambien fallo, responder con comando no enviado
         return {
             "exito": True,
-            "pedido": {
-                "id": row[0],
-                "tipo": row[1],
-                "descripcion": row[2],
-                "metadata": json.loads(row[3]) if row[3] else {},
-                "estado": row[4],
-                "notas": row[5],
-                "creado_en": row[6],
-                "actualizado_en": row[7],
-            },
+            "pedido_id": pedido_id,
+            "costo_tokens": costo_tokens,
+            "comando_id": comando_id,
+            "comando_enviado": False,
+            "mensaje": "pedido creado pero no se pudo encolar el comando. se reintentara.",
         }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"error al obtener pedido {pedido_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+    # actualizar estado a enviado
+    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
+
+    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} pcbot_id='{pcbot_id}'")
+    return {
+        "exito": True,
+        "pedido_id": pedido_id,
+        "costo_tokens": costo_tokens,
+        "comando_id": comando_id,
+        "comando_enviado": True,
+        "mensaje": "pedido creado y comando enviado al pcbot",
+    }
 
 
-def obtener_usuario_por_token(token: str) -> Optional[dict]:
-    """obtiene datos del usuario desde un token de sesion."""
-    try:
-        from auth import verificar_token
-        resultado = verificar_token(token)
-        if resultado.get("exito") and resultado.get("usuario"):
-            return resultado["usuario"]
-        return None
-    except Exception:
-        return None
+# ---------------------------------------------------------------------------
+# get /api/pedidos/mis_pedidos
+# ---------------------------------------------------------------------------
+@router.get("/mis_pedidos")
+async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
+    """lista los pedidos del usuario autenticado."""
+    uid = _usuario_requerido(sesion)
+
+    pedidos = ejecutar_sql(
+        """select id, url, seguidores_streamer, cantidad_perfiles, duracion_horas,
+                  nivel_comentarios, tipo_pedido, costo_tokens, estado, comando_id,
+                  fecha_creacion
+           from pedidos
+           where usuario_id = ?
+           order by fecha_creacion desc""",
+        (uid,),
+    )
+
+    # mapear nombres de campos para compatibilidad con frontend
+    pedidos_mapeados = []
+    for p in pedidos:
+        pedidos_mapeados.append({
+            "id": p["id"],
+            "url": p["url"],
+            "seguidores": p["seguidores_streamer"],
+            "perfiles": p["cantidad_perfiles"],
+            "duracion": p["duracion_horas"],
+            "minutos": int(p["duracion_horas"] * 60),
+            "nivel_comentarios": p["nivel_comentarios"],
+            "tipo": p["tipo_pedido"],
+            "costo": p["costo_tokens"],
+            "costo_total": p["costo_tokens"],
+            "estado": p["estado"],
+            "comando_id": p["comando_id"],
+            "fecha_creacion": p["fecha_creacion"],
+            "created_at": p["fecha_creacion"],
+        })
+
+    return {
+        "exito": True,
+        "pedidos": pedidos_mapeados,
+    }
+
+
+# ---------------------------------------------------------------------------
+# delete /api/pedidos/{pedido_id}
+# ---------------------------------------------------------------------------
+@router.delete("/{pedido_id}")
+async def eliminar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """elimina un pedido pendiente y reembolsa los tokens."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para eliminar este pedido")
+    if pedido["estado"] not in ("pendiente",):
+        raise HTTPException(status_code=400, detail="solo se pueden eliminar pedidos pendientes")
+
+    # reembolsar tokens
+    costo = float(pedido["costo_tokens"])
+    ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?", (costo, uid))
+    ejecutar_sql("delete from pedidos where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'reembolso', ?, ?, ?)",
+        (uid, costo, f"reembolso eliminacion pedido #{pedido_id}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} eliminado por usuario {uid}, reembolso {costo} tokens")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} eliminado, reembolso de {costo} tokens"}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/detener
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/detener")
+async def detener_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """detiene un pedido en curso y reembolsa el 50% de los tokens."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para detener este pedido")
+    if pedido["estado"] not in ("trabajando", "en_progreso", "enviado"):
+        raise HTTPException(status_code=400, detail="solo se pueden detener pedidos en curso")
+
+    costo = float(pedido["costo_tokens"])
+    reembolso = round(costo * 0.5, 4)
+
+    ejecutar_sql("update wallets set balance = balance + ? where usuario_id = ?", (reembolso, uid))
+    ejecutar_sql("update pedidos set estado = 'detenido' where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'reembolso_parcial', ?, ?, ?)",
+        (uid, reembolso, f"reembolso parcial (50%) detener pedido #{pedido_id}",
+         datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} detenido por usuario {uid}, reembolso {reembolso} tokens")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} detenido", "reembolso": reembolso}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/reabrir
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/reabrir")
+async def reabrir_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """reabre un pedido detenido o fallido y lo pone en pendiente para reprocesar."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para reabrir este pedido")
+    if pedido["estado"] not in ("detenido", "fallido"):
+        raise HTTPException(status_code=400, detail="solo se pueden reabrir pedidos detenidos o fallidos")
+
+    ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
+    logger.info(f"[PEDIDO] pedido #{pedido_id} reabierto por usuario {uid}")
+
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} reabierto, sera reprocesado"}
+
+
+# ---------------------------------------------------------------------------
+# post /api/pedidos/{pedido_id}/cancelar
+# ---------------------------------------------------------------------------
+@router.post("/{pedido_id}/cancelar")
+async def cancelar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_opcional)):
+    """cancela un pedido sin reembolso y lo marca como finalizado."""
+    uid = _usuario_requerido(sesion)
+
+    pedido = ejecutar_sql_unico(
+        "select id, usuario_id, costo_tokens, estado from pedidos where id = ?",
+        (pedido_id,),
+    )
+    if not pedido:
+        raise HTTPException(status_code=404, detail="pedido no encontrado")
+    if pedido["usuario_id"] != uid:
+        raise HTTPException(status_code=403, detail="no tienes permiso para cancelar este pedido")
+    if pedido["estado"] not in ("pendiente", "enviado", "trabajando", "en-progreso", "en_progreso"):
+        raise HTTPException(status_code=400, detail="solo se pueden cancelar pedidos pendientes, enviados o en progreso")
+
+    costo = float(pedido["costo_tokens"])
+    ejecutar_sql("update pedidos set estado = 'finalizado' where id = ?", (pedido_id,))
+    ejecutar_insercion(
+        "insert into transacciones (origen_id, destino_id, tipo, monto, concepto, fecha) "
+        "values (?, null, 'cancelacion', 0, ?, ?)",
+        (uid, f"cancelacion sin reembolso pedido #{pedido_id}: {costo} tokens retenidos",
+         datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    )
+
+    logger.info(f"[PEDIDO] pedido #{pedido_id} cancelado por usuario {uid}, sin reembolso ({costo} tokens retenidos)")
+    return {"exito": True, "mensaje": f"pedido #{pedido_id} cancelado. no hay devolucion ni reembolso"}

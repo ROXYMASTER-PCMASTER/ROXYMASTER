@@ -1,0 +1,8 @@
+push rechazado - conflicto con remoto
+
+fecha: 2026-05-12 00:11
+accion: git push origin main
+error: Updates were rejected because the remote contains work that you do not have locally.
+causa: el remoto tiene commits que no estan en el clon local. posiblemente otro push desde otra maquina o cambios hechos directamente en github.
+regla activada: "si hay conflicto, detenerse y pedir instrucciones" (prohibido git pull y git push --force).
+solicitud: indicar como proceder para sincronizar y hacer push exitoso.

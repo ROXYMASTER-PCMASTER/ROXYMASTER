@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -50,149 +50,142 @@
       backdrop-filter:blur(12px);
     }
     .card h1 {
-      font-size:1.4rem; font-weight:800; text-align:center; margin-bottom:0.5rem;
+      font-size:1.4rem; font-weight:800; text-align:center; margin-bottom:0.3rem;
       background:linear-gradient(135deg,#8b5cf6,#06b6d4);
       -webkit-background-clip:text; -webkit-text-fill-color:transparent;
     }
-    .card p { text-align:center; color:#94a3b8; font-size:0.85rem; margin-bottom:1.8rem; }
-    .form-group { margin-bottom:1.2rem; }
-    .form-group label { display:block; font-size:0.8rem; font-weight:600; color:#94a3b8; margin-bottom:0.4rem; }
-    .form-group input {
-      width:100%; padding:0.8rem 1rem; border-radius:12px; border:1px solid rgba(139,92,246,0.2);
-      background:rgba(11,15,23,0.8); color:#e2e8f0; font-size:0.9rem; outline:none;
-      transition:border-color 0.3s, box-shadow 0.3s;
+    .card p.sub { text-align:center; color:#8892a4; font-size:0.9rem; margin-bottom:2rem; }
+    .card p.sub a { color:#8b5cf6; text-decoration:none; }
+    .card p.sub a:hover { text-decoration:underline; }
+    .form-group { margin-bottom:1.25rem; }
+    .form-group label {
+      display:block; font-size:0.8rem; font-weight:600; margin-bottom:0.4rem;
+      color:#a0aec0; text-transform:uppercase; letter-spacing:0.5px;
     }
-    .form-group input:focus { border-color:#8b5cf6; box-shadow:0 0 20px rgba(139,92,246,0.2); }
-    .form-group input::placeholder { color:#475569; }
-    .password-wrapper { position:relative; }
-    .password-wrapper input { padding-right:3rem!important; }
-    .toggle-password {
-      position:absolute; right:0.75rem; top:50%; transform:translateY(-50%);
-      background:none; border:none; color:#64748b; cursor:pointer; font-size:1.1rem;
-      padding:0.25rem; line-height:1; transition:color 0.3s;
+    .input-wrapper { position:relative; display:flex; align-items:center; }
+    .input-wrapper input {
+      width:100%; padding:0.85rem 1rem; padding-right:2.8rem;
+      background:rgba(12,16,22,0.8); border:1px solid rgba(139,92,246,0.25);
+      border-radius:12px; color:#e2e8f0; font-size:0.95rem;
+      transition:border-color 0.3s, box-shadow 0.3s; outline:none;
     }
-    .toggle-password:hover { color:#8b5cf6; }
-    .remember-me {
-      display:flex; align-items:center; gap:0.5rem; margin:1rem 0 0.5rem;
-      font-size:0.8rem; color:#94a3b8; cursor:pointer; user-select:none;
+    .input-wrapper input:focus {
+      border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,0.15);
     }
-    .remember-me input[type="checkbox"] {
-      appearance:none; -webkit-appearance:none;
-      width:1.1rem; height:1.1rem; border-radius:4px; border:1px solid rgba(139,92,246,0.4);
-      background:rgba(11,15,23,0.8); cursor:pointer; position:relative; flex-shrink:0;
-      transition:all 0.3s;
+    .input-wrapper .toggle-pwd {
+      position:absolute; right:12px; background:none; border:none;
+      color:#8892a4; cursor:pointer; font-size:1rem; padding:0; line-height:1;
     }
-    .remember-me input[type="checkbox"]:checked {
-      background:#8b5cf6; border-color:#8b5cf6;
+    .input-wrapper .toggle-pwd:hover { color:#c0c8d6; }
+    .btn-submit {
+      width:100%; padding:0.9rem; border:none; border-radius:12px;
+      background:linear-gradient(135deg,#a78bfa,#7c3aed);
+      color:#fff; font-size:1rem; font-weight:800; cursor:pointer;
+      text-shadow:0 1px 3px rgba(0,0,0,0.4);
+      letter-spacing:0.5px;
+      transition:transform 0.2s, box-shadow 0.3s;
     }
-    .remember-me input[type="checkbox"]:checked::after {
-      content:'✓'; position:absolute; inset:0; display:flex; align-items:center;
-      justify-content:center; color:#fff; font-size:0.75rem; font-weight:700;
+    .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(124,58,237,0.5); }
+    .btn-submit:active { transform:translateY(0); }
+    .msg-box {
+      padding:0.75rem; border-radius:10px; font-size:0.85rem; line-height:1.5;
+      display:none;
     }
-    .btn {
-      width:100%; padding:0.85rem; border-radius:12px; font-weight:700; font-size:0.95rem;
-      cursor:pointer; transition:all 0.3s; border:none; display:block; text-align:center; margin-top:0.5rem;
+    .msg-box.error { display:block; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; margin-bottom:1rem; }
+    .msg-box.success { display:block; background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3); color:#4ade80; margin-bottom:1rem; }
+    .footer-link { text-align:center; margin-top:1.5rem; font-size:0.85rem; color:#8892a4; }
+    .footer-link a { color:#8b5cf6; text-decoration:none; font-weight:600; }
+    .footer-link a:hover { text-decoration:underline; }
+    .back-link {
+      display:inline-flex; align-items:center; gap:6px;
+      color:#8892a4; text-decoration:none; font-size:0.85rem;
+      margin-bottom:1.5rem; transition:color 0.3s;
     }
-    .btn-primary {
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      color:#fff; box-shadow:0 4px 15px rgba(139,92,246,0.4);
-    }
-    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(139,92,246,0.6); }
-    .btn-secondary {
-      background:transparent; color:#8b5cf6; border:1px solid rgba(139,92,246,0.5);
-    }
-    .btn-secondary:hover { background:rgba(139,92,246,0.1); border-color:#8b5cf6; transform:translateY(-2px); }
-    .extra-links { text-align:center; margin-top:1.5rem; }
-    .extra-links a { color:#64748b; font-size:0.8rem; transition:color 0.3s; margin:0 0.5rem; }
-    .extra-links a:hover { color:#8b5cf6; }
-    .error-msg {
-      display:none; padding:0.7rem 1rem; border-radius:10px; background:rgba(239,68,68,0.1);
-      border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.8rem; margin-bottom:1rem; text-align:center;
-    }
-    ::-webkit-scrollbar { width:8px; }
-    ::-webkit-scrollbar-track { background:#0b0f17; }
-    ::-webkit-scrollbar-thumb { background:#8b5cf6; border-radius:4px; }
+    .back-link:hover { color:#8b5cf6; }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
-    <a href="/" class="logo-link"><div class="logo">wafabot</div></a>
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> volver al inicio</a>
+    <a href="index.html" class="logo-link"><div class="logo">wafabot</div></a>
     <div class="card">
-      <h1>bienvenido de vuelta</h1>
-      <p>ingresa tus credenciales para continuar</p>
-      <div class="error-msg" id="error-msg"></div>
-      <form id="login-form" autocomplete="off">
+      <h1>iniciar sesion</h1>
+      <p class="sub">accede a tu panel de <a href="index.html">wafabot</a></p>
+      <div id="msg" class="msg-box"></div>
+      <form id="loginForm" onsubmit="return handleLogin(event)">
         <div class="form-group">
-          <label for="email">usuario o correo electronico</label>
-          <input type="text" id="email" placeholder="usuario o email" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="password">contrasena</label>
-          <div class="password-wrapper">
-            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
-            <button type="button" class="toggle-password" id="toggle-password" aria-label="ver contrasena">👁</button>
+          <label for="email">correo electronico</label>
+          <div class="input-wrapper">
+            <input type="email" id="email" placeholder="tu@correo.com" required autocomplete="email">
           </div>
         </div>
-        <label class="remember-me">
-          <input type="checkbox" id="recordar" checked>
-          recordar sesion
-        </label>
-        <button type="submit" class="btn btn-primary">iniciar sesion</button>
+        <div class="form-group">
+          <label for="password">contraseña</label>
+          <div class="input-wrapper">
+            <input type="password" id="password" placeholder="contraseña" required autocomplete="current-password">
+            <button type="button" class="toggle-pwd" id="toggle-password" aria-label="mostrar contraseña"><i class="far fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">acceder <i class="fas fa-arrow-right"></i></button>
       </form>
-      <div class="extra-links">
-        <a href="/registro">crear cuenta gratis</a>
-        <span style="color:#475569;">·</span>
-        <a href="/">volver al inicio</a>
+      <div class="footer-link">
+        ¿no tienes cuenta? <a href="registro.html">crear cuenta gratis</a>
       </div>
     </div>
   </div>
   <script>
-    (function(){
-      document.getElementById('login-form').addEventListener('submit', async function(e) {
+    (function() {
+      'use strict';
+      const msg = document.getElementById('msg');
+      const form = document.getElementById('loginForm');
+
+      window.handleLogin = async function(e) {
         e.preventDefault();
-        var email = document.getElementById('email').value.trim();
-        var password = document.getElementById('password').value;
-        var errorEl = document.getElementById('error-msg');
-        var btn = this.querySelector('button[type="submit"]');
+        msg.className = 'msg-box';
+        msg.style.display = 'none';
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
         if (!email || !password) {
-          errorEl.textContent = 'completa todos los campos';
-          errorEl.style.display = 'block';
-          return;
+          msg.className = 'msg-box error';
+          msg.textContent = 'completa todos los campos.';
+          return false;
         }
-        btn.disabled = true;
-        btn.textContent = 'accediendo...';
         try {
-          var resp = await fetch('/api/login', {
+          const resp = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, password: password })
+            body: JSON.stringify({ email, password })
           });
-          var data = await resp.json();
-          if (resp.ok && data.token) {
-            var storage = document.getElementById('recordar').checked ? localStorage : sessionStorage;
-            storage.setItem('token', data.token);
-            if (data.rol === 'admin' || data.rol === 'superadmin') {
-              window.location.href = '/privado/dashboard_admin.html?token=' + data.token;
-            } else {
-              window.location.href = '/publico/dashboard_publico.html?token=' + data.token;
-            }
-          } else {
-            errorEl.textContent = data.detalle || data.error || 'credenciales invalidas';
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'iniciar sesion';
+          const data = await resp.json();
+          if (!resp.ok || !data.exito) {
+            msg.className = 'msg-box error';
+            msg.textContent = data.detail || data.error || 'error al iniciar sesion';
+            return false;
           }
-        } catch(err) {
-          errorEl.textContent = 'error de conexion. intenta de nuevo.';
-          errorEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'iniciar sesion';
+          // guardar token
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('usuario', JSON.stringify(data.usuario));
+          // redirigir al dashboard (o al redirect original si venia de marketplace/perfiles)
+          var redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/publico/dashboard_publico.html';
+          window.location.href = redirectUrl;
+        } catch (err) {
+          msg.className = 'msg-box error';
+          msg.textContent = 'error de conexion: ' + err.message;
+          return false;
         }
-      });
+        return false;
+      };
+
       document.getElementById('toggle-password').addEventListener('click', function() {
         var p = document.getElementById('password');
-        if (p.type === 'password') { p.type = 'text'; this.textContent = '🙈'; }
-        else { p.type = 'password'; this.textContent = '👁'; }
+        if (p.type === 'password') {
+          p.type = 'text';
+          this.innerHTML = '<i class="far fa-eye-slash"></i>';
+        } else {
+          p.type = 'password';
+          this.innerHTML = '<i class="far fa-eye"></i>';
+        }
       });
     })();
   </script>

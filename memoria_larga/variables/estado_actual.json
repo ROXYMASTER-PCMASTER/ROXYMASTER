@@ -1,0 +1,15 @@
+﻿{
+  "vigilante_pedidos": {
+    "activo": true,
+    "modulo": "pedidos_vigilante.py",
+    "tabla_asignaciones": "pedido_asignaciones",
+    "intervalo_seg": 30,
+    "timeout_pcbot_seg": 60
+  },
+  "archivos_vigilante": {
+    "db_pedidos_vigilante.py": "pcmaster/scripts/db_pedidos_vigilante.py",
+    "pedidos_vigilante.py": "pcmaster/scripts/pedidos_vigilante.py"
+  },
+  "server_py_modificado": true,
+  "ultima_actualizacion": "2026-05-11 22:05 UTC"
+}

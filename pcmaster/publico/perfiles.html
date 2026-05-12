@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function() {
+  if (window.top === window.self) {
+    window.location.replace('/publico/dashboard_publico.html?tab=perfiles');
+  }
+})();
+</script>
 <title>perfiles - roxymaster</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -16,7 +23,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 @keyframes avatarPulse{0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.4),0 0 40px rgba(0,255,136,0.2)}50%{box-shadow:0 0 30px rgba(124,58,237,0.6),0 0 60px rgba(0,255,136,0.3)}}
 .header-text{text-align:left}
 .header h1{font-size:1.85rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,#00ff88,#7c3aed,#ff6b35);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradientShift 4s ease-in-out infinite}
-.header h1::after{content:'\u25c6';font-size:0.5rem;vertical-align:super;margin-left:4px;-webkit-text-fill-color:#ff6b35}
 @keyframes gradientShift{0%,100%{background-position:0% center}50%{background-position:100% center}}
 .header .subtitle{font-size:0.9rem;color:#94a3b8;margin-top:0.3rem;max-width:500px;line-height:1.5;letter-spacing:0.3px}
 .header .subtitle span{color:#00ff88;font-weight:600}
@@ -43,26 +49,35 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .perfiles-section{max-width:1200px;margin:0 auto 2rem;padding:0 1.5rem}
 .perfiles-section h2{font-size:1.15rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem;background:linear-gradient(90deg,#00ff88,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .perfiles-table{width:100%;background:linear-gradient(145deg,#111133,#0f0f25);border-radius:16px;border:1px solid rgba(124,58,237,0.2);overflow:hidden}
-.pf-row{display:grid;grid-template-columns:0.8fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 1.5fr;padding:0.85rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.08);font-size:0.85rem;transition:background 0.3s;align-items:center}
+.pf-group{background:rgba(124,58,237,0.06);padding:0.75rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.15);display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 1.5rem;font-size:0.8rem}
+.pf-group .pcbot-id{font-weight:700;color:#a78bfa;font-size:0.9rem}
+.pf-group .stats{color:#94a3b8;font-size:0.75rem}
+.pf-group .stats span{color:#00ff88;font-weight:600}
+.pf-group .stats .inactive{color:#ff3366}
+.pf-row{display:grid;grid-template-columns:0.6fr 1fr 0.7fr 0.7fr 0.7fr 0.7fr 1.2fr;padding:0.7rem 1.25rem;border-bottom:1px solid rgba(124,58,237,0.08);font-size:0.82rem;transition:background 0.3s;align-items:center}
 .pf-row:hover{background:rgba(124,58,237,0.05)}
-.pf-row.header{color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.08);border-bottom:1px solid rgba(124,58,237,0.15)}
+.pf-row.header{color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.1);border-bottom:1px solid rgba(124,58,237,0.2);grid-template-columns:0.6fr 1fr 0.7fr 0.7fr 0.7fr 0.7fr 1.2fr}
+.pf-row.footer{color:#64748b;font-size:0.72rem;background:rgba(0,255,136,0.04);grid-template-columns:1fr;text-align:right;padding:0.5rem 1.25rem}
 .pf-estado{font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:8px;text-align:center;display:inline-block}
 .pf-estado.activo{background:rgba(0,255,136,0.1);color:#00ff88;border:1px solid rgba(0,255,136,0.2)}
 .pf-estado.inactivo{background:rgba(255,51,102,0.1);color:#ff3366;border:1px solid rgba(255,51,102,0.2)}
 .pf-tipo{color:#a78bfa;font-weight:600}
-.pf-nombre{color:#94a3b8}
+.pf-nombre{color:#94a3b8;word-break:break-all;font-family:'Courier New',monospace;font-size:0.75rem}
 .pf-horas{color:#94a3b8}
-.pf-ultimo{font-size:0.75rem;color:#64748b}
+.pf-ultimo{font-size:0.72rem;color:#64748b}
+.pf-hash{font-size:0.7rem;color:#484f58;font-family:'Courier New',monospace}
 @media(max-width:768px){
 .perfiles-summary{grid-template-columns:repeat(2,1fr);padding:1rem;gap:0.75rem}
-.pf-row{grid-template-columns:1fr 0.6fr 0.6fr 0.8fr 1fr;font-size:0.75rem;padding:0.7rem 1rem}
+.pf-row,.pf-row.header{grid-template-columns:1fr 0.8fr 0.6fr 0.6fr 0.8fr 1fr;font-size:0.72rem;padding:0.6rem 0.8rem}
+.pf-hash,.pf-ultimo{display:none}
 .header{padding:1.75rem 1rem 1.5rem}.header h1{font-size:1.45rem}.header-avatar{width:44px;height:44px;font-size:1.1rem}
 }
 @media(max-width:480px){
 .perfiles-summary{grid-template-columns:1fr}
 .header-content{flex-direction:column;text-align:center}.header-text{text-align:center}
-.pf-row{grid-template-columns:1fr 0.5fr 0.5fr 0.7fr 0.8fr;font-size:0.7rem;padding:0.6rem 0.75rem}
+.pf-row,.pf-row.header{grid-template-columns:1fr 0.6fr 0.5fr 0.5fr 0.7fr;font-size:0.68rem;padding:0.5rem 0.6rem}
 .pf-row.header{display:none}.perfiles-actions{flex-direction:column}
+.pf-hash,.pf-ultimo,.pf-tipo{display:none}
 }
 </style>
 </head>
@@ -90,146 +105,158 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 </div>
 
 <div class="perfiles-actions">
-<button id="btnAgregarPerfil" class="btn-action">✦ agregar perfil</button>
-<button class="btn-action btn-outline" onclick="cargarPerfiles()">↻ recargar</button>
+<input type="text" id="apiKeyInput" placeholder="ingresa tu api key de roxybrowser..." style="flex:2;padding:0.75rem 1rem;background:#111133;border:1px solid rgba(124,58,237,0.3);border-radius:12px;color:#e2e8f0;font-size:0.85rem;min-width:200px;">
+<button id="agregarPerfilBtn" class="btn-action">✦ agregar perfil</button>
+<button id="recargarBtn" class="btn-action btn-outline">↻ recargar</button>
 </div>
 
 <div class="perfiles-section">
-<h2>lista de perfiles</h2>
+<h2>lista de perfiles roxy</h2>
 <div class="perfiles-table">
-<div class="pf-row header">
-<span>nombre</span><span>tipo</span><span>estado</span><span>horas</span><span>ultimo heartbeat</span>
-</div>
-<div id="pf-list">
-<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">cargando perfiles...</div>
-</div>
+<table id="perfilesTabla" style="width:100%;border-collapse:collapse;">
+<thead>
+<tr style="color:#64748b;font-weight:700;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.8px;background:rgba(124,58,237,0.1);">
+<th style="padding:0.7rem 1rem;text-align:left;">nombre</th>
+<th style="padding:0.7rem 1rem;text-align:left;">hash</th>
+<th style="padding:0.7rem 1rem;text-align:left;">workspace id</th>
+<th style="padding:0.7rem 1rem;text-align:left;">ultima sincronizacion</th>
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="4" style="padding:2rem;text-align:center;color:#64748b;">cargando perfiles...</td></tr>
+</tbody>
+</table>
 </div>
 </div>
 
 <script>
-// carga inicial
+// ============================================================
+// funciones globales para perfiles (compatibles con SPA y standalone)
+// ============================================================
+
+// --- guard de autenticacion ---
 (function() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPerfiles);
-  } else {
-    cargarPerfiles();
+  var token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/publico/login.html';
+    return;
   }
 })();
 
-// funcion crear perfil (llamada desde el modal del dashboard)
-window.crearPerfil = async function() {
-  var apiKey = document.getElementById('apiKeyRoxy').value;
-  if (!apiKey || apiKey.trim() === '') {
-    if (typeof ui !== 'undefined' && ui._showError) {
-      ui._showError('ingresa una api key valida');
-    }
-    return;
-  }
-  try {
-    var r = await ui.api.post('/perfiles/crear', { api_key: apiKey.trim() });
-    if (r.exito !== false) {
-      ui._showSuccess('perfil creado exitosamente');
-      cerrarModal('modalAgregarPerfil');
-      document.getElementById('apiKeyRoxy').value = '';
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || r.detail || 'error al crear perfil');
-    }
-  } catch(e) {
-    if (typeof ui !== 'undefined' && ui._showError) {
-      ui._showError('error: ' + (e.message || 'desconocido'));
-    }
-  }
-};
-
-// funciones de accion sobre perfiles
-window.iniciarPerfil = async function(id) {
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/iniciar');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil iniciado');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al iniciar perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-window.detenerPerfil = async function(id) {
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/detener');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil detenido');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al detener perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-window.eliminarPerfil = async function(id) {
-  if (!confirm('confirmas eliminar este perfil?')) return;
-  try {
-    var r = await ui.api.post('/perfiles/' + id + '/eliminar');
-    if (r.exito !== false) {
-      ui._showSuccess('perfil eliminado');
-      cargarPerfiles();
-    } else {
-      ui._showError(r.mensaje || 'error al eliminar perfil');
-    }
-  } catch(e) { ui._showError('error: ' + e.message); }
-};
-
-async function cargarPerfiles() {
-  try {
-    const d = await ui.api.get('/dashboard');
-    if (d.exito) {
-      document.getElementById('user-email').textContent = d.usuario?.email || '---';
-      document.getElementById('user-rol').textContent = d.usuario?.rol || '---';
-      document.getElementById('pf-activos').textContent = d.perfiles_activos || 0;
-      document.getElementById('pf-totales').textContent = d.perfiles_totales || 0;
-      var h = parseFloat(d.horas_conexion || 0);
-      document.getElementById('pf-horas').textContent = h.toFixed(1);
-      var total = parseInt(d.perfiles_totales || 0);
-      document.getElementById('pf-promedio').textContent = total > 0 ? (h/total).toFixed(1) + 'h' : '0h';
-    }
-  } catch(e) { console.error('error cargando perfiles dashboard:', e); }
-
-  try {
-    const r = await ui.api.get('/perfiles');
-    var list = document.getElementById('pf-list');
-    if (!r.exito || !r.perfiles || r.perfiles.length === 0) {
-      list.innerHTML = '<div class="pf-row" style="color:#64748b;grid-column:1/-1;text-align:center;padding:2rem;">no tienes perfiles vinculados. agrega uno para empezar a minar</div>';
-      return;
-    }
-    list.innerHTML = r.perfiles.map(function(pf) {
-      var est = (pf.estado || 'inactivo').toLowerCase();
-      var horas = parseFloat(pf.horas_conexion || 0).toFixed(1);
-      var ultimo = pf.ultimo_heartbeat || '---';
-      var id = pf.id;
-      var ws = pf.workspace_id || '---';
-      var hash = pf.hash_id || '---';
-      var name = pf.name_id || pf.nombre_perfil || '---';
-      var totalRoxy = pf.total_perfiles_roxy || 0;
-      return '<div class="pf-row">' +
-        '<span class="pf-nombre">' + name + '</span>' +
-        '<span class="pf-tipo">' + (pf.tipo || '---') + '</span>' +
-        '<span class="pf-estado ' + est + '">' + est + '</span>' +
-        '<span class="pf-horas">' + horas + 'h</span>' +
-        '<span class="pf-ultimo">' + ultimo + '</span>' +
-        '<span class="pf-ws">' + ws + '</span>' +
-        '<span class="pf-totroxy">' + totalRoxy + '</span>' +
-        '<span class="pf-acciones">' +
-          (est === 'inactivo' ? '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;margin-right:0.3rem;" onclick="iniciarPerfil(' + id + ')">iniciar</button>' : '') +
-          (est === 'activo' ? '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;margin-right:0.3rem;background:#ff3366;" onclick="detenerPerfil(' + id + ')">detener</button>' : '') +
-          '<button class="btn-action" style="padding:0.3rem 0.8rem;font-size:0.7rem;background:#ef4444;" onclick="eliminarPerfil(' + id + ')">eliminar</button>' +
-        '</span>' +
-        '</div>';
-    }).join('');
-  } catch(e) {
-    console.error('error cargando lista perfiles:', e);
-  }
+// escapar html seguro
+function escapeHtml(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&';
+    if (m === '<') return '<';
+    if (m === '>') return '>';
+    return m;
+  });
 }
+
+// actualizar las tarjetas de estadisticas superiores
+function actualizarEstadisticas(perfiles) {
+  var total = perfiles.length;
+  var activos = 0;
+  var totalSegundos = 0;
+
+  for (var i = 0; i < total; i++) {
+    if (perfiles[i].activo) {
+      activos++;
+    }
+    totalSegundos += perfiles[i].tiempo_activo_seg || 0;
+  }
+
+  var horasTotales = (totalSegundos / 3600).toFixed(1);
+  var promedio = total > 0 ? (totalSegundos / total / 3600).toFixed(1) : 0;
+
+  document.getElementById('pf-activos').textContent = activos;
+  document.getElementById('pf-totales').textContent = total;
+  document.getElementById('pf-horas').textContent = horasTotales;
+  document.getElementById('pf-promedio').textContent = promedio + 'h';
+}
+
+// agregar perfil: guarda api key y sincroniza
+window.agregarPerfil = async function() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { alert('ingresa una api key'); return; }
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/roxy/api_key', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ roxy_api_key: apiKey })
+  });
+  const data = await res.json();
+  if (data.exito) {
+    alert('api key guardada. sincronizando...');
+    await window.sincronizarPerfiles();
+  } else {
+    alert('error: ' + (data.mensaje || 'desconocido'));
+  }
+};
+
+// sincronizar perfiles con el pcbot
+window.sincronizarPerfiles = async function() {
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/roxy/sync_profiles', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (data.ok) {
+    alert('sincronizacion completada: ' + data.perfiles_guardados + ' perfiles.');
+    await window.cargarPerfiles();
+  } else {
+    alert('error al sincronizar: ' + (data.error || 'desconocido'));
+  }
+};
+
+// cargar perfiles desde el backend
+window.cargarPerfiles = async function() {
+  const token = localStorage.getItem('token');
+  try {
+    const d = await fetch('/api/roxy/profiles', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await d.json();
+    const tbody = document.querySelector('#perfilesTabla tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (data.perfiles && data.perfiles.length) {
+      // actualizar las tarjetas de estadisticas con los perfiles recibidos
+      actualizarEstadisticas(data.perfiles);
+      data.perfiles.forEach(function(p) {
+        var sincro = p.ultima_sincronizacion ? new Date(p.ultima_sincronizacion).toLocaleString() : '';
+        var row = '<tr><td>' + escapeHtml(p.nombre) + '</td><td>' + escapeHtml(p.hash) + '</td><td>' + (p.workspace_id || '') + '</td><td>' + sincro + '</td></tr>';
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+    } else {
+      tbody.innerHTML = '<tr><td colspan="4">no hay perfiles sincronizados.</td></tr>';
+      // si no hay perfiles, poner las estadisticas en cero
+      actualizarEstadisticas([]);
+    }
+  } catch(e) {
+    console.error('error cargando perfiles:', e);
+  }
+};
+
+// funcion de inicializacion llamada desde SPA dashboard (o standalone)
+window.inicializarPanelPerfiles = function() {
+  // asignar eventos a botones
+  var agregarBtn = document.getElementById('agregarPerfilBtn');
+  var recargarBtn = document.getElementById('recargarBtn');
+  if (agregarBtn) agregarBtn.onclick = window.agregarPerfil;
+  if (recargarBtn) recargarBtn.onclick = window.sincronizarPerfiles;
+  // cargar perfiles
+  window.cargarPerfiles();
+};
+
+// auto-inicializar si se carga standalone (no desde SPA)
+(function() {
+  if (document.getElementById('agregarPerfilBtn')) {
+    window.inicializarPanelPerfiles();
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pedidos_ext - roxymaster</title>
+</head>
+<body>
+<script>
+// pedidos_ext.html - parte extendida del modulo pedidos
+// contiene las funciones auxiliares y de logica de negocio
+
+window.mostrarMensaje = function(texto, tipo) {
+  var msg = document.getElementById('pedido-msg');
+  if (!msg) return;
+  msg.textContent = texto || '';
+  msg.className = 'pedido-msg' + (tipo ? ' ' + tipo : '');
+  if (texto) {
+    msg.style.display = 'block';
+    setTimeout(function() {
+      msg.style.display = 'none';
+      msg.className = 'pedido-msg';
+    }, 6000);
+  } else {
+    msg.style.display = 'none';
+    msg.className = 'pedido-msg';
+  }
+};
+
+window.obtenerToken = function() {
+  return (window.obtenerTokenGlobal && window.obtenerTokenGlobal()) ||
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token') ||
+    (function() {
+      var m = window.location.search.match(/[?&]token=([^&]+)/);
+      return m ? decodeURIComponent(m[1]) : null;
+    })();
+};
+
+window.getHeaders = function() {
+  var token = window.obtenerToken();
+  var h = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+};
+
+window.setTiempo = function(minutos) {
+  var input = document.getElementById('ped-minutos');
+  if (input) input.value = minutos;
+  document.querySelectorAll('.btn-opt-tiempo').forEach(function(b) {
+    b.classList.toggle('active', parseInt(b.getAttribute('data-minutos')) === minutos);
+  });
+  window.calcularCosto();
+};
+
+window.setTipo = function(tipo) {
+  window._ped_estado = window._ped_estado || { tipo: 'normal', intervalId: null };
+  window._ped_estado.tipo = tipo;
+  document.querySelectorAll('.toggle-btn').forEach(function(b) {
+    b.classList.remove('active-normal', 'active-vip');
+    if (b.getAttribute('data-tipo') === tipo) {
+      b.classList.add(tipo === 'vip' ? 'active-vip' : 'active-normal');
+    }
+  });
+  window.calcularCosto();
+};
+
+window.calcularCosto = function() {
+  function $(id) { return document.getElementById(id); }
+  function valor(id) { var el = $(id); return el ? el.value : ''; }
+  var pedEstado = window._ped_estado || { tipo: 'normal' };
+
+  var seguidores = parseInt(valor('ped-seguidores')) || 0;
+  var perfiles = parseInt(valor('ped-perfiles')) || 0;
+  var horas = (parseInt(valor('ped-minutos')) || 0) / 60;
+  var nivel = valor('ped-comentarios') || 'basico';
+  var costoEl = $('costo-valor');
+  var detalleEl = $('costo-detalle-linea');
+  if (!costoEl || !detalleEl) return;
+
+  if (seguidores <= 0 || perfiles <= 0 || horas <= 0) {
+    costoEl.innerHTML = '0.00 <span class="small">kbt</span>';
+    detalleEl.textContent = 'ingresa datos para calcular costo';
+    return;
+  }
+
+  var tasaBase = 0.0001;
+  var multNivel = { basico: 1, normal: 1.5, intenso: 2.5 };
+  var multVip = pedEstado.tipo === 'vip' ? 2.0 : 1.0;
+  var costo = seguidores * perfiles * horas * tasaBase * (multNivel[nivel] || 1) * multVip;
+  var costoStr = costo.toFixed(4);
+
+  costoEl.innerHTML = (pedEstado.tipo === 'vip' ? 'vip ' : '') + costoStr + ' <span class="small">kbt</span>';
+  costoEl.className = 'valor' + (pedEstado.tipo === 'vip' ? ' vip' : '');
+  detalleEl.textContent = seguidores + ' seguidores x ' + perfiles + ' perfiles x ' + horas.toFixed(1) + 'h';
+  if (pedEstado.tipo === 'vip') detalleEl.className = 'detalle-linea vip';
+  else detalleEl.className = 'detalle-linea';
+};
+
+window.crearPedido = function() {
+  function $(id) { return document.getElementById(id); }
+  function valor(id) { var el = $(id); return el ? el.value : ''; }
+
+  var url = valor('ped-url');
+  if (!url) { window.mostrarMensaje('ingresa la url del directo', 'error'); return; }
+  var seguidores = parseInt(valor('ped-seguidores')) || 0;
+  if (seguidores <= 0) { window.mostrarMensaje('ingresa una cantidad valida de seguidores', 'error'); return; }
+  var perfiles = parseInt(valor('ped-perfiles')) || 0;
+  if (perfiles <= 0) { window.mostrarMensaje('ingresa una cantidad valida de perfiles', 'error'); return; }
+  var minutos = parseInt(valor('ped-minutos')) || 0;
+  if (minutos <= 0) { window.mostrarMensaje('ingresa un tiempo valido', 'error'); return; }
+  var nivel = valor('ped-comentarios') || 'basico';
+  var pedEstado = window._ped_estado || { tipo: 'normal' };
+
+  // mostrar modal de validacion
+  window.mostrarModalValidacion({
+    url: url,
+    seguidores: seguidores,
+    perfiles: perfiles,
+    minutos: minutos,
+    nivel: nivel,
+    tipo: pedEstado.tipo,
+  });
+};
+
+// --- modal de validacion ---
+
+window._modalData = null;
+
+window.mostrarModalValidacion = function(data) {
+  window._modalData = data;
+  var modal = document.getElementById('modal-validar-pedido');
+  if (!modal) return;
+  document.getElementById('modal-val-url').textContent = data.url;
+  document.getElementById('modal-val-seguidores').textContent = data.seguidores;
+  document.getElementById('modal-val-perfiles').textContent = data.perfiles;
+  document.getElementById('modal-val-duracion').textContent = data.minutos + ' min';
+  document.getElementById('modal-val-comentarios').textContent = data.nivel;
+  var tipoEl = document.getElementById('modal-val-tipo');
+  tipoEl.textContent = data.tipo;
+  tipoEl.className = 'modal-pedidos-value' + (data.tipo === 'vip' ? ' vip' : '');
+
+  // calcular costo para el modal (misma formula que calcularCosto)
+  var tasaBase = 0.0001;
+  var multNivel = { basico: 1, normal: 1.5, intenso: 2.5 };
+  var multVip = data.tipo === 'vip' ? 2.0 : 1.0;
+  var horas = data.minutos / 60;
+  var costo = data.seguidores * data.perfiles * horas * tasaBase * (multNivel[data.nivel] || 1) * multVip;
+  var costoSinVip = data.seguidores * data.perfiles * horas * tasaBase * (multNivel[data.nivel] || 1);
+
+  var costoStr = costo.toFixed(4);
+  var totalEl = document.getElementById('modal-val-costo');
+  totalEl.textContent = costoStr + ' kbt';
+  totalEl.className = 'modal-pedidos-total-valor' + (data.tipo === 'vip' ? ' vip' : '');
+
+  modal.style.display = 'flex';
+};
+
+window.cerrarModalValidacion = function() {
+  var modal = document.getElementById('modal-validar-pedido');
+  if (modal) modal.style.display = 'none';
+  window._modalData = null;
+};
+
+window.confirmarPedido = function() {
+  var data = window._modalData;
+  if (!data) return;
+  var btn = document.getElementById('btn-modal-confirmar');
+  if (btn) btn.disabled = true;
+
+  var payload = {
+    url: data.url,
+    seguidores: data.seguidores,
+    perfiles: data.perfiles,
+    minutos: data.minutos,
+    nivel_comentarios: data.nivel,
+    tipo: data.tipo,
+  };
+
+  fetch('/api/pedidos/crear', {
+    method: 'POST',
+    headers: window.getHeaders(),
+    body: JSON.stringify(payload),
+  })
+  .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+  .then(function(resp) {
+    window.cerrarModalValidacion();
+    if (resp.status >= 200 && resp.status < 300) {
+      window.mostrarMensaje(resp.json.detail || 'pedido creado exitosamente', 'success');
+      window.cargarPedidos();
+      window.calcularCosto();
+    } else {
+      window.mostrarMensaje(resp.json.detail || 'error al crear pedido', 'error');
+    }
+  })
+  .catch(function(err) {
+    window.cerrarModalValidacion();
+    window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+  })
+  .finally(function() {
+    if (btn) btn.disabled = false;
+  });
+};
+
+window.cargarPedidos = function() {
+  var body = document.getElementById('tabla-pedidos-body');
+  if (!body) return;
+
+  fetch('/api/pedidos/mis_pedidos', { headers: window.getHeaders() })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var pedidos = data.pedidos || [];
+    if (pedidos.length === 0) {
+      body.innerHTML = '<tr><td colspan="8" class="tabla-empty">no hay pedidos aun. crea tu primer pedido arriba.</td></tr>';
+      return;
+    }
+
+    var rows = pedidos.map(function(p) {
+      var estadoCls = (p.estado || 'desconocido').toLowerCase();
+      var esPendiente = estadoCls === 'pendiente';
+      var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en progreso';
+      var esVip = p.tipo === 'vip';
+      var costo = p.costo_total || p.costo || 0;
+
+      var accionesHtml = '<div class="acciones-cell">';
+      if (esPendiente) {
+        accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i></button>';
+      }
+      if (esTrabajando) {
+        accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener pedido"><i class="fas fa-stop-circle"></i></button>';
+      }
+      accionesHtml += '</div>';
+
+      var urlMostrar = p.url || '-';
+      var urlCorta = urlMostrar.length > 30 ? urlMostrar.substring(0, 30) + '...' : urlMostrar;
+      var fecha = p.fecha_creacion || p.created_at || '-';
+      if (fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
+
+      var duracion = p.duracion || p.minutos || '-';
+      if (typeof duracion === 'number') duracion = duracion + ' min';
+
+      return '<tr' + (esVip ? ' class="vip-row"' : '') + '>' +
+        '<td class="col-id">' + (p.id || '#') + '</td>' +
+        '<td><span class="truncate-url" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></td>' +
+        '<td class="col-perfiles">' + (p.perfiles || '-') + '</td>' +
+        '<td class="col-duracion">' + duracion + '</td>' +
+        '<td class="col-costo">' + (typeof costo === 'number' ? costo.toFixed(2) : costo) + ' kbt</td>' +
+        '<td class="col-estado"><span class="badge-estado ' + estadoCls + '">' + (p.estado || '?') + '</span></td>' +
+        '<td class="col-fecha">' + fecha + '</td>' +
+        '<td class="col-acciones">' + accionesHtml + '</td>' +
+      '</tr>';
+    });
+
+    body.innerHTML = rows.join('');
+  })
+  .catch(function(err) {
+    body.innerHTML = '<tr><td colspan="8" class="tabla-empty">error al cargar pedidos: ' + err.message + '</td></tr>';
+  });
+};
+
+window.eliminarPedido = function(id) {
+  if (!confirm('eliminar pedido #' + id + '?')) return;
+  fetch('/api/pedidos/' + id, {
+    method: 'DELETE',
+    headers: window.getHeaders(),
+  })
+  .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+  .then(function(resp) {
+    if (resp.status >= 200 && resp.status < 300) {
+      window.mostrarMensaje('pedido #' + id + ' eliminado', 'success');
+      window.cargarPedidos();
+    } else {
+      window.mostrarMensaje(resp.json.detail || 'error al eliminar pedido', 'error');
+    }
+  })
+  .catch(function(err) {
+    window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+  });
+};
+
+window.detenerPedido = function(id) {
+  if (!confirm('detener pedido #' + id + '?')) return;
+  fetch('/api/pedidos/' + id + '/detener', {
+    method: 'POST',
+    headers: window.getHeaders(),
+  })
+  .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+  .then(function(resp) {
+    if (resp.status >= 200 && resp.status < 300) {
+      window.mostrarMensaje('pedido #' + id + ' detenido', 'info');
+      window.cargarPedidos();
+    } else {
+      window.mostrarMensaje(resp.json.detail || 'error al detener pedido', 'error');
+    }
+  })
+  .catch(function(err) {
+    window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+  });
+};
+
+window.iniciarLiveCount = function() {
+  var el = document.getElementById('live-count');
+  if (!el) return;
+  var count = parseInt(localStorage.getItem('pedidos_live_count') || '1', 10);
+  var lastUpdate = parseInt(localStorage.getItem('pedidos_live_count_time') || '0', 10);
+  var ahora = Date.now();
+  var intervalo = 67 * 60 * 1000;
+  if (lastUpdate > 0 && (ahora - lastUpdate) >= intervalo) {
+    var intervalosPasados = Math.floor((ahora - lastUpdate) / intervalo);
+    for (var i = 0; i < intervalosPasados; i++) {
+      count += Math.random() < 0.5 ? 1 : 2;
+    }
+    localStorage.setItem('pedidos_live_count', String(count));
+    localStorage.setItem('pedidos_live_count_time', String(ahora));
+  } else if (lastUpdate === 0) {
+    localStorage.setItem('pedidos_live_count', String(count));
+    localStorage.setItem('pedidos_live_count_time', String(ahora));
+  }
+  el.textContent = count;
+  setInterval(function() {
+    var c = parseInt(localStorage.getItem('pedidos_live_count') || '1', 10);
+    c += Math.random() < 0.5 ? 1 : 2;
+    localStorage.setItem('pedidos_live_count', String(c));
+    localStorage.setItem('pedidos_live_count_time', String(Date.now()));
+    var e = document.getElementById('live-count');
+    if (e) e.textContent = c;
+  }, intervalo);
+};
+</script>
+</body>
+</html>

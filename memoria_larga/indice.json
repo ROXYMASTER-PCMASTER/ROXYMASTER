@@ -1,0 +1,33 @@
+{
+  "version": 8.3,
+  "ultima_actualizacion": "2026-05-12 15:31",
+  "contador_tareas": 17,
+  "contador_errores": 5,
+  "archivos_memoria": {
+    "decisiones": [
+      "bitacora.md"
+    ],
+    "errores": [
+      "error_20260511_pedidos_estancados.md",
+      "error_20260510_pedidos_estancados.md",
+      "error_20260509_login.md"
+    ],
+    "variables": [
+      "estado_actual.json"
+    ],
+    "toolkit": []
+  },
+  "ultimas_tareas": [
+    "2026-05-12 15:30 - correccion pedidos estancados + login endpoint verificado",
+    "2026-12-05 14:27 - ajuste columnas tabla historial y header dorado centrado",
+    "2026-12-05 13:49 - modal de validacion de pedido",
+    "2026-12-05 13:00 - header unificado estilo marketplace en pedidos_core.html",
+    "2026-05-11 12:00 - limpieza archivos temp y comprobacion estado"
+  ],
+  "sistema": {
+    "servidor": "activo (PID 17268)",
+    "db": "c:/Users/PCMASTER/Desktop/roxymaster/pcmaster/data/roxymaster.db",
+    "puerto": 8086,
+    "auth": "POST /api/login - funcional (status 200 con jwt)"
+  }
+}

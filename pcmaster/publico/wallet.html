@@ -313,6 +313,12 @@
       <div class="w-label">saldo en soles</div>
       <div class="w-value" id="w-saldo-pen">s/ 0.00</div>
     </div>
+    <div class="wallet-card" onclick="window.location.href='/publico/marketplace.html'">
+      <span class="w-icon">$</span>
+      <div class="w-label">total fiat disponible</div>
+      <div class="w-value" id="w-balance-fiat">s/ 0.00</div>
+      <div class="w-sub">saldo en tu cuenta para compras</div>
+    </div>
     <div class="wallet-card" onclick="ui.cargarTransacciones()">
       <span class="w-icon">⬆</span>
       <div class="w-label">minado total</div>
@@ -395,6 +401,7 @@
         if (!d.exito) return;
         document.getElementById('w-balance').textContent = parseFloat(d.balance || 0).toFixed(2);
         document.getElementById('w-saldo-pen').textContent = 's/ ' + parseFloat(d.saldo_pen || 0).toFixed(2);
+        document.getElementById('w-balance-fiat').textContent = 's/ ' + parseFloat(d.balance_fiat || 0).toFixed(2);
         document.getElementById('w-minado-total').textContent = parseFloat(d.kbt_total_minado || 0).toFixed(2);
         document.getElementById('w-retirado-total').textContent = parseFloat(d.retirado_total || 0).toFixed(2);
         document.getElementById('user-email').textContent = d.usuario?.email || '---';

@@ -29,6 +29,8 @@ from orchestrator import (
 )
 from tasks import iniciar_tareas_periodicas, inicializar_registros_tareas
 from tokenomics import inicializar_tokenomics, emitir_kbt_admin
+from db_pedidos_vigilante import crear_tablas_vigilante
+from pedidos_vigilante import monitorear_pedidos
 
 # routers api
 from api_heartbeat import router as heartbeat_router
@@ -64,8 +66,15 @@ from api_monitoreo import router as router_monitoreo
 from api_pedidos import router as router_pedidos
 from api_version import router as router_version
 
+# routers nuevos para economia - retiros y referidos
+from api_retiros import router as router_retiros
+from api_referidos import router as router_referidos
+
 # router para computadoras
 from api_computadoras import router as router_computadoras
+
+# router para acciones de pedidos (eliminar, detener)
+from api_pedidos_acciones import router as router_pedidos_acciones
 
 from pydantic import BaseModel
 from api_auth import LoginRequest, RegisterRequest
@@ -107,6 +116,12 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else "data", exist_ok=True)
     inicializar_db()
     logger.info(f"base de datos inicializada: {db_path}")
+    # crear tablas del vigilante de pedidos
+    try:
+        await crear_tablas_vigilante()
+        logger.info("tablas del vigilante de pedidos creadas")
+    except Exception as e:
+        logger.warning(f"no se pudieron crear tablas vigilante: {e}")
 
     # inicializar registros de tareas
     inicializar_registros_tareas()
@@ -126,6 +141,9 @@ async def lifespan(app: FastAPI):
     # iniciar tareas periodicas en segundo plano
     tarea_fondo = asyncio.create_task(iniciar_tareas_periodicas())
     logger.info("tareas periodicas iniciadas")
+    # iniciar vigilante de pedidos
+    tarea_vigilante = asyncio.create_task(monitorear_pedidos())
+    logger.info("vigilante de pedidos iniciado")
 
     yield  # servidor corriendo
 
@@ -184,16 +202,19 @@ app.include_router(router_dashboard)
 app.include_router(router_encriptacion)
 app.include_router(router_monitoreo)
 app.include_router(router_pedidos)
+app.include_router(router_retiros)
+app.include_router(router_referidos)
 app.include_router(router_version)
 app.include_router(heartbeat_router)
 app.include_router(router_computadoras)
+app.include_router(router_pedidos_acciones)
 
 logger.info(
     "routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, "
     "comandos, admin, superadmin, tokenomics, roxykey, mensajes, "
     "public_perfiles, public_finanzas, public_referidos, public_sistema, "
-    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, version, "
-    "computadoras"
+    "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, "
+    "retiros, referidos, version, computadoras, pedidos_acciones"
 )
 
 
@@ -248,6 +269,28 @@ async def login():
     if os.path.exists(login_path):
         return FileResponse(login_path, media_type="text/html")
     return {"error": "login no disponible"}
+
+# redirecciones de compatibilidad para rutas sin prefijo /publico/
+@app.get("/dashboard_publico.html")
+async def dashboard_publico_redirect():
+    """redirige a la ruta correcta con prefijo /publico/."""
+    dashboard_path = os.path.join(base_dir, "..", "publico", "dashboard_publico.html")
+    if os.path.exists(dashboard_path):
+        return FileResponse(dashboard_path, media_type="text/html")
+    return RedirectResponse(url="/publico/dashboard_publico.html")
+
+@app.get("/dashboard")
+async def dashboard_redirect():
+    """redirige a la ruta correcta con prefijo /publico/."""
+    return RedirectResponse(url="/publico/dashboard_publico.html")
+
+@app.get("/pedidos")
+async def pedidos_page():
+    """pagina de gestion de pedidos."""
+    pedidos_path = os.path.join(base_dir, "..", "publico", "pedidos.html")
+    if os.path.exists(pedidos_path):
+        return FileResponse(pedidos_path, media_type="text/html")
+    return RedirectResponse(url="/publico/pedidos.html")
 
 # endpoint registro
 @app.get("/registro")
@@ -315,6 +358,57 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
             # recibir mensaje del pcbot (json plano, sin firma)
             data = await websocket.receive_json()
 
+            # --- SINCRONIZACION FORZADA: refrescar _conexiones_ws en CADA mensaje ---
+            # esto asegura que orchestrator._conexiones_ws tenga la conexion correcta
+            # incluso si el pcbot se reconecto sin enviar identify
+            try:
+                import orchestrator as _orch_refresh
+                if pcbot_id not in _orch_refresh._conexiones_ws:
+                    _orch_refresh._conexiones_ws[pcbot_id] = {
+                        "ws": websocket,
+                        "ultimo_heartbeat": datetime.now().isoformat(),
+                    }
+                    logger.info(f"[DIAG-SYNC-EACH] _conexiones_ws[{pcbot_id}] poblado por mensaje entrante tipo={data.get('tipo')}")
+                else:
+                    # refrescar heartbeat y ws por si cambio
+                    _orch_refresh._conexiones_ws[pcbot_id]["ws"] = websocket
+                    _orch_refresh._conexiones_ws[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()
+            except Exception as e:
+                logger.warning(f"[DIAG-SYNC-EACH] error refrescando _conexiones_ws: {e}")
+
+            # --- REGISTRO EN WS_MANAGER EN CADA MENSAJE (hasta que se logre) ---
+            # el pcbot nunca envia "identify", solo heartbeats, asi que registramos
+            # en ws_manager en cada mensaje hasta que _usuario_registrado_ws quede seteado.
+            if _usuario_registrado_ws is None:
+                try:
+                    from db import ejecutar_sql_unico as _sql_unico
+                    _user = _sql_unico(
+                        "select id from usuarios where pcbot_id = ?", (pcbot_id,)
+                    )
+                    if not _user:
+                        _conn = _sql_unico(
+                            "select usuario_id from computadoras where pcbot_id = ?",
+                            (pcbot_id,)
+                        )
+                        if _conn:
+                            _uid = _conn["usuario_id"]
+                            from db import ejecutar_sql as _sql_upd
+                            _sql_upd(
+                                "update usuarios set pcbot_id = ?, modo = 'conectado' where id = ?",
+                                (pcbot_id, _uid)
+                            )
+                            _user = {"id": _uid}
+                            logger.info(f"[DIAG-SYNC-WS] usuario {_uid} actualizado con pcbot_id={pcbot_id} via computadoras")
+                    if _user:
+                        _usuario_registrado_ws = _user["id"]
+                        from ws_manager import registrar_conexion
+                        registrar_conexion(_user["id"], pcbot_id, websocket)
+                        logger.info(f"[DIAG-SYNC-WS] usuario {_user['id']} registrado en ws_manager via mensaje tipo={data.get('tipo')}")
+                    else:
+                        logger.warning(f"[DIAG-SYNC-WS] NO SE ENCONTRO usuario para pcbot {pcbot_id} - ni en usuarios ni en computadoras")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC-WS] error registrando en ws_manager: {e}")
+
             # persistir datos del pcbot si es identify
             if data.get("tipo") == "identify":
                 logger.info(f"identify recibido de {pcbot_id}")
@@ -352,9 +446,25 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
                 except Exception as e:
                     logger.warning(f"error persistir pcbot {pcbot_id}: {e}")
 
-                # responder identify_ok (plano, sin secreto)
+# responder identify_ok (plano, sin secreto)
                 await websocket.send_json({"tipo": "identify_ok", "pcbot_id": pcbot_id})
                 logger.info(f"identify_ok enviado a {pcbot_id}")
+
+                # enviar comandos pendientes al pcbot recien conectado
+                try:
+                    from orchestrator import _enviar_pendientes
+                    await _enviar_pendientes(pcbot_id)
+                    logger.info(f"comandos pendientes enviados a {pcbot_id}")
+                except Exception as e:
+                    logger.warning(f"error enviando pendientes a {pcbot_id}: {e}")
+
+                # sincronizar con orchestrator._conexiones_ws para que crear_comando encuentre al pcbot
+                try:
+                    import orchestrator as _orch
+                    _orch._conexiones_ws[pcbot_id] = {"ws": websocket, "ultimo_heartbeat": datetime.now().isoformat()}
+                    logger.info(f"[DIAG-SYNC] orchestrator._conexiones_ws[{pcbot_id}] poblado. keys={list(_orch._conexiones_ws.keys())}")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC] error poblando orchestrator._conexiones_ws: {e}")
 
                 # registrar en ws_manager por usuario
                 try:
@@ -362,13 +472,30 @@ async def websocket_pcbot(websocket: WebSocket, pcbot_id: str):
                     _user = _sql_unico(
                         "select id from usuarios where pcbot_id = ?", (pcbot_id,)
                     )
+                    # fallback: buscar via tabla computadoras si usuarios.pcbot_id no esta actualizado
+                    if not _user:
+                        _conn = _sql_unico(
+                            "select usuario_id from computadoras where pcbot_id = ?",
+                            (pcbot_id,)
+                        )
+                        if _conn:
+                            _uid = _conn["usuario_id"]
+                            from db import ejecutar_sql as _sql_upd
+                            _sql_upd(
+                                "update usuarios set pcbot_id = ?, modo = 'conectado' where id = ?",
+                                (pcbot_id, _uid)
+                            )
+                            _user = {"id": _uid}
+                            logger.info(f"[DIAG-SYNC] usuario {_uid} actualizado con pcbot_id={pcbot_id} via computadoras")
                     if _user:
                         _usuario_registrado_ws = _user["id"]
                         from ws_manager import registrar_conexion
                         registrar_conexion(_user["id"], pcbot_id, websocket)
-                        logger.info(f"usuario {_user['id']} registrado en ws_manager via pcbot {pcbot_id}")
-                except Exception:
-                    pass
+                        logger.info(f"[DIAG-SYNC] usuario {_user['id']} registrado en ws_manager via pcbot {pcbot_id} (mapeo usuario->pcbot completo)")
+                    else:
+                        logger.warning(f"[DIAG-SYNC] NO SE ENCONTRO usuario para pcbot {pcbot_id} - ni en usuarios ni en computadoras")
+                except Exception as e:
+                    logger.warning(f"[DIAG-SYNC] error registrando en ws_manager: {e}")
 
                 # actualizar heartbeat
                 gestor_websockets[pcbot_id]["ultimo_heartbeat"] = datetime.now().isoformat()

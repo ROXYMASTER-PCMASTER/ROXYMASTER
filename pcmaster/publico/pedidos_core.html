@@ -1,0 +1,396 @@
+  <!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pedidos_core - roxymaster</title>
+<style>
+/* pedidos_core.html - parte principal del modulo pedidos */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1a;color:#e2e8f0;min-height:100vh;display:initial}
+/* header */
+.header{background:linear-gradient(135deg,#1a0f00,#2d1a00);border-bottom:1px solid rgba(240,185,11,0.2);padding:.75rem 1.5rem;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:1rem}
+.header-content{display:flex;align-items:center;gap:.75rem}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#0a0a1a}
+.header-text h1{font-size:1.2rem;font-weight:800;color:#e2e8f0;margin:0;text-transform:uppercase;letter-spacing:.5px}
+.header-text .subtitle{font-size:.72rem;color:#64748b}
+.header-text .subtitle span{color:#00ff88;font-weight:700}
+.user-info{font-size:.78rem;color:#94a3b8;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.user-info .badge{background:rgba(124,58,237,.2);color:#a78bfa;padding:.1rem .5rem;border-radius:20px;font-size:.65rem;font-weight:700;text-transform:uppercase}
+/* panel principal */
+.panel-pedidos{padding:1.5rem;max-width:1200px;margin:0 auto}
+.panel-header-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem}
+.panel-header-row h2{font-size:1.1rem;font-weight:800;color:#e2e8f0;display:flex;align-items:center;gap:.5rem}
+.panel-header-row h2 i{color:#00ff88}
+.panel-pedidos>.subtitle{font-size:.78rem;color:#64748b;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid rgba(124,58,237,.08)}
+/* mensajes */
+.pedido-msg{display:none;padding:.65rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.82rem;font-weight:600;animation:msgSlideIn .25s ease}
+.pedido-msg.error{display:block;background:rgba(255,51,102,.12);color:#ff3366;border:1px solid rgba(255,51,102,.2)}
+.pedido-msg.success{display:block;background:rgba(0,255,136,.1);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
+@keyframes msgSlideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+/* grid principal */
+.pedido-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:900px){.pedido-grid{grid-template-columns:1fr}}
+/* card formulario */
+.card-pedido{background:linear-gradient(135deg,#151b2f,#0f0a28);border:1px solid rgba(124,58,237,.12);border-radius:16px;padding:1.4rem}
+.card-titulo{font-size:.95rem;font-weight:800;color:#e2e8f0;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.card-titulo i{color:#7c3aed;font-size:1rem}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.5rem}
+@media(max-width:480px){.field-row{grid-template-columns:1fr}}
+.pedido-field{margin-bottom:.25rem}
+.pedido-field label{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:.25rem;font-weight:700}
+.pedido-field input,.pedido-field select{width:100%;padding:.6rem .75rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:10px;color:#e2e8f0;font-size:.85rem;font-family:inherit;transition:border .2s;outline:none}
+.pedido-field input:focus,.pedido-field select:focus{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,.15)}
+.pedido-field input::placeholder{color:#475569}
+.field-hint{font-size:.6rem;color:#475569;margin-top:.2rem}
+/* tiempo opt group */
+.tiempo-opt-group{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.25rem}
+.btn-opt-tiempo{padding:.4rem .75rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:8px;color:#94a3b8;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-opt-tiempo:hover{background:rgba(124,58,237,.15);border-color:#7c3aed;color:#a78bfa}
+.btn-opt-tiempo.active{background:rgba(0,255,136,.12);border-color:#00ff88;color:#00ff88}
+/* toggle tipo */
+.toggle-group{display:flex;gap:.35rem;margin-top:.25rem}
+.toggle-btn{padding:.4rem 1rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:8px;color:#94a3b8;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase;letter-spacing:.5px}
+.toggle-btn:hover{border-color:#7c3aed;color:#a78bfa}
+.toggle-btn.active-normal{background:rgba(0,255,136,.1);border-color:#00ff88;color:#00ff88}
+.toggle-btn.active-vip{background:rgba(240,185,11,.12);border-color:#f0b90b;color:#f0b90b;text-shadow:0 0 6px rgba(240,185,11,.2)}
+/* costo visor */
+.costo-visor{background:rgba(13,13,34,.5);border-radius:12px;padding:.75rem 1rem;margin:.75rem 0;border:1px solid #1e1e3a;display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem}
+.costo-visor .label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:#64748b;width:100%;margin-bottom:.15rem;font-weight:700}
+.costo-visor .valor{font-size:1.15rem;font-weight:800;color:#00ff88;font-family:'Courier New',monospace;flex:1}
+.costo-visor .valor.vip{color:#f0b90b;text-shadow:0 0 8px rgba(240,185,11,.2)}
+.costo-visor .small{font-size:.7rem;font-weight:400;color:#94a3b8}
+.costo-visor .detalle-linea{font-size:.68rem;color:#64748b;width:100%;margin-top:.1rem;font-style:italic}
+.costo-visor .detalle-linea.vip{color:#f0b90b}
+/* boton crear */
+.btn-crear-wrapper{margin-top:.25rem}
+.btn-crear{width:100%;padding:.75rem;background:linear-gradient(135deg,#00ff88,#00cc6a);border:none;border-radius:12px;color:#0a0a1a;font-size:.9rem;font-weight:800;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.5rem;position:relative}
+.btn-crear:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(0,255,136,.3)}
+.btn-crear:active{transform:translateY(0)}
+.btn-crear .btn-tooltip{position:absolute;top:-2rem;background:#1e293b;color:#e2e8f0;font-size:.65rem;padding:.25rem .6rem;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;font-weight:500}
+.btn-crear:hover .btn-tooltip{opacity:1}
+/* tabla historial */
+.card-tabla{overflow:hidden}
+.tabla-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.tabla-info{font-size:.72rem;color:#64748b;display:flex;align-items:center;gap:.4rem}
+.btn-actualizar{padding:.35rem .75rem;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:8px;color:#a78bfa;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:.3rem}
+.btn-actualizar:hover{background:rgba(124,58,237,.2);border-color:#7c3aed}
+.tabla-wrapper{overflow-x:auto;border-radius:10px;border:1px solid rgba(42,42,74,.3)}
+table.tabla-pedidos{width:100%;border-collapse:collapse;font-size:.75rem}
+table.tabla-pedidos th{background:rgba(13,13,34,.7);color:#94a3b8;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:.55rem .6rem;text-align:left;font-weight:700;border-bottom:1px solid #2a2a4a;white-space:nowrap}
+table.tabla-pedidos td{padding:.5rem .6rem;border-bottom:1px solid rgba(42,42,74,.15);color:#cbd5e1;vertical-align:middle}
+table.tabla-pedidos tr:last-child td{border-bottom:none}
+table.tabla-pedidos tr:hover td{background:rgba(124,58,237,.04)}
+table.tabla-pedidos .col-id{width:35px}
+table.tabla-pedidos .col-perfiles{width:55px}
+table.tabla-pedidos .col-duracion{width:65px}
+table.tabla-pedidos .col-costo{width:75px}
+table.tabla-pedidos .col-estado{width:70px}
+table.tabla-pedidos .col-fecha{width:100px}
+table.tabla-pedidos .col-acciones{width:60px}
+.tabla-empty{text-align:center;color:#475569;font-style:italic;padding:2rem!important}
+.estado-badge{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.estado-badge.activo{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
+.estado-badge.completado{background:rgba(100,116,139,.12);color:#64748b;border:1px solid rgba(100,116,139,.2)}
+.estado-badge.pendiente{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.estado-badge.cancelado{background:rgba(255,51,102,.12);color:#ff3366;border:1px solid rgba(255,51,102,.2)}
+.btn-accion{padding:.2rem .5rem;border-radius:6px;font-size:.62rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.btn-accion.cancelar{background:rgba(255,51,102,.1);color:#ff3366}
+.btn-accion.cancelar:hover{background:rgba(255,51,102,.2)}
+.btn-accion:pressed{transform:scale(.95)}
+/* modal de validacion - clases con prefijo pedidos- para evitar conflicto con dashboard */
+.modal-pedidos-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-pedidos-card{background:linear-gradient(135deg,#1a1a2e,#0f0f23);border:1px solid #2a2a4a;border-radius:20px;padding:2rem;max-width:480px;width:90%;box-shadow:0 8px 48px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.modal-pedidos-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f0b90b,#d4a017,#f0b90b);opacity:.7}
+.modal-pedidos-card h3{font-size:1.2rem;font-weight:800;color:#e2e8f0;margin:0 0 .25rem 0;display:flex;align-items:center;gap:.5rem}
+.modal-pedidos-card h3 i{color:#f0b90b}
+.modal-pedidos-subtitle{font-size:.75rem;color:#64748b;margin-bottom:1.25rem}
+.modal-pedidos-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.25rem}
+.modal-pedidos-item{padding:.5rem .75rem;background:rgba(13,13,34,.6);border-radius:10px;border:1px solid rgba(42,42,74,.5)}
+.modal-pedidos-item .modal-pedidos-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;display:block;margin-bottom:.15rem;font-weight:700}
+.modal-pedidos-item .modal-pedidos-value{font-size:.9rem;font-weight:700;color:#e2e8f0;display:block;word-break:break-all}
+.modal-pedidos-item .modal-pedidos-value.vip{color:#f0b90b}
+.modal-pedidos-item .modal-pedidos-value.costo{color:#00ff88;font-family:'Courier New',monospace}
+.modal-pedidos-full{grid-column:1/-1}
+.modal-pedidos-total{background:linear-gradient(135deg,#0d0d22,#111133);border-radius:12px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;border:1px solid #1e1e3a;margin-bottom:1.5rem}
+.modal-pedidos-total .modal-pedidos-total-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:#64748b}
+.modal-pedidos-total .modal-pedidos-total-valor{font-size:1.1rem;font-weight:800;color:#00ff88;font-family:'Courier New',monospace}
+.modal-pedidos-total .modal-pedidos-total-valor.vip{color:#f0b90b;text-shadow:0 0 8px rgba(240,185,11,.3)}
+.modal-pedidos-acciones{display:flex;gap:.75rem;justify-content:flex-end}
+.btn-modal-pedidos-cancelar{padding:.6rem 1.2rem;background:rgba(100,116,139,.1);border:1px solid #2a2a4a;border-radius:12px;color:#94a3b8;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-modal-pedidos-cancelar:hover{background:rgba(100,116,139,.2);border-color:#475569;color:#e2e8f0}
+.btn-modal-pedidos-confirmar{padding:.6rem 1.2rem;background:linear-gradient(135deg,#f0b90b,#d4a017);border:none;border-radius:12px;color:#0a0a1a;font-size:.82rem;font-weight:800;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:.4rem}
+.btn-modal-pedidos-confirmar:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 20px rgba(240,185,11,.4)}
+.btn-modal-pedidos-confirmar:disabled{opacity:.5;cursor:not-allowed;transform:none}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-content">
+    <div class="header-avatar">p</div>
+    <div class="header-text">
+      <h1>pedidos</h1>
+      <p class="subtitle">gestiona tus <span>ordenes de minado</span> en tiempo real</p>
+    </div>
+  </div>
+  <div class="user-info">
+    <span id="user-email">---</span>
+    <span>|</span>
+    <span class="badge" id="user-rol">---</span>
+  </div>
+</header>
+
+<div class="panel-pedidos" id="panel-pedidos-root">
+  <div class="panel-header-row">
+    <h2><i class="fas fa-shopping-cart"></i> panel de pedidos</h2>
+    <div class="live-count" id="live-count">1</div>
+  </div>
+  <div class="subtitle">gestiona tus pedidos de streameando.</div>
+
+  <div id="pedido-msg" class="pedido-msg"></div>
+
+  <div class="pedido-grid">
+    <!-- formulario de nuevo pedido -->
+    <div class="card-pedido" id="card-formulario">
+      <div class="card-titulo">
+        <i class="fas fa-pen-fancy"></i> nuevo pedido
+      </div>
+      <div class="field-row">
+        <div class="pedido-field">
+          <label for="ped-url">url del directo</label>
+          <input type="text" id="ped-url" placeholder="https://twitch.tv/usuario" autocomplete="off">
+        </div>
+        <div class="pedido-field">
+          <label for="ped-seguidores">seguidores</label>
+          <input type="number" id="ped-seguidores" placeholder="ej: 1000" min="1" value="100" autocomplete="off">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="pedido-field">
+          <label for="ped-perfiles">perfiles</label>
+          <input type="number" id="ped-perfiles" placeholder="10" min="1" max="1000" value="10" autocomplete="off">
+          <div class="field-hint">min 1, max 1000</div>
+        </div>
+        <div class="pedido-field">
+          <label for="ped-minutos">tiempo (min)</label>
+          <input type="number" id="ped-minutos" placeholder="15" min="1" value="15" autocomplete="off">
+        </div>
+      </div>
+      <div class="pedido-field">
+        <label>tiempo rapido</label>
+        <div class="tiempo-opt-group">
+          <button type="button" class="btn-opt-tiempo" data-minutos="5" onclick="window.setTiempo(5)">5 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="15" onclick="window.setTiempo(15)">15 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="30" onclick="window.setTiempo(30)">30 min</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="60" onclick="window.setTiempo(60)">1 hora</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="120" onclick="window.setTiempo(120)">2 horas</button>
+          <button type="button" class="btn-opt-tiempo" data-minutos="240" onclick="window.setTiempo(240)">4 horas</button>
+        </div>
+      </div>
+      <div class="pedido-field">
+        <label for="ped-comentarios">comentarios</label>
+        <select id="ped-comentarios">
+          <option value="basico">basico</option>
+          <option value="normal">normal</option>
+          <option value="intenso">intenso</option>
+        </select>
+      </div>
+      <div class="pedido-field">
+        <label>tipo</label>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn active-normal" data-tipo="normal" onclick="window.setTipo('normal')">normal</button>
+          <button type="button" class="toggle-btn" data-tipo="vip" onclick="window.setTipo('vip')">vip</button>
+        </div>
+      </div>
+      <div class="costo-visor">
+        <div class="label">costo estimado</div>
+        <div class="valor" id="costo-valor">0.00 <span class="small">kbt</span></div>
+        <div class="detalle-linea" id="costo-detalle-linea">ingresa datos para calcular costo</div>
+      </div>
+      <div class="btn-crear-wrapper">
+        <button class="btn-crear" id="btn-crear-pedido" onclick="window.crearPedido()">
+          <i class="fas fa-paper-plane"></i> crear pedido
+          <span class="btn-tooltip">los pedidos se procesan segun disponibilidad</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- tabla de historial de pedidos -->
+    <div class="card-pedido card-tabla">
+      <div class="card-titulo">
+        <i class="fas fa-history"></i> historial de pedidos
+      </div>
+      <div class="tabla-header">
+        <span class="tabla-info"><i class="fas fa-info-circle"></i> ultimos pedidos registrados</span>
+        <button class="btn-actualizar" onclick="window.cargarPedidos()">
+          <i class="fas fa-sync-alt"></i> actualizar
+        </button>
+      </div>
+      <div class="tabla-wrapper">
+        <table class="tabla-pedidos">
+          <thead>
+            <tr>
+              <th class="col-id">#</th>
+              <th>url</th>
+              <th class="col-perfiles">perfiles</th>
+              <th class="col-duracion">duracion</th>
+              <th class="col-costo">costo</th>
+              <th class="col-estado">estado</th>
+              <th class="col-fecha">fecha</th>
+              <th class="col-acciones">acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-pedidos-body">
+            <tr><td colspan="8" class="tabla-empty">cargando pedidos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- modal de validacion de pedido -->
+  <div id="modal-validar-pedido" class="modal-pedidos-overlay" style="display:none">
+    <div class="modal-pedidos-card">
+      <h3><i class="fas fa-clipboard-check"></i> confirmar pedido</h3>
+      <div class="modal-pedidos-subtitle">revisa los datos antes de confirmar</div>
+      <div class="modal-pedidos-grid" id="modal-grid-resumen">
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">url</span>
+          <span class="modal-pedidos-value" id="modal-val-url">---</span>
+        </div>
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">seguidores</span>
+          <span class="modal-pedidos-value" id="modal-val-seguidores">---</span>
+        </div>
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">perfiles</span>
+          <span class="modal-pedidos-value" id="modal-val-perfiles">---</span>
+        </div>
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">duracion</span>
+          <span class="modal-pedidos-value" id="modal-val-duracion">---</span>
+        </div>
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">comentarios</span>
+          <span class="modal-pedidos-value" id="modal-val-comentarios">---</span>
+        </div>
+        <div class="modal-pedidos-item">
+          <span class="modal-pedidos-label">tipo</span>
+          <span class="modal-pedidos-value" id="modal-val-tipo">---</span>
+        </div>
+      </div>
+      <div class="modal-pedidos-total">
+        <span class="modal-pedidos-total-label">costo total</span>
+        <span class="modal-pedidos-total-valor" id="modal-val-costo">0.00 kbt</span>
+      </div>
+      <div class="modal-pedidos-acciones">
+        <button class="btn-modal-pedidos-cancelar" onclick="window.cerrarModalValidacion()">cancelar</button>
+        <button class="btn-modal-pedidos-confirmar" id="btn-modal-confirmar" onclick="window.confirmarPedido()">
+          <i class="fas fa-check"></i> confirmar y gastar tokens
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// pedidos_core.html - parte principal del modulo pedidos
+// helpers
+function $(id) { return document.getElementById(id); }
+function valor(id) { var el = $(id); return el ? el.value : ''; }
+
+// --- estado interno ---
+var _ped_estado = {
+  tipo: 'normal',
+  intervalId: null,
+};
+
+// --- promesa compartida para carga de funciones extendidas ---
+var _extLoadingPromise = null;
+
+async function cargarFuncionesExtendidas() {
+  // si ya estan cargadas (window.cargarPedidos existe), salir
+  if (typeof window.cargarPedidos === 'function') return;
+  // si ya hay una carga en curso, reusar esa promesa
+  if (_extLoadingPromise) return _extLoadingPromise;
+  _extLoadingPromise = (async function() {
+    try {
+      var resp = await fetch('/publico/pedidos_ext.html');
+      var html = await resp.text();
+      var bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (bodyMatch) {
+        var bodyContent = bodyMatch[1];
+        var scriptRegex = /<script>([\s\S]*?)<\/script>/gi;
+        var match;
+        while ((match = scriptRegex.exec(bodyContent)) !== null) {
+          try {
+            new Function(match[1])();
+          } catch (e) {
+            console.error('error evaluando script extendido:', e);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('error cargando funciones extendidas:', e);
+    }
+  })();
+  return _extLoadingPromise;
+}
+
+function configurarEventos() {
+  ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios'].forEach(function(id) {
+    var el = $(id);
+    if (el) {
+      el.addEventListener('input', window.calcularCosto);
+      el.addEventListener('change', window.calcularCosto);
+    }
+  });
+}
+
+function iniciarAutoRecarga() {
+  _ped_estado.intervalId = setInterval(function() {
+    var body = $('tabla-pedidos-body');
+    if (body && body.querySelector('.tabla-empty') === null) {
+      window.cargarPedidos();
+    }
+  }, 15000);
+}
+
+window.limpiarIntervaloPedidos = function() {
+  if (_ped_estado.intervalId) {
+    clearInterval(_ped_estado.intervalId);
+    _ped_estado.intervalId = null;
+  }
+};
+
+// funcion de inicializacion llamada desde SPA dashboard (o standalone)
+// sigue el mismo patron que window.inicializarPanelPerfiles en perfiles.html
+window.inicializarPanelPedidos = async function() {
+  // asegurar que las funciones extendidas esten cargadas
+  await cargarFuncionesExtendidas();
+  configurarEventos();
+  if (typeof window.calcularCosto === 'function') window.calcularCosto();
+  if (typeof window.cargarPedidos === 'function') window.cargarPedidos();
+  window.limpiarIntervaloPedidos();
+  iniciarAutoRecarga();
+  if (typeof window.iniciarLiveCount === 'function') window.iniciarLiveCount();
+};
+
+// auto-inicializar si se carga standalone (no desde SPA)
+// MISMO PATRON que perfiles.html: verifica si el DOM existe y llama a init
+(function() {
+  if (document.getElementById('panel-pedidos-root')) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        window.inicializarPanelPedidos();
+      });
+    } else {
+      window.inicializarPanelPedidos();
+    }
+  }
+})();
+</script>
+</body>
+</html>
