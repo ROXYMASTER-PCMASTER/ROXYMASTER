@@ -1,0 +1,127 @@
+2026-05-12 11:58:17,153 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, retiros, referidos, version, computadoras, pedidos_acciones
+2026-05-12 11:58:17,169 [roxymaster.server] INFO: iniciando servidor en 0.0.0.0:8086
+2026-05-12 11:58:17,345 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, retiros, referidos, version, computadoras, pedidos_acciones
+2026-05-12 11:58:17,345 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
+2026-05-12 11:58:17,345 [roxymaster.server] INFO: configuracion cargada: puerto=8086
+2026-05-12 11:58:17,360 [roxymaster.server] INFO: base de datos inicializada: C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
+2026-05-12 11:58:17,366 [roxymaster.db_pedidos_vigilante] INFO: tabla pedido_asignaciones verificada/creada
+2026-05-12 11:58:17,366 [roxymaster.server] INFO: tablas del vigilante de pedidos creadas
+2026-05-12 11:58:17,382 [roxymaster.tasks] INFO: registros de tareas inicializados
+2026-05-12 11:58:17,416 [roxymaster.server] INFO: tareas periodicas iniciadas
+2026-05-12 11:58:17,416 [roxymaster.server] INFO: vigilante de pedidos iniciado
+2026-05-12 11:58:17,416 [roxymaster.tasks] INFO: iniciando tareas periodicas...
+2026-05-12 11:58:17,433 [vigilante_pedidos] INFO: vigilante de pedidos iniciado
+INFO:     181.176.72.106:0 - "GET /dashboard_publico.html HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/precios_marketplace HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /publico/login.html HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /assets/fonts/Inter-ExtraBold.woff2 HTTP/1.1" 404 Not Found
+INFO:     181.176.72.106:0 - "GET /assets/fonts/Inter-Regular.woff2 HTTP/1.1" 404 Not Found
+INFO:     181.176.72.106:0 - "GET /assets/fonts/Inter-SemiBold.woff2 HTTP/1.1" 404 Not Found
+2026-05-12 11:58:28,927 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+2026-05-12 11:58:28,942 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+2026-05-12 11:58:28,953 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+2026-05-12 11:58:28,963 [roxymaster.ws_manager] INFO: [WS-DIAG] registrar_conexion OK: usuario=33 pcbot=PCWILMER
+2026-05-12 11:58:28,964 [roxymaster.server] INFO: [DIAG-SYNC-WS] usuario 33 registrado en ws_manager via mensaje tipo=handshake
+2026-05-12 11:58:28,966 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '11h 55m', 'uptime_sec': 42941, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:57:29.194
+2026-05-12 11:58:28,967 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:58:28,987 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,003 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,020 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,034 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,037 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 11:58:29,043 [roxymaster.ws_manager] INFO: [WS-DIAG] registrar_conexion OK: usuario=33 pcbot=PCWILMER
+2026-05-12 11:58:29,048 [roxymaster.server] INFO: [DIAG-SYNC-WS] usuario 33 registrado en ws_manager via mensaje tipo=handshake
+2026-05-12 11:58:29,049 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '41h 59m', 'uptime_sec': 151175, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:57:29.20
+2026-05-12 11:58:29,049 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:58:29,070 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 11:58:29,070 [roxymaster.ws_manager] INFO: [WS-DIAG] registrar_conexion OK: usuario=33 pcbot=PCWILMER
+2026-05-12 11:58:29,070 [roxymaster.server] INFO: [DIAG-SYNC-WS] usuario 33 registrado en ws_manager via mensaje tipo=handshake
+2026-05-12 11:58:29,077 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '15h 55m', 'uptime_sec': 57349, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:57:29.223
+2026-05-12 11:58:29,077 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:58:29,095 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,112 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,120 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,137 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:29,137 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+INFO:     181.176.72.106:0 - "POST /api/login HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /publico/dashboard_publico.html HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/precios_marketplace HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /publico/ayuda.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /publico/pedidos_core.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.106:0 - "GET /publico/pedidos_ext.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /publico/marketplace.html HTTP/1.1" 304 Not Modified
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/marketplace/ordenes HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/marketplace/ordenes HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53186 - "GET /dashboard_publico.html HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/transacciones HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53188 - "GET /dashboard HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53191 - "GET /publico/dashboard_publico.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53194 - "GET /publico/login.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53196 - "GET /publico/dashboard_publico.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53199 - "POST /api/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53201 - "GET /api/health HTTP/1.1" 200 OK
+2026-05-12 11:58:51,799 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/fantasmitakeli perfiles=1 horas=0.25 costo=0.008325
+2026-05-12 11:58:51,799 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/fantasmitakeli
+2026-05-12 11:58:51,801 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=32
+2026-05-12 11:58:51,818 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 11:58:51,818 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 11:58:51,818 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 11:58:51,818 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_4ed2412d934a", "parametros": {"url": "https://kick.com/fantasmitakeli", "cantidad": 1, "duracion": 15, "nivel_comentarios": "basico"}}
+2026-05-12 11:58:51,818 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 11:58:51,818 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_4ed2412d934a
+2026-05-12 11:58:51,818 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 11:58:51,822 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 11:58:51,822 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 11:58:51,831 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #32 usuario=33 costo=0.008325 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 11:58:59,096 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '11h 56m', 'uptime_sec': 42971, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:57:59.350
+2026-05-12 11:58:59,098 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:58:59,118 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:59,127 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:59,139 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:59,150 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 11:58:59,154 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 11:58:59,157 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '42h 0m', 'uptime_sec': 151205, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:57:59.411
+2026-05-12 11:58:59,157 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:58:59,174 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 11:59:01,049 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '15h 56m', 'uptime_sec': 57381, 'modo': 'offline', 'conectado_desde': '2026-05-12T16:58:01.303
+2026-05-12 11:59:01,050 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 11:59:01,066 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 11:59:01,066 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 11:59:01,066 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 11:59:01,082 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 11:59:01,082 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 11:59:19,819 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/fantasmitakeli perfiles=1 horas=0.25 costo=0.008325
+2026-05-12 11:59:19,819 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/fantasmitakeli
+2026-05-12 11:59:19,835 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=33
+2026-05-12 11:59:19,836 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 11:59:19,836 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 11:59:19,836 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 11:59:19,836 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_2376bfc69b80", "parametros": {"url": "https://kick.com/fantasmitakeli", "cantidad": 1, "duracion": 15, "nivel_comentarios": "basico"}}
+2026-05-12 11:59:19,836 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 11:59:19,836 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_2376bfc69b80
+2026-05-12 11:59:19,836 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 11:59:19,846 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 11:59:19,846 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 11:59:19,854 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #33 usuario=33 costo=0.008325 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK

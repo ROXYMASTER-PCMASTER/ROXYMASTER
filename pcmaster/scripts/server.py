@@ -270,6 +270,20 @@ async def login():
         return FileResponse(login_path, media_type="text/html")
     return {"error": "login no disponible"}
 
+# redirecciones de compatibilidad para rutas sin prefijo /publico/
+@app.get("/dashboard_publico.html")
+async def dashboard_publico_redirect():
+    """redirige a la ruta correcta con prefijo /publico/."""
+    dashboard_path = os.path.join(base_dir, "..", "publico", "dashboard_publico.html")
+    if os.path.exists(dashboard_path):
+        return FileResponse(dashboard_path, media_type="text/html")
+    return RedirectResponse(url="/publico/dashboard_publico.html")
+
+@app.get("/dashboard")
+async def dashboard_redirect():
+    """redirige a la ruta correcta con prefijo /publico/."""
+    return RedirectResponse(url="/publico/dashboard_publico.html")
+
 # endpoint registro
 @app.get("/registro")
 async def registro():
