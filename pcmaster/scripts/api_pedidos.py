@@ -14,8 +14,7 @@ from tokenomics_core import (
     _cargar_params,
 )
 from auth import verificar_token_opcional
-from ws_manager import obtener_pcbot_de_usuario
-from orchestrator import crear_comando
+from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
 
 logger = logging.getLogger("roxymaster.api_pedidos")
 
@@ -88,9 +87,15 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     url = body.get("url", "").strip()
     seguidores = int(body.get("seguidores", 0))
     perfiles = int(body.get("perfiles", 0))
-    horas = float(body.get("horas", 0))
+    # aceptar 'minutos' (frontend) o 'horas' (api directa)
+    minutos = float(body.get("minutos", 0) or body.get("horas", 0) or 0)
+    if body.get("horas") and not body.get("minutos"):
+        horas = float(body.get("horas", 0))
+    else:
+        horas = minutos / 60.0  # convertir minutos a horas
     nivel_comentarios = body.get("nivel_comentarios", "basico")
-    tipo_pedido = body.get("tipo_pedido", "vistas")
+    # aceptar 'tipo' (frontend) o 'tipo_pedido' (api directa)
+    tipo_pedido = body.get("tipo_pedido") or body.get("tipo", "vistas")
 
     if not url:
         raise HTTPException(status_code=400, detail="url requerida")
@@ -167,13 +172,15 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
         "parametros": parametros_pedido,
     }
     logger.info(f"[PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='{pcbot_id}': {json.dumps(payload_exacto, ensure_ascii=False)}")
-    logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en orchestrator._conexiones_ws? CHEQUEAR LOGS")
+    logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en ws_manager? CHEQUEAR LOGS")
 
-    resultado_orch = await crear_comando(
-        tipo="asignar",
-        parametros=parametros_pedido,
-        pcbot_id=pcbot_id,
-        comando_id=comando_id,
+    resultado_orch = await enviar_comando_al_pcbot(
+        usuario_id=uid,
+        comando={
+            "tipo": "asignar",
+            "comando_id": comando_id,
+            "parametros": parametros_pedido,
+        },
     )
     logger.info(f"[PEDIDO-DIAG] resultado_orch={resultado_orch}")
 

@@ -1,12 +1,13 @@
 # pedidos_vigilante.py - monitoreo y reemplazo de perfiles caidos
 # modulo para vigilante de pedidos, se ejecuta como tarea asincrona
-# dependencias: ws_manager, db, datetime
+# dependencias: heartbeat_cache, db, datetime
 
 import asyncio
 import logging
 from datetime import datetime, timezone
 
-from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
+import heartbeat_cache
+from ws_manager import enviar_comando_al_pcbot, obtener_pcbot_de_usuario
 from db import ejecutar_sql, ejecutar_insercion
 
 logger = logging.getLogger("vigilante_pedidos")
@@ -22,34 +23,12 @@ def _ahora_dt() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _obtener_perfiles_activos(pcbot_id: str) -> list:
-    """obtiene perfiles activos del heartbeat almacenados en perfiles_roxy.
-    devuelve lista de dicts con hash (profile_id), activo."""
-    rows = ejecutar_sql(
-        "select hash as profile_id, activo from perfiles_roxy "
-        "where pcbot_id = ? and activo = 1",
-        (pcbot_id,),
-    )
-    return rows if rows else []
-
-
-def _obtener_perfiles_libres(pcbot_id: str) -> list:
-    """obtiene perfiles instalados que no estan activos en este pcbot.
-    busca en perfiles_roxy perfiles del pcbot que no tienen activo=1.
-    devuelve lista de hash (profile_id) disponibles."""
-    rows = ejecutar_sql(
-        "select hash from perfiles_roxy "
-        "where pcbot_id = ? and (activo is null or activo = 0)",
-        (pcbot_id,),
-    )
-    return [r["hash"] for r in rows] if rows else []
-
-
 async def monitorear_pedidos():
     """bucle principal del vigilante.
     se ejecuta cada 30 segundos y verifica:
     - pedidos expirados -> finalizar
     - perfiles caidos -> reemplazar
+    - perfiles con url incorrecta -> reemplazar
     """
     logger.info("vigilante de pedidos iniciado")
     while True:
@@ -83,7 +62,9 @@ async def _ciclo_vigilante():
 
 
 async def _verificar_pedido(pedido: dict, ahora: datetime):
-    """verifica estado de un pedido y actua si es necesario."""
+    """verifica estado de un pedido y actua si es necesario.
+    usa heartbeat_cache para obtener los perfiles activos reales
+    y comparar urls."""
     pedido_id = pedido["id"]
 
     # calcular tiempo restante usando fecha_creacion + duracion_horas
@@ -104,7 +85,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         await _finalizar_pedido(pedido)
         return
 
-    # caso 2: verificar perfiles activos
+    # caso 2: verificar perfiles activos contra el heartbeat cache
     asignaciones = ejecutar_sql(
         "select id, perfil_id, pcbot_id, url from pedido_asignaciones "
         "where pedido_id = ? and estado = 'activo'",
@@ -118,9 +99,10 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             await _asignar_perfil(pedido, tiempo_restante)
         return
 
-    # contar perfiles caidos
+    # contar perfiles caidos o con url incorrecta
     perfiles_fallidos = 0
     usuario_id = pedido.get("usuario_id")
+    url_pedido = pedido.get("url", "")
 
     for asig in asignaciones:
         pcbot_id = asig.get("pcbot_id")
@@ -137,12 +119,18 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 )
                 continue
 
-        activos = _obtener_perfiles_activos(pcbot_id)
-        perfil_activo = any(p.get("profile_id") == perfil_id for p in activos)
+        # obtener perfiles activos desde el heartbeat cache (datos reales del pcbot)
+        activos_cache = heartbeat_cache.obtener_perfiles_activos(pcbot_id)
+        perfil_en_cache = None
+        for p in activos_cache:
+            if p.get("profile_id") == perfil_id:
+                perfil_en_cache = p
+                break
 
-        if not perfil_activo:
+        if not perfil_en_cache:
+            # perfil no aparece como activo en el ultimo heartbeat
             logger.info(
-                "perfil %s caido en pcbot %s para pedido %s",
+                "perfil %s caido en pcbot %s para pedido %s (no aparece en heartbeat)",
                 perfil_id, pcbot_id, pedido_id,
             )
             # marcar asignacion como fallida
@@ -151,6 +139,33 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 (asig["id"],),
             )
             perfiles_fallidos += 1
+            continue
+
+        # verificar que la url del perfil coincida con la url del pedido
+        url_actual = perfil_en_cache.get("url", "")
+        if url_pedido and url_actual and url_actual != url_pedido:
+            logger.info(
+                "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) para pedido %s",
+                perfil_id, pcbot_id, url_actual, url_pedido, pedido_id,
+            )
+            # marcar asignacion como fallida por url incorrecta
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
+            )
+            perfiles_fallidos += 1
+            # enviar comando detener para liberar ese perfil
+            comando_detener = {
+                "tipo": "detener",
+                "parametros": {"perfil_id": perfil_id},
+            }
+            try:
+                await _enviar_comando_seguro(int(usuario_id), comando_detener)
+            except Exception as e:
+                logger.error(
+                    "error enviando detener perfil %s con url incorrecta: %s",
+                    perfil_id, str(e)[:200],
+                )
 
     # reemplazar perfiles caidos si hay
     if perfiles_fallidos > 0:
@@ -162,9 +177,24 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             await _asignar_perfil(pedido, tiempo_restante)
 
 
+async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:
+    """wrapper seguro para enviar_comando_al_pcbot que maneja
+    excepciones y devuelve siempre un dict con exito/error."""
+    try:
+        resultado = await enviar_comando_al_pcbot(usuario_id, comando)
+        if isinstance(resultado, dict):
+            return resultado
+        # si devolvio bool o None, convertir a dict
+        exito = bool(resultado)
+        return {"exito": exito, "error": "" if exito else "resultado inesperado"}
+    except Exception as e:
+        logger.error("error en enviar_comando_al_pcbot: %s", str(e)[:200])
+        return {"exito": False, "error": str(e)[:200]}
+
+
 async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
     """asigna un perfil libre al pedido.
-    busca perfiles libres en perfiles_roxy para el pcbot del usuario,
+    busca perfiles libres en heartbeat_cache para el pcbot del usuario,
     envia comando asignar y registra en pedido_asignaciones."""
     usuario_id = pedido.get("usuario_id")
     if not usuario_id:
@@ -174,20 +204,28 @@ async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
     try:
         pcbot_id = obtener_pcbot_de_usuario(int(usuario_id))
     except Exception as e:
-        logger.warning("no se pudo obtener pcbot para usuario %s: %s", usuario_id, str(e)[:100])
+        logger.warning(
+            "no se pudo obtener pcbot para usuario %s: %s",
+            usuario_id, str(e)[:100],
+        )
         return False
 
     if not pcbot_id:
-        logger.warning("usuario %s no tiene pcbot asignado", usuario_id)
+        logger.warning("usuario %s no tiene pcbot conectado", usuario_id)
         return False
 
-    # buscar perfil libre
-    libres = _obtener_perfiles_libres(pcbot_id)
-    if not libres:
-        logger.warning("no hay perfiles libres en pcbot %s", pcbot_id)
+    # buscar perfil libre desde heartbeat_cache
+    # perfil libre = existe en el heartbeat del pcbot pero NO esta activo
+    libres_cache = heartbeat_cache.obtener_perfiles_libres(pcbot_id)
+    if not libres_cache:
+        logger.warning("no hay perfiles libres en pcbot %s segun heartbeat", pcbot_id)
         return False
 
-    perfil_elegido = libres[0]
+    perfil_elegido = libres_cache[0].get("profile_id", "")
+    if not perfil_elegido:
+        logger.warning("perfil libre sin profile_id en pcbot %s", pcbot_id)
+        return False
+
     url = pedido.get("url", "")
     nivel_comentarios = pedido.get("nivel_comentarios", 0)
     duracion_int = max(1, int(duracion))
@@ -203,12 +241,7 @@ async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
         },
     }
 
-    try:
-        resultado = await enviar_comando_al_pcbot(int(usuario_id), comando)
-    except Exception as e:
-        logger.error("error enviando comando a pcbot: %s", str(e)[:200])
-        return False
-
+    resultado = await _enviar_comando_seguro(int(usuario_id), comando)
     if not resultado.get("exito"):
         logger.warning(
             "no se pudo enviar comando a pcbot para usuario %s: %s",
@@ -216,7 +249,7 @@ async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
         )
         return False
 
-    # registrar asignacion - columnas reales: pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado
+    # registrar asignacion
     ahora_str = _ahora_str()
     ejecutar_insercion(
         "insert into pedido_asignaciones "
@@ -263,7 +296,7 @@ async def _finalizar_pedido(pedido: dict):
                 "parametros": {"perfil_id": perfil_id},
             }
             try:
-                await enviar_comando_al_pcbot(int(usuario_id), comando)
+                await _enviar_comando_seguro(int(usuario_id), comando)
             except Exception as e:
                 logger.error(
                     "error enviando detener perfil %s: %s",
@@ -278,7 +311,7 @@ async def _finalizar_pedido(pedido: dict):
         (ahora_str, pedido_id),
     )
 
-    # cambiar estado del pedido (columna fecha_fin no existe en pedidos, solo actualizar estado)
+    # cambiar estado del pedido
     ejecutar_sql(
         "update pedidos set estado = 'completado' where id = ?",
         (pedido_id,),

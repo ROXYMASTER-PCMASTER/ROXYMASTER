@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 from datetime import datetime
 
+import heartbeat_cache
 from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion, get_db_context
 from shs import firmar_payload, verificar_payload, secreto_bytes as secreto_sistema, generar_secreto_pcbot
 
@@ -343,6 +344,7 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                 if datos.get("tipo") == "heartbeat":
                     # actualizar heartbeat
                     _conexiones_ws[pcbot_id]["ultimo_heartbeat"] = time.time()
+                    heartbeat_cache.registrar_heartbeat(pcbot_id, datos)
                     await websocket.send_json({"tipo": "ack"})
                     continue
 
