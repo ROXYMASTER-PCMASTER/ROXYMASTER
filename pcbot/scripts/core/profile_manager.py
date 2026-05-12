@@ -43,6 +43,8 @@ class ProfileManager:
     def __init__(self, roxy_api=None):
         self.profiles: dict[str, Profile] = {}
         self.roxy = roxy_api
+        # bug 2: mutex por perfil para evitar operaciones simultaneas
+        self._perfiles_en_uso: dict[str, bool] = {}
 
     def register_profiles(self, profiles_data: list):
         """registra perfiles desde datos de roxybrowser o deteccion local."""
@@ -80,10 +82,15 @@ class ProfileManager:
 
     async def navigate_to(self, profile_id: str, url: str) -> bool:
         """navega un perfil a la url indicada via roxybrowser api.
-        inicia monitor cdp si es exitoso."""
+        inicia monitor cdp si es exitoso.
+        bug 2: usa mutex para evitar operaciones simultaneas sobre el mismo perfil."""
+        if self._perfiles_en_uso.get(profile_id):
+            logger.warning(f"perfil {profile_id[:16]}... esta en uso, no se puede navegar ahora")
+            return False
         if not self.roxy:
             logger.warning("roxybrowser api no disponible para navegar")
             return False
+        self._perfiles_en_uso[profile_id] = True
         try:
             ok = await self.roxy.navigate_async(profile_id, url)
             if ok:
@@ -103,13 +110,22 @@ class ProfileManager:
         except Exception as e:
             logger.error(f"error navegando perfil {profile_id}: {e}")
             return False
+        finally:
+            self._perfiles_en_uso.pop(profile_id, None)
 
     async def close_profile(self, profile_id: str) -> bool:
-        """cierra un perfil via roxybrowser api."""
+        """cierra un perfil via roxybrowser api.
+        bug 2: usa mutex para evitar operaciones simultaneas sobre el mismo perfil."""
+        if self._perfiles_en_uso.get(profile_id):
+            logger.warning(f"perfil {profile_id[:16]}... esta en uso, no se puede cerrar ahora")
+            return False
         if not self.roxy:
             return False
+        self._perfiles_en_uso[profile_id] = True
         try:
-            ok = self.roxy.close_profile(profile_id)
+            # roxy.close_profile es sincrono, ejecutar en executor para no bloquear
+            loop = asyncio.get_event_loop()
+            ok = await loop.run_in_executor(None, self.roxy.close_profile, profile_id)
             if ok:
                 p = self.profiles.get(profile_id)
                 if p:
@@ -121,6 +137,8 @@ class ProfileManager:
         except Exception as e:
             logger.error(f"error cerrando perfil {profile_id}: {e}")
             return False
+        finally:
+            self._perfiles_en_uso.pop(profile_id, None)
 
     async def redirect_to_portal(self, profile_id: str, portal_url: str) -> bool:
         """redirige un perfil al portal local."""

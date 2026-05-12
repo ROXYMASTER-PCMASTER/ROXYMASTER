@@ -10,12 +10,20 @@ import logging
 import os
 import sys
 import time
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from core.profile_manager import ProfileManager, ProfileState
+from orchestrator_local_ext import SchedulerExtension
+
+# bug 3: maximo de pedidos por perfil compartido
+MAX_PEDIDOS_POR_PERFIL = 5
+
+# portal de redireccion cuando un pedido termina (en vez de cerrar el perfil)
+PORTAL_URL = "https://www.wafabot.com"
 
 
 class OrchestratorLocal:
@@ -41,6 +49,10 @@ class OrchestratorLocal:
         #     "comando_id": str,
         # }
         self._pedidos_activos: dict[str, dict] = {}
+
+        # nueva funcionalidad: pedidos programados
+        # comando_id -> asyncio.Task
+        self._pedidos_programados: dict[str, asyncio.Task] = {}
 
     def process_command(self, cmd: dict) -> dict:
         """version sincrona para ser llamada desde ws_client.
@@ -101,6 +113,8 @@ class OrchestratorLocal:
             result = await self._cmd_configurar_apikey(params, cmd_id)
         elif cmd_type == "conexion":
             result = await self._cmd_conexion(params, cmd_id)
+        elif cmd_type == "cancelar":
+            result = await self._cmd_cancelar(params, cmd_id)
         elif cmd_type == "ping":
             result = {"ok": True, "tipo": "pong", "ts": time.time()}
         else:
@@ -115,13 +129,6 @@ class OrchestratorLocal:
         if len(self._command_history) > self._max_history:
             self._command_history = self._command_history[-self._max_history:]
         return result
-
-    async def process_command(self, cmd: dict) -> dict:
-        """wrapper async que extrae tipo/id/params del dict."""
-        cmd_type = cmd.get("tipo", cmd.get("type", ""))
-        cmd_id = cmd.get("comando_id", cmd.get("id", str(time.time())))
-        params = cmd.get("parametros", cmd.get("data", {}))
-        return await self.process_command_async(cmd_type, cmd_id, params)
 
     def _parse_nivel_comentarios(self, raw_val) -> int:
         """convierte nivel_comentarios (string o int) a entero:
@@ -165,14 +172,127 @@ class OrchestratorLocal:
         transcurrido = time.time() - pedido["inicio"]
         return max(0, int(pedido["duracion"] - transcurrido))
 
+    async def _programar_pedido(self, comando_id: str, params: dict, segundos_hasta_inicio: float):
+        """espera segundos_hasta_inicio y luego ejecuta el pedido como inmediato."""
+        try:
+            logger.info(
+                f"pedido {comando_id} programado para ejecutarse en {segundos_hasta_inicio:.0f}s"
+            )
+            await asyncio.sleep(segundos_hasta_inicio)
+            logger.info(f"pedido {comando_id}: hora de ejecucion llegada, ejecutando...")
+            resultado = await self._cmd_asignar_inmediato(params, comando_id)
+            # enviar respuesta de ejecucion al ws si es necesario
+            if self.ws_client is not None:
+                try:
+                    await self.ws_client.send_response({
+                        "tipo": "respuesta_asignar",
+                        "comando_id": comando_id,
+                        "programado": False,
+                        "ejecutado": True,
+                        **resultado,
+                    })
+                    logger.info(f"respuesta de ejecucion enviada para pedido programado {comando_id}")
+                except Exception as e:
+                    logger.error(f"error enviando respuesta de ejecucion programada: {e}")
+        except asyncio.CancelledError:
+            logger.info(f"pedido programado {comando_id} cancelado")
+        except Exception as e:
+            logger.error(f"error ejecutando pedido programado {comando_id}: {e}")
+        finally:
+            self._pedidos_programados.pop(comando_id, None)
+
+    async def _cmd_cancelar(self, params: dict, cmd_id: str) -> dict:
+        """cancela un pedido programado."""
+        pedido_id = params.get("pedido_id", params.get("codigo", ""))
+        if not pedido_id:
+            return {"ok": False, "error": "pedido_id requerido para cancelar"}
+        tarea = self._pedidos_programados.pop(pedido_id, None)
+        if tarea is not None and not tarea.done():
+            tarea.cancel()
+            logger.info(f"pedido programado {pedido_id} cancelado")
+            return {"ok": True, "cancelado": True, "pedido_id": pedido_id}
+        return {"ok": False, "error": f"no hay pedido programado con id {pedido_id}"}
+
     async def _cmd_asignar(self, params: dict, cmd_id: str) -> dict:
-        """asigna perfiles a un pedido.
-        - respeta pedido_id unico (no se duplica)
-        - acumula perfiles por pedido
-        - reutiliza perfiles activos con misma url y mismo nivel (acumula)
-        - asigna nuevos perfiles inactivos si faltan
-        - la duracion del perfil se ajusta al maximo de todos los pedidos que lo usan
-        """
+        """asigna perfiles a un pedido, con soporte de agendamiento por hora.
+        si hora_inicio esta presente, programa el pedido para el futuro."""
+        # extraer campos de agendamiento (opcionales)
+        hora_inicio_str = params.get("hora_inicio", None)
+        hora_fin_str = params.get("hora_fin", None)
+
+        # caso c: hora_fin sin hora_inicio -> ignorar hora_fin, inmediato
+        if hora_fin_str and not hora_inicio_str:
+            logger.info("hora_fin presente sin hora_inicio, se ignora hora_fin")
+            hora_fin_str = None
+
+        if hora_inicio_str:
+            # caso b: pedido programado
+            return await self._cmd_asignar_programado(params, cmd_id, hora_inicio_str, hora_fin_str)
+
+        # caso a y c: pedido inmediato
+        return await self._cmd_asignar_inmediato(params, cmd_id)
+
+    async def _cmd_asignar_programado(self, params: dict, cmd_id: str, hora_inicio_str: str, hora_fin_str: str | None) -> dict:
+        """maneja pedido con hora_inicio: programa la ejecucion para el futuro."""
+        try:
+            hora_inicio = datetime.fromisoformat(hora_inicio_str.replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            return {
+                "ok": False,
+                "error": f"hora_inicio invalida: {hora_inicio_str}, debe ser iso 8601 utc",
+                "comando": "asignar",
+            }
+
+        ahora = datetime.now(timezone.utc)
+        segundos_hasta_inicio = (hora_inicio - ahora).total_seconds()
+
+        if segundos_hasta_inicio <= 0:
+            # ya deberia haber empezado, ejecutar inmediatamente
+            logger.info(f"pedido {cmd_id}: hora_inicio {hora_inicio_str} ya paso, ejecutando inmediato")
+            return await self._cmd_asignar_inmediato(params, cmd_id)
+
+        # calcular duracion basado en hora_fin si esta presente
+        duracion_real = None
+        if hora_fin_str:
+            try:
+                hora_fin = datetime.fromisoformat(hora_fin_str.replace("Z", "+00:00"))
+                duracion_real = int((hora_fin - hora_inicio).total_seconds())
+                if duracion_real <= 0:
+                    duracion_real = None
+                    logger.warning(f"hora_fin {hora_fin_str} es anterior a hora_inicio, se ignora")
+            except (ValueError, AttributeError):
+                logger.warning(f"hora_fin invalida {hora_fin_str}, se ignora")
+
+        # si hay duracion_real, sobreescribir params.duracion para cuando se ejecute
+        params_programado = dict(params)
+        if duracion_real is not None and duracion_real > 0:
+            params_programado["duracion"] = duracion_real
+
+        # programar la tarea
+        tarea = asyncio.create_task(
+            self._programar_pedido(cmd_id, params_programado, segundos_hasta_inicio)
+        )
+        self._pedidos_programados[cmd_id] = tarea
+
+        logger.info(
+            f"pedido {cmd_id} programado: hora_inicio={hora_inicio_str}, "
+            f"hora_fin={hora_fin_str or 'n/a'}, "
+            f"segundos_hasta_inicio={int(segundos_hasta_inicio)}, "
+            f"duracion={duracion_real or params.get('duracion', 60)}"
+        )
+
+        return {
+            "ok": True,
+            "tipo": "respuesta_asignar",
+            "comando_id": cmd_id,
+            "programado": True,
+            "hora_inicio": hora_inicio_str,
+            "hora_fin": hora_fin_str or "",
+            "segundos_hasta_inicio": int(segundos_hasta_inicio),
+        }
+
+    async def _cmd_asignar_inmediato(self, params: dict, cmd_id: str) -> dict:
+        """asigna perfiles a un pedido inmediatamente (logica original con bugs corregidos)."""
         pedido_id = params.get("pedido_id", params.get("codigo", cmd_id))
         url = params.get("url", "")
         if not url:
@@ -213,12 +333,17 @@ class OrchestratorLocal:
             }
 
         # --- paso 1: perfiles que ya estan activos con la misma url y mismo nivel (reutilizar) ---
-        reutilizables = [
-            pid for pid, p in self.pm.profiles.items()
-            if p.state == ProfileState.ACTIVE
-            and p.current_url == url
-            and p.nivel_comentarios == nivel_comentarios
-        ]
+        # bug 3: filtrar los que ya tienen maximo de pedidos
+        reutilizables = []
+        for pid, p in self.pm.profiles.items():
+            if p.state == ProfileState.ACTIVE \
+               and p.current_url == url \
+               and p.nivel_comentarios == nivel_comentarios:
+                # bug 3: verificar limite de pedidos por perfil
+                if len(p.pedidos_ids) >= MAX_PEDIDOS_POR_PERFIL:
+                    logger.info(f"perfil {pid} ya tiene {len(p.pedidos_ids)} pedidos (max {MAX_PEDIDOS_POR_PERFIL}), no reutilizable")
+                    continue
+                reutilizables.append(pid)
 
         # --- paso 2: perfiles activos con url/nivel diferente (no reutilizables) ---
         # (no se cuentan como disponibles porque hay que cerrarlos primero y reasignar)
@@ -240,7 +365,7 @@ class OrchestratorLocal:
 
         disponibles = len(reutilizables) + len(inactivos) + len(reasignables)
         logger.info(
-            f"perfiles: {len(reutilizables)} reutilizables (misma url+nivel), "
+            f"perfiles: {len(reutilizables)} reutilizables (misma url+nivel, respetando max {MAX_PEDIDOS_POR_PERFIL}), "
             f"{len(inactivos)} inactivos, "
             f"{len(reasignables)} reasignables (url/nivel diferente sin pedidos), "
             f"total disponibles={disponibles}, solicitados={cantidad}"
@@ -253,6 +378,7 @@ class OrchestratorLocal:
                 "error": f"no hay suficientes perfiles: {disponibles} disponibles, {cantidad} solicitados",
                 "comando": "asignar",
                 "estados": estados.get("counts", {}),
+                "max_pedidos_por_perfil": MAX_PEDIDOS_POR_PERFIL,
             }
 
         # --- seleccionar perfiles ---
@@ -322,16 +448,34 @@ class OrchestratorLocal:
                         except Exception as e:
                             logger.error(f"error cerrando {pid} para reasignar: {e}")
 
-                    # navegar
+                    # navegar (bug 2: si devuelve false por mutex, probar otro perfil)
                     success = await self.pm.navigate_to(pid, url)
-                    if success:
+                    if not success:
+                        # bug 2: intentar con otro perfil de los no seleccionados aun
+                        logger.warning(f"navegacion fallo para perfil {pid} (posiblemente ocupado), buscando alternativo...")
+                        pid_alternativo = None
+                        for alt_pid, alt_p in self.pm.profiles.items():
+                            if alt_pid not in seleccionados and alt_p.state == ProfileState.INACTIVE:
+                                pid_alternativo = alt_pid
+                                break
+                        if pid_alternativo:
+                            logger.info(f"usando perfil alternativo {pid_alternativo} en lugar de {pid}")
+                            seleccionados[seleccionados.index(pid)] = pid_alternativo
+                            pid = pid_alternativo
+                            self._pedidos_activos[pedido_id]["perfiles"] = seleccionados
+                            success = await self.pm.navigate_to(pid, url)
+                        if not success:
+                            resultados.append({"perfil": pid, "ok": False, "error": "fallo al navegar"})
+                            continue
                         p = self.pm.get_profile(pid)
                         if p:
                             p.nivel_comentarios = nivel_comentarios
                             p.pedidos_ids = [pedido_id]
                     else:
-                        resultados.append({"perfil": pid, "ok": False, "error": "fallo al navegar"})
-                        continue
+                        p = self.pm.get_profile(pid)
+                        if p:
+                            p.nivel_comentarios = nivel_comentarios
+                            p.pedidos_ids = [pedido_id]
 
                 # actualizar metadata del perfil
                 p = self.pm.get_profile(pid)
@@ -481,13 +625,13 @@ class OrchestratorLocal:
                     )
                 mantenidos.append(pid)
             else:
-                # cerrar perfil
+                # redirigir al portal en vez de cerrar
                 try:
-                    await self.pm.close_profile(pid)
+                    await self.pm.redirect_to_portal(pid, PORTAL_URL)
                     cerrados.append(pid)
-                    logger.info(f"perfil {pid} cerrado al liberar pedido {pedido_id}")
+                    logger.info(f"perfil {pid} redirigido al portal al liberar pedido {pedido_id}")
                 except Exception as e:
-                    logger.error(f"error cerrando {pid}: {e}")
+                    logger.error(f"error redirigiendo {pid}: {e}")
 
         # enviar respuesta de confirmacion
         respuesta = {
@@ -521,11 +665,11 @@ class OrchestratorLocal:
         if tarea is not None and not tarea.done():
             tarea.cancel()
 
-        # cerrar el perfil
+        # redirigir el perfil al portal en vez de cerrar
         try:
-            ok = await self.pm.close_profile(profile_id)
+            ok = await self.pm.redirect_to_portal(profile_id, PORTAL_URL)
         except Exception as e:
-            logger.error(f"error cerrando perfil {profile_id}: {e}")
+            logger.error(f"error redirigiendo perfil {profile_id}: {e}")
             ok = False
 
         # limpiar pedidos asociados
@@ -554,7 +698,8 @@ class OrchestratorLocal:
 
     async def _cierre_automatico(self, profile_id: str, duracion_seg: int):
         """espera duracion_seg y cierra el perfil SOLO si no tiene otros pedidos activos.
-        si aun tiene pedidos activos, reprograma con la duracion restante maxima."""
+        si aun tiene pedidos activos, reprograma con la duracion restante maxima.
+        bug 1: si duracion_restante <= 0, no reprograma, cierra directamente."""
         try:
             await asyncio.sleep(duracion_seg)
 
@@ -590,6 +735,23 @@ class OrchestratorLocal:
                     if pedido:
                         restante = max(0, pedido["duracion"] - (ahora - pedido["inicio"]))
                         duracion_max = max(duracion_max, restante)
+
+                # bug 1: si duracion_max < 1 (incluye fracciones), cerrar directamente
+                if int(duracion_max) <= 0:
+                    logger.info(
+                        f"cierre automatico: perfil {profile_id} sin tiempo restante "
+                        f"({len(pedidos_vivos)} pedido(s) activos pero con restante <= 0), cerrando..."
+                    )
+                    # cerrar directamente
+                    if p.state == ProfileState.ACTIVE:
+                        ok = await self.pm.redirect_to_portal(profile_id, PORTAL_URL)
+                        if ok:
+                            logger.info(f"cierre automatico: perfil {profile_id} redirigido al portal (sin tiempo restante)")
+                        else:
+                            logger.warning(f"cierre automatico: no se pudo redirigir {profile_id} al portal")
+                    self._cierres_pendientes.pop(profile_id, None)
+                    return
+
                 logger.info(
                     f"cierre automatico: perfil {profile_id} reprogramado "
                     f"({len(pedidos_vivos)} pedido(s) aun activos, proximo cierre en {duracion_max:.0f}s)"
@@ -607,12 +769,12 @@ class OrchestratorLocal:
                 self._cierres_pendientes.pop(profile_id, None)
                 return
 
-            logger.info(f"cierre automatico: cerrando perfil {profile_id} tras {duracion_seg}s")
-            ok = await self.pm.close_profile(profile_id)
+            logger.info(f"cierre automatico: redirigiendo perfil {profile_id} al portal tras {duracion_seg}s")
+            ok = await self.pm.redirect_to_portal(profile_id, PORTAL_URL)
             if ok:
-                logger.info(f"cierre automatico: perfil {profile_id} cerrado")
+                logger.info(f"cierre automatico: perfil {profile_id} redirigido al portal")
             else:
-                logger.warning(f"cierre automatico: no se pudo cerrar {profile_id}")
+                logger.warning(f"cierre automatico: no se pudo redirigir {profile_id} al portal")
         except asyncio.CancelledError:
             logger.info(f"cierre automatico: cancelado para perfil {profile_id}")
         except Exception as e:
@@ -625,7 +787,7 @@ class OrchestratorLocal:
         url = params.get("url", "")
         if not url:
             return {"ok": False, "error": "url requerida"}
-        portal_url = "https://www.wafabot.com"
+        portal_url = PORTAL_URL
         afectados = []
         for pid, p in self.pm.profiles.items():
             if p.current_url and url in p.current_url:
@@ -731,6 +893,14 @@ class OrchestratorLocal:
                 "comando_id": pedido.get("comando_id", ""),
             }
 
+        # informacion de pedidos programados
+        pedidos_programados_info = {}
+        for pid_pedido, tarea in self._pedidos_programados.items():
+            pedidos_programados_info[pid_pedido] = {
+                "programado": True,
+                "pendiente": not tarea.done(),
+            }
+
         return {
             "ok": True,
             "estado": {
@@ -740,7 +910,9 @@ class OrchestratorLocal:
                     "profiles": perfiles_info,
                 },
                 "pedidos_activos": pedidos_info,
+                "pedidos_programados": pedidos_programados_info,
                 "total_pedidos": len(pedidos_info),
+                "total_programados": len(pedidos_programados_info),
                 "perfiles_libres": states.get("counts", {}).get("inactive", 0),
             },
         }
