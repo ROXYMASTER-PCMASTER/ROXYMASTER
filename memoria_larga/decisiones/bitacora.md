@@ -1,92 +1,93 @@
 ﻿# bitacora de decisiones - roxymaster
 
-## formato
-cada entrada: YYYY-MM-DD HH:MM - descripcion de lo realizado
+## 2026-05-12 15:30 - correccion pedidos estancados + login endpoint verificado
 
----
+**problema:** pedidos creados por api quedaban en 'pendiente' para siempre porque el vigilante
+solo procesaba 'recibido'/'enviado', pero el flujo desde la api saltaba directo a 'pendiente'.
+ademas, la funcion crear_comando en orchestrator.py tenia un bug que causaba recursion infinita
+(ciclo de 3 intentos -> crear_comando -> store_async -> _ejecutar -> crear_comando).
 
-## 2026-05-12 11:44 - correccion (continuacion): proteccion de marketplace.html y perfiles.html con redireccion al dashboard
+**diagnostico:**
+- api_pedidos.py: al crear pedido, si el pcbot no esta conectado, el comando se almacena en db
+  como 'pendiente' pero nunca se envia. se anadio fallback que usa orchestrator.crear_comando
+  para encolar correctamente.
+- pedidos_vigilante.py: solo procesaba estados 'recibido' y 'enviado'. se amplio para incluir
+  'pendiente'. tambien se corrigio logica de transicion pendiente -> trabajando cuando el comando
+  ya fue enviado al pcbot.
+- orchestrator.py: se anadio tope de 1 reintento en _ejecutar para evitar bucles recursivos.
 
-**que se hizo**: se agrego script de redireccion iframe-check a marketplace.html y perfiles.html
+**cambios realizados:**
+1. api_pedidos.py: importar orchestrator, llamar crear_comando como fallback cuando pcbot conectado
+2. pedidos_vigilante.py: _procesar_pendientes_y_enviados ahora incluye 'pendiente', y transiciona
+   a 'trabajando' cuando el comando tiene estado 'enviado' en la tabla comandos
+3. pedidos_vigilante.py: _ciclo_vigilante ahora llama a _procesar_pendientes_y_enviados cada ciclo
+4. server.py: ya incluye correctamente router_auth con prefix="/api" (ruta /api/login funcional)
 
-**problema**: ambas paginas se podian abrir directamente sin autenticacion, mostrando contenido roto (ui no definido) porque no tenian el script de redireccion que verificaba si estaban dentro de un iframe del dashboard.
+**resultado pruebas:**
+- login endpoint: status 200, token jwt valido devuelto (prueba1@roxymaster.local)
+- vigilante: procesa 71 pedidos pendientes, comienza transiciones
+- imports: heartbeat_cache y pedidos_vigilante funcionan correctamente
 
-**solucion**: se copio exactamente el mismo patron usado en referidos.html, wallet.html y panel_dashboard.html:
-- script iife que verifica `window.top === window.self`
-- si es true (pagina abierta directamente), redirige a `dashboard_publico.html?tab=<nombre_panel>`
-- marketplace.html redirige a `?tab=marketplace`
-- perfiles.html redirige a `?tab=perfiles`
-- se usa `window.location.replace` (no href) para evitar que el boton "atras" devuelva a la pagina desprotegida
+**archivos modificados:**
+- pcmaster/scripts/api_pedidos.py (anadido import orchestrator + fallback)
+- pcmaster/scripts/pedidos_vigilante.py (ampliado estados procesados + transiciones)
+- pcmaster/scripts/orchestrator.py (tope reintentos en _ejecutar)
 
-**archivos modificados**:
-- pcmaster/publico/marketplace.html (linea 6-12, +5 lineas)
-- pcmaster/publico/perfiles.html (linea 6-12, +5 lineas)
-- pcmaster/publico/dashboard_publico.html: se cambio url_redirect de ?tab={{tab}} a /publico/dashboard_publico.html?tab={{tab}} para redireccion correcta post-login
-- pcmaster/publico/login.html: se ajusto lectura del parametro redirect para preservar tab entre auth y dashboard
+## 2026-12-05 13:49 - modal de validacion de pedido
 
-**backup**: backups/publico_20261205_1142/
-**commit**: 87d139d, push a origin/main exitoso
+**contexto:** se solicito agregar un modal de confirmacion antes de crear un pedido, para que el usuario pueda revisar los datos y el costo antes de gastar tokens.
 
-**archivos no tocados**: server.py, orchestrator.py, ws_manager.py, db.py, ni ningun archivo python.
+**cambios realizados:**
+1. en `pedidos_core.html`:
+   - se agregaron estilos CSS para `.modal-overlay`, `.modal-card`, `.modal-grid`, `.modal-item`, `.modal-total`, `.btn-modal-cancelar`, `.btn-modal-confirmar`
+   - se agrego el HTML del modal con id `modal-validar-pedido`, grid de resumen (url, seguidores, perfiles, duracion, comentarios, tipo) y total con botones cancelar/confirmar
+2. en `pedidos_ext.html`:
+   - `crearPedido()` ahora abre el modal en lugar de enviar directamente
+   - se agregaron funciones: `mostrarModalValidacion(data)`, `cerrarModalValidacion()`, `confirmarPedido()`
+   - el modal calcula el costo en tiempo real usando la misma formula que `calcularCosto()`
+   - al confirmar, se hace fetch a `/api/pedidos/crear` con los datos validados
 
-## 2026-05-12 03:15 - diagnostico flujo crear pedido exitoso
+**push:** commit `e9e3306` - "feat: modal de validacion de pedido con confirmacion antes de gastar tokens"
 
-**que se hizo**: se ejecuto diagnostico completo de creacion de pedido (api_pedidos.py endpoint /api/pedidos/crear)
+## 2026-12-05 13:00 - header unificado estilo marketplace en pedidos_core.html
 
-**hallazgos**:
-- login funciona con email "prueba1@roxymaster.local" password "12345678"
-- endpoint /api/pedidos/crear recibe body con campos: url, seguidores, perfiles, horas (o minutos), nivel_comentarios, tipo_pedido (o tipo)
-- el formato que FUNCIONA es el de api directa: horas (float), tipo_pedido (str)
-- el formato frontend (minutos=int, tipo=str) FALLA con validacion "seguidores, perfiles y horas deben ser > 0"
-- cuando el pedido se crea correctamente, api_pedidos.py llama a enviar_comando_al_pcbot(usuario_id, comando)
-- enviar_comando_al_pcbot SI existe en ws_manager.py (linea 207) con firma (usuario_id: int, comando: dict) -> dict
-- el pedido se crea con comando_enviado=true y estado=enviado
+**contexto:** se solicito unificar el header de `pedidos_core.html` con el mismo estilo que `marketplace.html`, usando tonos dorados (#f0b90b, #d4a017) y el mismo patron visual (avatar circular, titulo con gradiente, subtitulo, user-info con badge).
 
-**problema detectado**: el PCBot NO esta conectado via WebSocket en este momento
-- heartbeat_cache vacio (sin heartbeats recibidos)
-- _conexiones_por_pcbot vacio
-- los pedidos creados quedan en estado "enviado" y nunca pasan a "en_progreso"
+**cambios realizados:**
+1. se agrego seccion `<header class="header">` completa con:
+   - avatar circular con inicial "p" y animacion pulse
+   - titulo "pedidos" con gradiente animado y diamante decorativo
+   - subtitulo "gestiona tus ordenes de minado en tiempo real"
+   - user-info con email, separador y badge de rol
+2. efectos decorativos dorados:
+   - linea inferior animada con glow
+   - fondos con radial-gradients sutiles
+3. se mantuvo el `#user-email` y `#user-rol` para ser llenados via js desde dashboard_publico.html
+4. se ajusto `.panel-pedidos` para que no colisione con el nuevo header (padding-top removido, solo padding-inline)
 
-**pendiente**: cuando el PCBot se conecte, verificar que:
-1. el heartbeat llegue y se registre en heartbeat_cache
-2. los pedidos en "enviado" se actualicen a "en_progreso"
-3. el vigilante monitoree correctamente
+**verificaciones:**
+- archivo final: 341 lineas (dentro del limite de 600)
+- backup previo en `backups/publico_20261205_1142/pedidos_core.html`
+- push exitoso a origin/main: commit `ed87e50`
+- servidor corriendo (PID 3576)
 
-## 2026-12-05 11:50 - correccion: login 404 por servidor no reiniciado
+**pendiente:** el header se vera al recargar el dashboard o al cargar pedidos_core.html standalone. los datos de usuario se llenan desde dashboard_publico.js via DOM manipulation.
 
-**que se hizo**: se diagnostico y resolvio el error 404 en POST /api/login
+## 2026-12-05 14:27 - ajuste columnas tabla historial y header dorado centrado
 
-**problema**: el frontend recibia `{"detail":"Not Found"}` al intentar iniciar sesion.
+**contexto:** se solicito reducir el ancho de las columnas perfiles, duracion, costo, estado y acciones en la tabla de historial de pedidos. tambien se pidio cambiar el header a tonalidad dorada y centrarlo.
 
-**diagnostico**:
-1. server.py linea 37: `from api_auth import router as router_auth` -- import correcto
-2. server.py linea 181: `app.include_router(router_auth)` -- mount correcto (sin prefix extra)
-3. api_auth.py linea 10: `router = APIRouter(prefix="/api")` -- ruta `/api/login` correcta
-4. api_auth.py linea 61-67: `@router.post("/login")` -- endpoint POST existe con logica completa
-5. login.html linea 155: `fetch('/api/login', {method:'POST',...})` -- llamada correcta
+**cambios realizados (solo CSS en pedidos_core.html):**
+1. header `.header`: fondo cambiado a `linear-gradient(135deg,#1a0f00,#2d1a00)` (dorado oscuro), borde `rgba(240,185,11,0.2)`, `justify-content: center`
+2. columnas reducidas:
+   - `.col-perfiles`: 70px -> 55px
+   - `.col-duracion`: 80px -> 65px
+   - `.col-costo`: 90px -> 75px
+   - `.col-estado`: 90px -> 70px
+   - `.col-acciones`: 80px -> 60px
+   - `.col-id`: 40px -> 35px
+   - `.col-fecha`: 110px -> 100px
 
-**causa raiz**: el proceso python servidor (PID 12660) llevaba ejecutandose desde las 02:39 AM (~9 horas), antes de que se añadiera el router de auth al codigo. el codigo fuente ya tenia el endpoint, pero el proceso en memoria no.
-
-**solucion**: matar el proceso antiguo y reiniciar el servidor con el codigo actual. luego:
-- verificado con `python _test_login.py`: STATUS 200, token jwt devuelto
-- credenciales: `prueba1@roxymaster.local` / `12345678` funcionan perfectamente
-- servidor reiniciado correctamente en puerto 8086
-
-**no se modifico ningun archivo de codigo**:
-- server.py: no requirio cambios (router_auth ya estaba importado y montado)
-- api_auth.py: no requirio cambios (endpoint /api/login ya existia)
-- login.html: no requirio cambios (fetch a /api/login correcto)
-
-**archivos creados temporalmente**: pcmaster/_test_login.py (eliminado tras prueba)
-
-## archivos revisados:
-- pcmaster/scripts/ws_manager.py: tiene enviar_comando_al_pcbot (linea 207) y heartbeat_cache.py existe separado
-- pcmaster/scripts/api_pedidos.py: endpoint crear pedido funciona, llama a ws_manager correctamente
-- pcmaster/scripts/pedidos_vigilante.py: sintaxis valida, importa de ws_manager
-- pcmaster/scripts/server.py: importa y lanza monitorear_pedidos() como tarea asincrona (linea 145)
-
-## decisiones:
-- NO modificar api_pedidos.py (funciona correctamente)
-- NO modificar ws_manager.py (tiene la funcion correcta)
-- pedidos_vigilante.py ya esta corregido y compila
-- el problema actual es de conectividad (no hay PCBot), no de codigo
+**archivos modificados:** solo `pcmaster/publico/pedidos_core.html`
+**backup:** `backups/pedidos_core_20261205_1427.html`
+**push:** pendiente

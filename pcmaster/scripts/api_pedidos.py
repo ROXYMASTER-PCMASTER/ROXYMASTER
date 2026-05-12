@@ -15,6 +15,7 @@ from tokenomics_core import (
 )
 from auth import verificar_token_opcional
 from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
+from orchestrator import crear_comando as orc_crear_comando
 
 logger = logging.getLogger("roxymaster.api_pedidos")
 
@@ -194,9 +195,46 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
 
     if not resultado_orch.get("exito"):
         logger.warning(
-            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO envio a pcbot. "
-            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error', 'sin error')}"
+            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO envio a pcbot via ws_manager. "
+            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error', 'sin error')}. "
+            f"intentando fallback via orchestrator..."
         )
+
+        # FALLBACK: intentar via orchestrator.crear_comando directamente
+        try:
+            # buscar pcbot_id del usuario en la tabla usuarios
+            usuario = ejecutar_sql_unico(
+                "select pcbot_id from usuarios where id = ?",
+                (uid,)
+            )
+            if usuario and usuario["pcbot_id"]:
+                orc_pcbot_id = usuario["pcbot_id"]
+                logger.info(f"[PEDIDO-FALLBACK] intentando orc_crear_comando con pcbot_id='{orc_pcbot_id}' uid={uid}")
+                orc_result = await orc_crear_comando(
+                    tipo="asignar",
+                    parametros=parametros_pedido,
+                    pcbot_id=orc_pcbot_id,
+                    comando_id=comando_id,
+                )
+                if orc_result.get("exito"):
+                    logger.info(f"[PEDIDO-FALLBACK] orc_crear_comando EXITO: {json.dumps(orc_result)}")
+                    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
+                    return {
+                        "exito": True,
+                        "pedido_id": pedido_id,
+                        "costo_tokens": costo_tokens,
+                        "comando_id": comando_id,
+                        "comando_enviado": True,
+                        "mensaje": "pedido creado y comando encolado en orchestrator",
+                    }
+                else:
+                    logger.warning(f"[PEDIDO-FALLBACK] orc_crear_comando fallo: {orc_result}")
+            else:
+                logger.warning(f"[PEDIDO-FALLBACK] usuario {uid} no tiene pcbot_id asignado")
+        except Exception as e:
+            logger.error(f"[PEDIDO-FALLBACK] excepcion en orchestrator fallback: {e}")
+
+        # si el fallback tambien fallo, responder con comando no enviado
         return {
             "exito": True,
             "pedido_id": pedido_id,

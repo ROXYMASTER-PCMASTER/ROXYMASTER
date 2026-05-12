@@ -138,7 +138,7 @@ window.mostrarModalValidacion = function(data) {
   document.getElementById('modal-val-comentarios').textContent = data.nivel;
   var tipoEl = document.getElementById('modal-val-tipo');
   tipoEl.textContent = data.tipo;
-  tipoEl.className = 'modal-value' + (data.tipo === 'vip' ? ' vip' : '');
+  tipoEl.className = 'modal-pedidos-value' + (data.tipo === 'vip' ? ' vip' : '');
 
   // calcular costo para el modal (misma formula que calcularCosto)
   var tasaBase = 0.0001;
@@ -151,7 +151,7 @@ window.mostrarModalValidacion = function(data) {
   var costoStr = costo.toFixed(4);
   var totalEl = document.getElementById('modal-val-costo');
   totalEl.textContent = costoStr + ' kbt';
-  totalEl.className = 'total-valor' + (data.tipo === 'vip' ? ' vip' : '');
+  totalEl.className = 'modal-pedidos-total-valor' + (data.tipo === 'vip' ? ' vip' : '');
 
   modal.style.display = 'flex';
 };
