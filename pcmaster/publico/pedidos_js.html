@@ -104,6 +104,15 @@
     else detalleEl.className = 'detalle-linea';
   };
 
+  // --- convertir datetime-local a iso utc ---
+  function convertirAHoraUTC(idCampo) {
+    var el = $(idCampo);
+    if (!el || !el.value) return '';
+    var fechaLocal = new Date(el.value);
+    if (isNaN(fechaLocal.getTime())) return '';
+    return fechaLocal.toISOString().replace('Z', '+00:00');
+  }
+
   // --- crear pedido ---
   window.crearPedido = function() {
     var url = valor('ped-url');
@@ -118,6 +127,10 @@
     var btn = $('btn-crear-pedido');
     if (btn) btn.disabled = true;
 
+    // leer campos de agendamiento (opcionales)
+    var horaInicio = convertirAHoraUTC('ped-hora-inicio');
+    var horaFin = convertirAHoraUTC('ped-hora-fin');
+
     var data = {
       url: url,
       seguidores: seguidores,
@@ -127,7 +140,15 @@
       tipo: estado.tipo,
     };
 
-    fetch('/api/pedidos/crear', {
+    // agregar campos de agendamiento solo si estan presentes
+    if (horaInicio) data.hora_inicio = horaInicio;
+    if (horaFin) data.hora_fin = horaFin;
+
+    // decidir endpoint segun si hay agendamiento
+    var esProgramado = horaInicio !== '';
+    var endpoint = esProgramado ? '/api/pedidos/crear_con_agenda' : '/api/pedidos/crear';
+
+    fetch(endpoint, {
       method: 'POST',
       headers: window.getHeaders(),
       body: JSON.stringify(data),
@@ -135,7 +156,11 @@
     .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
     .then(function(resp) {
       if (resp.status >= 200 && resp.status < 300) {
-        window.mostrarMensaje(resp.json.detail || 'pedido creado exitosamente', 'success');
+        var mensaje = resp.json.mensaje || resp.json.detail || 'pedido creado exitosamente';
+        if (resp.json.programado) {
+          mensaje += ' (programado)';
+        }
+        window.mostrarMensaje(mensaje, 'success');
         window.cargarPedidos();
         window.calcularCosto();
       } else {
@@ -167,12 +192,13 @@
       var rows = pedidos.map(function(p) {
         var estadoCls = (p.estado || 'desconocido').toLowerCase();
         var esPendiente = estadoCls === 'pendiente';
+        var esProgramado = estadoCls === 'programado';
         var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en progreso';
         var esVip = p.tipo === 'vip';
         var costo = p.costo_total || p.costo || 0;
 
         var accionesHtml = '<div class="acciones-cell">';
-        if (esPendiente) {
+        if (esPendiente || esProgramado) {
           accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i></button>';
         }
         if (esTrabajando) {
@@ -185,8 +211,14 @@
         var fecha = p.fecha_creacion || p.created_at || '-';
         if (fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
 
-        var duracion = p.duracion || p.minutos || '-';
-        if (typeof duracion === 'number') duracion = duracion + ' min';
+        var duracion = p.duracion || p.minutos || p.duracion_horas || '-';
+        if (typeof duracion === 'number') {
+          if (p.hora_inicio_programada) {
+            duracion = duracion + 'h (programado)';
+          } else {
+            duracion = duracion + ' min';
+          }
+        }
 
         return '<tr' + (esVip ? ' class="vip-row"' : '') + '>' +
           '<td class="col-id">' + (p.id || '#') + '</td>' +

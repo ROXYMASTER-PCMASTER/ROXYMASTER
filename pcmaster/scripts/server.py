@@ -76,6 +76,9 @@ from api_computadoras import router as router_computadoras
 # router para acciones de pedidos (eliminar, detener)
 from api_pedidos_acciones import router as router_pedidos_acciones
 
+# router para agendamiento de pedidos por hora
+from api_pedidos_agendamiento import router as router_pedidos_agendamiento
+
 from pydantic import BaseModel
 from api_auth import LoginRequest, RegisterRequest
 
@@ -116,6 +119,14 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else "data", exist_ok=True)
     inicializar_db()
     logger.info(f"base de datos inicializada: {db_path}")
+
+    # agregar columnas de agendamiento si no existen
+    try:
+        from db_pedidos_ext import agregar_columnas_agendamiento
+        agregar_columnas_agendamiento()
+        logger.info("columnas de agendamiento verificadas/agregadas")
+    except Exception as e:
+        logger.warning(f"no se pudieron agregar columnas de agendamiento: {e}")
     # crear tablas del vigilante de pedidos
     try:
         await crear_tablas_vigilante()
@@ -208,13 +219,14 @@ app.include_router(router_version)
 app.include_router(heartbeat_router)
 app.include_router(router_computadoras)
 app.include_router(router_pedidos_acciones)
+app.include_router(router_pedidos_agendamiento)
 
 logger.info(
     "routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, "
     "comandos, admin, superadmin, tokenomics, roxykey, mensajes, "
     "public_perfiles, public_finanzas, public_referidos, public_sistema, "
     "public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, "
-    "retiros, referidos, version, computadoras, pedidos_acciones"
+    "retiros, referidos, version, computadoras, pedidos_acciones, pedidos_agendamiento"
 )
 
 
