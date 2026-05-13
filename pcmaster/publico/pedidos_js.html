@@ -175,70 +175,67 @@
     });
   };
 
-  // --- cargar pedidos (con botones de accion) ---
+  // --- cargar pedidos como CARDS HORIZONTALES ---
   window.cargarPedidos = function() {
-    var body = $('tabla-pedidos-body');
-    if (!body) return;
+    var lista = $('lista-pedidos-horizontal');
+    if (!lista) return;
 
     fetch('/api/pedidos/mis_pedidos', { headers: window.getHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var pedidos = data.pedidos || [];
       if (pedidos.length === 0) {
-        body.innerHTML = '<tr><td colspan="8" class="tabla-empty">no hay pedidos aun. crea tu primer pedido arriba.</td></tr>';
+        lista.innerHTML = '<div class="lista-empty">no hay pedidos aun. crea tu primer pedido arriba.</div>';
         return;
       }
 
-      var rows = pedidos.map(function(p) {
+      var cards = pedidos.map(function(p) {
         var estadoCls = (p.estado || 'desconocido').toLowerCase();
         var esPendiente = estadoCls === 'pendiente';
         var esProgramado = estadoCls === 'programado';
-        var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en progreso';
+        var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en_progreso';
         var esVip = p.tipo === 'vip';
         var costo = p.costo_total || p.costo || 0;
-
-      var accionesHtml = '<div class="acciones-cell">';
-      if (esPendiente || esProgramado || esTrabajando) {
-        accionesHtml += '<button class="btn-accion cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar pedido">cancelar</button>';
-      }
-      if (esPendiente || esProgramado) {
-        accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i></button>';
-      }
-      if (esTrabajando) {
-        accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener pedido"><i class="fas fa-stop-circle"></i></button>';
-      }
-      accionesHtml += '</div>';
+        var costoStr = typeof costo === 'number' ? costo.toFixed(2) : costo;
 
         var urlMostrar = p.url || '-';
-        var urlCorta = urlMostrar.length > 30 ? urlMostrar.substring(0, 30) + '...' : urlMostrar;
+        var urlCorta = urlMostrar.length > 35 ? urlMostrar.substring(0, 35) + '...' : urlMostrar;
         var fecha = p.fecha_creacion || p.created_at || '-';
         if (fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
 
-        var duracion = p.duracion || p.minutos || p.duracion_horas || '-';
-        if (typeof duracion === 'number') {
-          if (p.hora_inicio_programada) {
-            duracion = duracion + 'h (programado)';
-          } else {
-            duracion = duracion + ' min';
-          }
+        var duracion = p.duracion || p.minutos || '-';
+        if (typeof duracion === 'number') duracion = duracion + ' min';
+
+        // acciones
+        var accHtml = '';
+        if (esPendiente || esProgramado || esTrabajando) {
+          accHtml += '<button class="btn-paccion cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar">cancelar</button>';
+        }
+        if (esPendiente) {
+          accHtml += '<button class="btn-paccion eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar"><i class="fas fa-trash-alt"></i></button>';
+        }
+        if (esTrabajando) {
+          accHtml += '<button class="btn-paccion detener" onclick="window.detenerPedido(' + p.id + ')" title="detener"><i class="fas fa-stop-circle"></i></button>';
         }
 
-        return '<tr' + (esVip ? ' class="vip-row"' : '') + '>' +
-          '<td class="col-id">' + (p.id || '#') + '</td>' +
-          '<td><span class="truncate-url" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></td>' +
-          '<td class="col-perfiles">' + (p.perfiles || '-') + '</td>' +
-          '<td class="col-duracion">' + duracion + '</td>' +
-          '<td class="col-costo">' + (typeof costo === 'number' ? costo.toFixed(2) : costo) + ' kbt</td>' +
-          '<td class="col-estado"><span class="badge-estado ' + estadoCls + '">' + (p.estado || '?') + '</span></td>' +
-          '<td class="col-fecha">' + fecha + '</td>' +
-          '<td class="col-acciones">' + accionesHtml + '</td>' +
-        '</tr>';
+        var vipCls = esVip ? ' vip' : '';
+
+        return '<div class="pedido-card-h' + vipCls + '">' +
+          '<span class="pcampo"><span class="plabel">#</span><span class="pvalor id">' + (p.id || '-') + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">url</span><span class="pvalor url" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">perfiles</span><span class="pvalor">' + (p.perfiles || '-') + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">duracion</span><span class="pvalor">' + duracion + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">costo</span><span class="pvalor costo' + (esVip ? ' vip' : '') + '">' + costoStr + ' kbt</span></span>' +
+          '<span class="pcampo"><span class="pbadge ' + estadoCls + '">' + (p.estado || '?') + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">fecha</span><span class="pvalor">' + fecha + '</span></span>' +
+          '<span class="pacciones">' + accHtml + '</span>' +
+        '</div>';
       });
 
-      body.innerHTML = rows.join('');
+      lista.innerHTML = cards.join('');
     })
     .catch(function(err) {
-      body.innerHTML = '<tr><td colspan="8" class="tabla-empty">error al cargar pedidos: ' + err.message + '</td></tr>';
+      lista.innerHTML = '<div class="lista-empty">error al cargar pedidos: ' + err.message + '</div>';
     });
   };
 
@@ -319,8 +316,8 @@
   // --- iniciar auto-recarga ---
   function iniciarAutoRecarga() {
     estado.intervalId = setInterval(function() {
-      var body = $('tabla-pedidos-body');
-      if (body && body.querySelector('.tabla-empty') === null) {
+      var lista = $('lista-pedidos-horizontal');
+      if (lista && lista.querySelector('.lista-empty') === null) {
         window.cargarPedidos();
       }
     }, 15000);
