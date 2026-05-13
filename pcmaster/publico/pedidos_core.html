@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -72,35 +72,56 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .btn-crear:hover .btn-tooltip{opacity:1}
 /* wrap responsive */
 @media(max-width:700px){#card-formulario{flex-direction:column;align-items:stretch}.pedido-field{flex:1 1 100%;min-width:unset}}
-/* tabla historial */
-.card-tabla{overflow:hidden}
-.tabla-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
-.tabla-info{font-size:.72rem;color:#64748b;display:flex;align-items:center;gap:.4rem}
+
+/* === LISTA HORIZONTAL DE PEDIDOS === */
+/* cada pedido es un card-horizontal con todos los campos en fila */
+.card-lista-pedidos{overflow:hidden}
+.lista-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.lista-info{font-size:.72rem;color:#64748b;display:flex;align-items:center;gap:.4rem}
 .btn-actualizar{padding:.35rem .75rem;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:8px;color:#a78bfa;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:.3rem}
 .btn-actualizar:hover{background:rgba(124,58,237,.2);border-color:#7c3aed}
-.tabla-wrapper{overflow-x:auto;border-radius:10px;border:1px solid rgba(42,42,74,.3)}
-table.tabla-pedidos{width:100%;border-collapse:collapse;font-size:.75rem}
-table.tabla-pedidos th{background:rgba(13,13,34,.7);color:#94a3b8;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:.55rem .6rem;text-align:left;font-weight:700;border-bottom:1px solid #2a2a4a;white-space:nowrap}
-table.tabla-pedidos td{padding:.5rem .6rem;border-bottom:1px solid rgba(42,42,74,.15);color:#cbd5e1;vertical-align:middle}
-table.tabla-pedidos tr:last-child td{border-bottom:none}
-table.tabla-pedidos tr:hover td{background:rgba(124,58,237,.04)}
-table.tabla-pedidos .col-id{width:35px}
-table.tabla-pedidos .col-perfiles{width:55px}
-table.tabla-pedidos .col-duracion{width:65px}
-table.tabla-pedidos .col-costo{width:75px}
-table.tabla-pedidos .col-estado{width:70px}
-table.tabla-pedidos .col-fecha{width:100px}
-table.tabla-pedidos .col-acciones{width:60px}
-.tabla-empty{text-align:center;color:#475569;font-style:italic;padding:2rem!important}
-.estado-badge{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-.estado-badge.activo{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
-.estado-badge.completado{background:rgba(100,116,139,.12);color:#64748b;border:1px solid rgba(100,116,139,.2)}
-.estado-badge.pendiente{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
-.estado-badge.cancelado{background:rgba(255,51,102,.12);color:#ff3366;border:1px solid rgba(255,51,102,.2)}
-.btn-accion{padding:.2rem .5rem;border-radius:6px;font-size:.62rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
-.btn-accion.cancelar{background:rgba(240,185,11,.12);color:#f0b90b;border:1px solid rgba(240,185,11,.2)}
-.btn-accion.cancelar:hover{background:rgba(240,185,11,.2);color:#f5d83d}
-.btn-accion:pressed{transform:scale(.95)}
+/* contenedor de la lista horizontal */
+.lista-pedidos-horizontal{display:flex;flex-direction:column;gap:.5rem;border-radius:10px;border:1px solid rgba(42,42,74,.3);padding:.5rem}
+/* cada item es un card horizontal (una fila) */
+.pedido-card-h{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;padding:.45rem .7rem;background:rgba(13,13,34,.4);border:1px solid rgba(42,42,74,.2);border-radius:10px;transition:background .2s,border .2s}
+.pedido-card-h:hover{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2)}
+/* cada campo dentro del card (todos en fila) */
+.pedido-card-h .pcampo{display:inline-flex;align-items:center;gap:.25rem;font-size:.72rem;color:#cbd5e1;white-space:nowrap}
+.pedido-card-h .pcampo .plabel{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:700}
+.pedido-card-h .pcampo .pvalor{font-weight:600;color:#e2e8f0}
+.pedido-card-h .pcampo .pvalor.url{max-width:160px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+.pedido-card-h .pcampo .pvalor.costo{color:#00ff88;font-family:'Courier New',monospace}
+.pedido-card-h .pcampo .pvalor.costo.vip{color:#f0b90b}
+.pedido-card-h .pcampo .pvalor.id{color:#7c3aed;font-weight:800}
+/* badge estado */
+.pedido-card-h .pbadge{display:inline-block;padding:.1rem .4rem;border-radius:20px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.pedido-card-h .pbadge.en_progreso,.pedido-card-h .pbadge.trabajando{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
+.pedido-card-h .pbadge.completado{background:rgba(100,116,139,.12);color:#64748b;border:1px solid rgba(100,116,139,.2)}
+.pedido-card-h .pbadge.pendiente{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.pedido-card-h .pbadge.cancelado{background:rgba(255,51,102,.12);color:#ff3366;border:1px solid rgba(255,51,102,.2)}
+.pedido-card-h .pbadge.programado{background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.2)}
+/* acciones inline en el card */
+.pedido-card-h .pacciones{display:inline-flex;gap:.2rem;margin-left:auto;flex-shrink:0}
+.pedido-card-h .btn-paccion{padding:.15rem .4rem;border-radius:6px;font-size:.6rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.pedido-card-h .btn-paccion.cancelar{background:rgba(240,185,11,.12);color:#f0b90b;border:1px solid rgba(240,185,11,.2)}
+.pedido-card-h .btn-paccion.cancelar:hover{background:rgba(240,185,11,.2);color:#f5d83d}
+.pedido-card-h .btn-paccion.eliminar{background:rgba(255,51,102,.1);color:#ff3366;border:1px solid rgba(255,51,102,.15)}
+.pedido-card-h .btn-paccion.eliminar:hover{background:rgba(255,51,102,.2);color:#ff6688}
+.pedido-card-h .btn-paccion.detener{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.15)}
+.pedido-card-h .btn-paccion.detener:hover{background:rgba(239,68,68,.2)}
+/* vip row */
+.pedido-card-h.vip{border-color:rgba(240,185,11,.25);background:rgba(240,185,11,.03)}
+/* empty state */
+.lista-empty{text-align:center;color:#475569;font-style:italic;padding:1.5rem;font-size:.8rem}
+/* en mobile los cards se apilan verticalmente (cada campo en su propia linea) */
+@media(max-width:640px){
+  .pedido-card-h{flex-direction:column;align-items:stretch;gap:.35rem;padding:.55rem .65rem}
+  .pedido-card-h .pcampo{justify-content:space-between;border-bottom:1px solid rgba(42,42,74,.1);padding-bottom:.2rem}
+  .pedido-card-h .pcampo:last-child{border-bottom:none;padding-bottom:0}
+  .pedido-card-h .pcampo .pvalor.url{max-width:200px}
+  .pedido-card-h .pacciones{margin-left:0;justify-content:flex-end;margin-top:.25rem;padding-top:.25rem;border-top:1px solid rgba(42,42,74,.15)}
+}
+
 /* modal de validacion - clases con prefijo pedidos- para evitar conflicto con dashboard */
 .modal-pedidos-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -220,35 +241,19 @@ table.tabla-pedidos .col-acciones{width:60px}
       </div>
     </div>
 
-    <!-- tabla de historial de pedidos -->
-    <div class="card-pedido card-tabla">
+    <!-- lista horizontal de pedidos (reemplaza la tabla) -->
+    <div class="card-pedido card-lista-pedidos">
       <div class="card-titulo">
         <i class="fas fa-history"></i> historial de pedidos
       </div>
-      <div class="tabla-header">
-        <span class="tabla-info"><i class="fas fa-info-circle"></i> ultimos pedidos registrados</span>
+      <div class="lista-header">
+        <span class="lista-info"><i class="fas fa-info-circle"></i> ultimos pedidos registrados</span>
         <button class="btn-actualizar" onclick="window.cargarPedidos()">
           <i class="fas fa-sync-alt"></i> actualizar
         </button>
       </div>
-      <div class="tabla-wrapper">
-        <table class="tabla-pedidos">
-          <thead>
-            <tr>
-              <th class="col-id">#</th>
-              <th>url</th>
-              <th class="col-perfiles">perfiles</th>
-              <th class="col-duracion">duracion</th>
-              <th class="col-costo">costo</th>
-              <th class="col-estado">estado</th>
-              <th class="col-fecha">fecha</th>
-              <th class="col-acciones">acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-pedidos-body">
-            <tr><td colspan="8" class="tabla-empty">cargando pedidos...</td></tr>
-          </tbody>
-        </table>
+      <div class="lista-pedidos-horizontal" id="lista-pedidos-horizontal">
+        <div class="lista-empty">cargando pedidos...</div>
       </div>
     </div>
   </div>
@@ -300,23 +305,18 @@ table.tabla-pedidos .col-acciones{width:60px}
 
 <script>
 // pedidos_core.html - parte principal del modulo pedidos
-// helpers
 function $(id) { return document.getElementById(id); }
 function valor(id) { var el = $(id); return el ? el.value : ''; }
 
-// --- estado interno ---
 var _ped_estado = {
   tipo: 'normal',
   intervalId: null,
 };
 
-// --- promesa compartida para carga de funciones extendidas ---
 var _extLoadingPromise = null;
 
 async function cargarFuncionesExtendidas() {
-  // si ya estan cargadas (window.cargarPedidos existe), salir
   if (typeof window.cargarPedidos === 'function') return;
-  // si ya hay una carga en curso, reusar esa promesa
   if (_extLoadingPromise) return _extLoadingPromise;
   _extLoadingPromise = (async function() {
     try {
@@ -354,8 +354,8 @@ function configurarEventos() {
 
 function iniciarAutoRecarga() {
   _ped_estado.intervalId = setInterval(function() {
-    var body = $('tabla-pedidos-body');
-    if (body && body.querySelector('.tabla-empty') === null) {
+    var lista = $('lista-pedidos-horizontal');
+    if (lista && lista.querySelector('.lista-empty') === null) {
       window.cargarPedidos();
     }
   }, 15000);
@@ -368,10 +368,7 @@ window.limpiarIntervaloPedidos = function() {
   }
 };
 
-// funcion de inicializacion llamada desde SPA dashboard (o standalone)
-// sigue el mismo patron que window.inicializarPanelPerfiles en perfiles.html
 window.inicializarPanelPedidos = async function() {
-  // asegurar que las funciones extendidas esten cargadas
   await cargarFuncionesExtendidas();
   configurarEventos();
   if (typeof window.calcularCosto === 'function') window.calcularCosto();
@@ -381,8 +378,6 @@ window.inicializarPanelPedidos = async function() {
   if (typeof window.iniciarLiveCount === 'function') window.iniciarLiveCount();
 };
 
-// auto-inicializar si se carga standalone (no desde SPA)
-// MISMO PATRON que perfiles.html: verifica si el DOM existe y llama a init
 (function() {
   if (document.getElementById('panel-pedidos-root')) {
     if (document.readyState === 'loading') {
