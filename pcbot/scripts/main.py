@@ -172,7 +172,10 @@ async def async_main():
     async def on_command(cmd):
         global _modo_actual
         logger.info(f"comando recibido: {cmd.get('tipo', '?')}")
-        result = await orchestrator.process_command(cmd)
+        cmd_type = cmd.get("tipo", cmd.get("type", ""))
+        cmd_id = cmd.get("comando_id", cmd.get("id", str(time.time())))
+        params = cmd.get("parametros", cmd.get("data", {}))
+        result = await orchestrator.process_command_async(cmd_type, cmd_id, params)
         # si el comando cambia el modo, sincronizar
         if cmd.get("tipo") == "cambiar_modo" and result.get("ok"):
             nuevo_modo = cmd.get("modo", cmd.get("data", {}).get("modo", ""))
@@ -185,6 +188,9 @@ async def async_main():
 
     # pasar profile manager al ws para incluir datos de perfiles en heartbeat
     ws.set_profile_manager(pm)
+
+    # pasar orchestrator al ws para incluir datos de pedidos en heartbeat
+    ws.set_orchestrator(orchestrator)
 
     # pasar referencia ws al orchestrator para estado de heartbeat y enviar respuestas
     orchestrator.ws_client = ws

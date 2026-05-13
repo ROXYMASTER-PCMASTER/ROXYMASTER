@@ -1,0 +1,115 @@
+{
+  "tokens": {
+    "96aa36332bf522e7f201a5d0e913287c": 4.0,
+    "747a3c2406e0c8f1454bd379e5558e5b": 4.0,
+    "2e137cbf9db8a38c6b6d244556adfd47": 4.0,
+    "9713f2ca9fb3570bd20fc87c3507beb6": 4.0,
+    "cdbe0ca01ebb6216fcfaf7b820f321ee": 1.0
+  },
+  "history": [
+    {
+      "profile_id": "96aa36332bf522e7f201a5d0e913287c",
+      "cantidad": 1.0,
+      "timestamp": 1778551761.365522,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "747a3c2406e0c8f1454bd379e5558e5b",
+      "cantidad": 1.0,
+      "timestamp": 1778551761.3665216,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "2e137cbf9db8a38c6b6d244556adfd47",
+      "cantidad": 1.0,
+      "timestamp": 1778551761.3675213,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "9713f2ca9fb3570bd20fc87c3507beb6",
+      "cantidad": 1.0,
+      "timestamp": 1778551761.3675213,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "96aa36332bf522e7f201a5d0e913287c",
+      "cantidad": 1.0,
+      "timestamp": 1778559284.1191654,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "747a3c2406e0c8f1454bd379e5558e5b",
+      "cantidad": 1.0,
+      "timestamp": 1778559284.1201653,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "2e137cbf9db8a38c6b6d244556adfd47",
+      "cantidad": 1.0,
+      "timestamp": 1778559284.1211648,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "9713f2ca9fb3570bd20fc87c3507beb6",
+      "cantidad": 1.0,
+      "timestamp": 1778559284.1221645,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "96aa36332bf522e7f201a5d0e913287c",
+      "cantidad": 1.0,
+      "timestamp": 1778565829.7417545,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "747a3c2406e0c8f1454bd379e5558e5b",
+      "cantidad": 1.0,
+      "timestamp": 1778565829.743754,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "2e137cbf9db8a38c6b6d244556adfd47",
+      "cantidad": 1.0,
+      "timestamp": 1778565829.7447536,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "9713f2ca9fb3570bd20fc87c3507beb6",
+      "cantidad": 1.0,
+      "timestamp": 1778565829.745754,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "cdbe0ca01ebb6216fcfaf7b820f321ee",
+      "cantidad": 1.0,
+      "timestamp": 1778622675.3836246,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "96aa36332bf522e7f201a5d0e913287c",
+      "cantidad": 1.0,
+      "timestamp": 1778622675.3846242,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "747a3c2406e0c8f1454bd379e5558e5b",
+      "cantidad": 1.0,
+      "timestamp": 1778622675.3866234,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "2e137cbf9db8a38c6b6d244556adfd47",
+      "cantidad": 1.0,
+      "timestamp": 1778622675.3876233,
+      "tipo": "cycle_complete"
+    },
+    {
+      "profile_id": "9713f2ca9fb3570bd20fc87c3507beb6",
+      "cantidad": 1.0,
+      "timestamp": 1778622675.3886228,
+      "tipo": "cycle_complete"
+    }
+  ],
+  "total_earned": 17.0,
+  "updated": 1778622675.3886228
+}

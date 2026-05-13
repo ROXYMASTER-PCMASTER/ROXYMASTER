@@ -60,6 +60,7 @@ class WSClient:
         self._intentos_ws = 0
         self._max_intentos_ws = 999999
         self._profile_manager = None
+        self._orchestrator = None
 
         # contadores de heartbeat
         self._heartbeats_enviados = 0
@@ -71,6 +72,10 @@ class WSClient:
     def set_profile_manager(self, pm):
         """asigna el profile manager para incluir datos de perfiles en heartbeat."""
         self._profile_manager = pm
+
+    def set_orchestrator(self, orch):
+        """asigna el orchestrator para incluir datos de pedidos activos en heartbeat."""
+        self._orchestrator = orch
 
     def set_handshake(self, data: dict):
         self.handshake_data = data
@@ -288,6 +293,24 @@ class WSClient:
                     entry["url"] = p.current_url or ""
                     perfiles.append(entry)
             payload["perfiles"] = perfiles
+
+            # agregar datos de pedidos activos desde orchestrator
+            pedidos = []
+            if self._orchestrator is not None:
+                now_ts = time.time()
+                for pid_pedido, pedido in self._orchestrator._pedidos_activos.items():
+                    transcurrido = now_ts - pedido["inicio"]
+                    restante = max(0, int(pedido["duracion"] - transcurrido))
+                    pedidos.append({
+                        "pedido_id": pid_pedido,
+                        "url": pedido["url"][:80],
+                        "duracion_total": pedido["duracion"],
+                        "tiempo_restante": restante,
+                        "nivel_comentarios": pedido["nivel_comentarios"],
+                        "perfiles_count": len(pedido["perfiles"]),
+                    })
+            payload["pedidos_activos"] = pedidos
+
             payload.update(self._hb_extra)
             await self._send_plano(payload)
             # actualizar contadores despues de enviar
