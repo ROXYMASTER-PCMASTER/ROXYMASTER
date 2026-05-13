@@ -176,7 +176,7 @@ async def _procesar_pendiente(pedido: dict):
     parametros = {
         "url": pedido["url"],
         "cantidad": pedido["cantidad_perfiles"],
-        "duracion": int(pedido["duracion_horas"] * 60),
+        "duracion": int(pedido["duracion_horas"] * 3600),
         "nivel_comentarios": pedido.get("nivel_comentarios", "basico"),
     }
 

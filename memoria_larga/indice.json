@@ -1,33 +1,30 @@
 {
-  "version": 8.3,
-  "ultima_actualizacion": "2026-05-12 15:31",
-  "contador_tareas": 17,
-  "contador_errores": 5,
-  "archivos_memoria": {
+  "version": "1.0",
+  "ultima_actualizacion": "2026-12-05T18:49",
+  "contadores": {
+    "errores_resueltos": 12,
+    "decisiones_registradas": 5,
+    "archivos_memoria": 8
+  },
+  "archivos": {
     "decisiones": [
-      "bitacora.md"
+      "memoria_larga/decisiones/bitacora.md"
     ],
     "errores": [
-      "error_20260511_pedidos_estancados.md",
-      "error_20260510_pedidos_estancados.md",
-      "error_20260509_login.md"
+      "memoria_larga/errores/error_20260510_pedidos.md",
+      "memoria_larga/errores/error_20260511_duplicados.md",
+      "memoria_larga/errores/error_20260512_url.md"
     ],
     "variables": [
-      "estado_actual.json"
+      "memoria_larga/variables/estado_actual.json"
     ],
-    "toolkit": []
+    "toolkit": [
+      "memoria_larga/toolkit/herramientas.md"
+    ]
   },
-  "ultimas_tareas": [
-    "2026-05-12 15:30 - correccion pedidos estancados + login endpoint verificado",
-    "2026-12-05 14:27 - ajuste columnas tabla historial y header dorado centrado",
-    "2026-12-05 13:49 - modal de validacion de pedido",
-    "2026-12-05 13:00 - header unificado estilo marketplace en pedidos_core.html",
-    "2026-05-11 12:00 - limpieza archivos temp y comprobacion estado"
-  ],
-  "sistema": {
-    "servidor": "activo (PID 17268)",
-    "db": "c:/Users/PCMASTER/Desktop/roxymaster/pcmaster/data/roxymaster.db",
-    "puerto": 8086,
-    "auth": "POST /api/login - funcional (status 200 con jwt)"
-  }
+  "nuevos_archivos_20261205": [
+    "pcmaster/scripts/db_pedidos_ext.py",
+    "pcmaster/scripts/api_pedidos_agendamiento.py",
+    "pcmaster/_test_agendamiento.py"
+  ]
 }
