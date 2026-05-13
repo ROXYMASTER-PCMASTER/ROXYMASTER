@@ -23,6 +23,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .live-count::before{content:'';width:6px;height:6px;border-radius:50%;background:#0a0a1a;margin-right:4px;animation:live-dot-pulse 1.5s ease-in-out infinite;display:inline-block}
 @keyframes live-dot-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .subtitle{color:#64748b;font-size:.85rem;margin-bottom:1.5rem}
+
+/* formulario */
 .pedido-grid{display:grid;grid-template-columns:1fr;gap:1.5rem}
 .card-pedido{background:linear-gradient(135deg,#1a1a2e 0%,#0f0f23 100%);border-radius:16px;border:1px solid #2a2a4a;padding:1.5rem;box-shadow:0 4px 24px rgba(0,0,0,.3);position:relative;overflow:hidden}
 .card-pedido::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f0b90b,#d4a017,#f0b90b);opacity:.6}
@@ -56,74 +58,96 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-crear:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-crear .btn-tooltip{position:absolute;bottom:-1.6rem;font-size:.58rem;color:#475569;font-weight:400;white-space:nowrap;text-transform:none;letter-spacing:0}
 .card-tabla{grid-column:1/-1}
+
+/* header de la lista */
 .tabla-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
 .tabla-header .tabla-info{font-size:.78rem;color:#64748b}
 .tabla-header .tabla-info i{margin-right:.3rem}
 .tabla-header-right{display:flex;gap:.5rem;align-items:center}
 .btn-actualizar{padding:.4rem .9rem;background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);border-radius:8px;color:#f0b90b;font-size:.72rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.375rem;font-family:inherit;font-weight:600}
 .btn-actualizar:hover{background:rgba(240,185,11,.18);border-color:#f0b90b;box-shadow:0 0 12px rgba(240,185,11,.1)}
-.tabla-wrapper{overflow-x:auto;border-radius:10px;border:1px solid rgba(240,185,11,.08);background:#0d0d22}
-.tabla-wrapper::-webkit-scrollbar{height:4px}
-.tabla-wrapper::-webkit-scrollbar-track{background:#0d0d22}
-.tabla-wrapper::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:4px}
-.tabla-pedidos{width:100%;border-collapse:collapse;font-size:.76rem}
-.tabla-pedidos thead{position:sticky;top:0;z-index:2}
-.tabla-pedidos th{text-align:left;padding:.7rem .5rem;color:#64748b;font-weight:700;text-transform:uppercase;font-size:.58rem;letter-spacing:.08em;border-bottom:2px solid rgba(240,185,11,.15);background:#0d0d22;white-space:nowrap}
-.tabla-pedidos td{padding:.55rem .5rem;border-bottom:1px solid rgba(240,185,11,.06);color:#cbd5e1;vertical-align:middle}
-.tabla-pedidos tr:last-child td{border-bottom:none}
-.tabla-pedidos tbody tr:hover td{background:rgba(240,185,11,.03)}
-.tabla-pedidos tr.vip-row td{background:rgba(240,185,11,.04)}
-.tabla-pedidos tr.vip-row:hover td{background:rgba(240,185,11,.08)}
-.tabla-pedidos td .truncate-url{display:inline-block;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8}
-.tabla-pedidos .col-id{width:35px}
-.tabla-pedidos .col-perfiles{width:50px}
-.tabla-pedidos .col-duracion{width:60px}
-.tabla-pedidos .col-costo{width:70px}
-.tabla-pedidos .col-estado{width:70px}
-.tabla-pedidos .col-fecha{width:70px}
-.tabla-pedidos .col-acciones{width:100px}
-.badge-estado{display:inline-block;padding:.15rem .5rem;border-radius:9999px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.badge-estado.pendiente{background:rgba(240,185,11,.12);color:#f0b90b;border:1px solid rgba(240,185,11,.2)}
-.badge-estado.trabajando{background:rgba(0,240,255,.1);color:#00f0ff;border:1px solid rgba(0,240,255,.18)}
-.badge-estado.en-progreso{background:rgba(0,240,255,.1);color:#00f0ff;border:1px solid rgba(0,240,255,.18)}
-.badge-estado.completado{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.18)}
-.badge-estado.fallido{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.18)}
-.badge-estado.detenido{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.15)}
-.badge-estado.enviado{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.18)}
-.badge-estado.finalizado{background:rgba(110,231,183,.1);color:#6ee7b7;border:1px solid rgba(110,231,183,.18)}
-.badge-estado.en-espera{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
-.badge-estado.interrumpido{background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.15)}
-.badge-estado.desconocido{background:rgba(100,116,139,.1);color:#94a3b8;border:1px solid rgba(100,116,139,.18)}
-.btn-accion{padding:.35rem .7rem;font-size:.62rem;border-radius:8px;cursor:pointer;transition:all .25s ease;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid transparent;position:relative;overflow:hidden}
-.btn-accion i{font-size:.68rem}
-.btn-eliminar{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#ef4444}
-.btn-eliminar:hover{background:rgba(239,68,68,.18);border-color:#ef4444;box-shadow:0 0 12px rgba(239,68,68,.15);transform:translateY(-1px)}
-.btn-detener{background:rgba(240,185,11,.08);border-color:rgba(240,185,11,.25);color:#f0b90b}
-.btn-detener:hover{background:rgba(240,185,11,.18);border-color:#f0b90b;box-shadow:0 0 12px rgba(240,185,11,.15);transform:translateY(-1px)}
-.btn-reabrir{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:#22c55e}
-.btn-reabrir:hover{background:rgba(34,197,94,.18);border-color:#22c55e;box-shadow:0 0 12px rgba(34,197,94,.15);transform:translateY(-1px)}
-.btn-cancelar{background:rgba(100,116,139,.08);border-color:rgba(100,116,139,.25);color:#94a3b8}
-.btn-cancelar:hover{background:rgba(100,116,139,.18);border-color:#94a3b8;box-shadow:0 0 12px rgba(100,116,139,.15);transform:translateY(-1px)}
-.acciones-cell{display:flex;gap:.35rem;align-items:center;justify-content:center;flex-wrap:wrap}
 .pedido-msg{padding:.7rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.8rem;display:none;font-weight:500}
 .pedido-msg.success{display:block;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.18);color:#22c55e}
 .pedido-msg.error{display:block;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#ef4444}
 .pedido-msg.info{display:block;background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.18);color:#f0b90b}
-.tabla-empty{text-align:center;padding:2rem;color:#475569;font-size:.82rem}
-.tabla-empty i{display:block;font-size:2rem;margin-bottom:.5rem;color:#2a2a4a}
-.col-tipo{width:45px}
-.badge-tipo{display:inline-block;padding:.1rem .35rem;border-radius:4px;font-size:.55rem;font-weight:700;text-transform:uppercase}
-.badge-tipo.vip{background:rgba(240,185,11,.12);color:#f0b90b}
-.badge-tipo.normal{background:rgba(100,116,139,.12);color:#94a3b8}
+
+/* filtros */
 .filtros-bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
 .filtro-btn{padding:.3rem .65rem;font-size:.65rem;border:1px solid #2a2a4a;background:transparent;color:#64748b;border-radius:6px;cursor:pointer;transition:all .2s;font-family:inherit;font-weight:600}
 .filtro-btn:hover{border-color:#f0b90b;color:#e2e8f0}
 .filtro-btn.active{background:rgba(240,185,11,.12);border-color:#f0b90b;color:#f0b90b}
+
+/* --- cards horizontales --- */
+.lista-pedidos-horizontal{display:flex;flex-direction:column;gap:.5rem}
+.pedido-card-h{display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;background:#0d0d22;border:1px solid rgba(240,185,11,.08);border-radius:10px;transition:all .2s;min-height:48px}
+.pedido-card-h:hover{border-color:rgba(240,185,11,.2);background:rgba(240,185,11,.02)}
+.pedido-card-h .pcampo{font-size:.72rem;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pedido-card-h .pcampo .plabel{font-size:.55rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;display:block;margin-bottom:1px}
+.pedido-card-h .pcampo .pvalor{font-weight:600;color:#e2e8f0}
+.pedido-card-h .pid{min-width:40px;font-weight:800;font-size:.85rem;color:#f0b90b}
+.pedido-card-h .purll{flex:2;min-width:0}
+.pedido-card-h .purll .pvalor{font-size:.68rem;color:#94a3b8}
+.pedido-card-h .pperfiles{min-width:40px;text-align:center}
+.pedido-card-h .pduracion{min-width:55px;text-align:center}
+.pedido-card-h .pcosto{min-width:70px;text-align:right}
+.pedido-card-h .pcosto .pvalor{font-family:'Courier New',monospace;color:#00ff88}
+.pedido-card-h .pestado{min-width:80px;text-align:center}
+.pedido-card-h .pfecha{min-width:70px;text-align:center}
+.pedido-card-h .pfecha .pvalor{font-size:.62rem;color:#64748b}
+.pedido-card-h .pacciones{display:flex;gap:.3rem;align-items:center;min-width:70px;justify-content:flex-end}
+
+/* badge estados */
+.pbadge{display:inline-block;padding:.12rem .45rem;border-radius:9999px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.pbadge.pendiente{background:rgba(240,185,11,.12);color:#f0b90b;border:1px solid rgba(240,185,11,.2)}
+.pbadge.en_progreso,.pbadge.trabajando,.pbadge.en-progreso{background:rgba(0,240,255,.1);color:#00f0ff;border:1px solid rgba(0,240,255,.18)}
+.pbadge.completado{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.18)}
+.pbadge.cancelado,.pbadge.detenido{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.15)}
+.pbadge.programado{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+.pbadge.fallido{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.18)}
+
+/* botones de accion en cards */
+.btn-accion{padding:.25rem .5rem;font-size:.58rem;border-radius:6px;cursor:pointer;transition:all .25s;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;gap:.2rem;border:1.5px solid transparent}
+.btn-accion i{font-size:.6rem}
+.btn-eliminar{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#ef4444}
+.btn-eliminar:hover{background:rgba(239,68,68,.18);border-color:#ef4444}
+.btn-detener{background:rgba(240,185,11,.08);border-color:rgba(240,185,11,.25);color:#f0b90b}
+.btn-detener:hover{background:rgba(240,185,11,.18);border-color:#f0b90b}
+.btn-reabrir{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:#22c55e}
+.btn-reabrir:hover{background:rgba(34,197,94,.18);border-color:#22c55e}
+.btn-cancelar{background:rgba(100,116,139,.08);border-color:rgba(100,116,139,.25);color:#94a3b8}
+.btn-cancelar:hover{background:rgba(100,116,139,.18);border-color:#94a3b8}
+
+/* badge tipo */
+.pbadge-tipo{display:inline-block;padding:.08rem .3rem;border-radius:4px;font-size:.5rem;font-weight:700;text-transform:uppercase}
+.pbadge-tipo.vip{background:rgba(240,185,11,.12);color:#f0b90b}
+.pbadge-tipo.normal{background:rgba(100,116,139,.12);color:#94a3b8}
+
+/* spinner */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(240,185,11,.2);border-top-color:#f0b90b;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.tabla-pedidos .col-url{min-width:160px}
-.tabla-pedidos .col-tipo{width:40px}
-.tabla-pedidos .col-minutos{width:50px}
+
+/* empty state */
+.lista-empty{text-align:center;padding:1.5rem;color:#475569;font-size:.78rem}
+.lista-empty i{display:block;font-size:1.5rem;margin-bottom:.35rem;color:#2a2a4a}
+
+/* mobile: cards apilados vertical */
+@media(max-width:640px){
+  .pedido-card-h{flex-wrap:wrap;gap:.35rem;padding:.5rem .65rem}
+  .pedido-card-h .pid{min-width:30px}
+  .pedido-card-h .purll{flex:1 1 100%;order:10}
+  .pedido-card-h .purll .pvalor{white-space:normal;word-break:break-all}
+  .pedido-card-h .pacciones{flex:1 1 100%;order:20;justify-content:center;margin-top:.2rem}
+  .field-row .pedido-field{min-width:100%}
+}
+
+/* programacion horaria */
+.programacion-row{border-top:1px solid rgba(240,185,11,.08);padding-top:.75rem;margin-top:.25rem}
+.programacion-toggle{font-size:.72rem;color:#94a3b8;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .5rem;border-radius:6px;transition:all .2s;user-select:none}
+.programacion-toggle:hover{color:#e2e8f0;background:rgba(240,185,11,.05)}
+.programacion-toggle i{font-size:.65rem;color:#f0b90b}
+.programacion-fields{display:none;margin-top:.6rem}
+.programacion-fields.visible{display:flex;gap:.75rem;flex-wrap:wrap}
+.programacion-fields .pedido-field{flex:1;min-width:160px}
 </style>
 </head>
 <body>
@@ -190,6 +214,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <button type="button" class="toggle-btn" data-tipo="vip" onclick="window.setTipo('vip')">vip</button>
         </div>
       </div>
+      <!-- programacion horaria -->
+      <div class="programacion-row">
+        <div class="programacion-toggle" onclick="window.toggleProgramacion()">
+          <i class="fas fa-calendar-alt"></i> programar para despues
+        </div>
+        <div class="programacion-fields" id="programacion-fields">
+          <div class="pedido-field">
+            <label for="ped-hora-inicio">inicio programado</label>
+            <input type="datetime-local" id="ped-hora-inicio">
+            <div class="field-hint">deja en blanco para ejecutar ahora</div>
+          </div>
+          <div class="pedido-field">
+            <label for="ped-hora-fin">fin programado</label>
+            <input type="datetime-local" id="ped-hora-fin">
+            <div class="field-hint">requiere inicio. si se omite, se usara la duracion</div>
+          </div>
+        </div>
+      </div>
       <div class="costo-visor">
         <div class="label">costo estimado</div>
         <div class="valor" id="costo-valor">0.0000 <span class="small">kbt</span></div>
@@ -203,7 +245,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
     </div>
 
-    <!-- tabla de historial de pedidos -->
+    <!-- lista horizontal de pedidos debajo del formulario -->
     <div class="card-pedido card-tabla">
       <div class="card-titulo">
         <i class="fas fa-history"></i> historial de pedidos
@@ -213,11 +255,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="filtros-bar" id="filtros-bar">
           <button class="filtro-btn active" data-filtro="todos" onclick="window.aplicarFiltro('todos')">todos</button>
           <button class="filtro-btn" data-filtro="pendiente" onclick="window.aplicarFiltro('pendiente')">en espera</button>
-          <button class="filtro-btn" data-filtro="trabajando" onclick="window.aplicarFiltro('trabajando')">en progreso</button>
+          <button class="filtro-btn" data-filtro="en_progreso" onclick="window.aplicarFiltro('en_progreso')">en progreso</button>
           <button class="filtro-btn" data-filtro="completado" onclick="window.aplicarFiltro('completado')">completados</button>
-          <button class="filtro-btn" data-filtro="detenido" onclick="window.aplicarFiltro('detenido')">interrumpidos</button>
-          <button class="filtro-btn" data-filtro="finalizado" onclick="window.aplicarFiltro('finalizado')">finalizados</button>
-          <button class="filtro-btn" data-filtro="vip" onclick="window.aplicarFiltro('vip')">vip</button>
+          <button class="filtro-btn" data-filtro="programado" onclick="window.aplicarFiltro('programado')">programados</button>
+          <button class="filtro-btn" data-filtro="cancelado" onclick="window.aplicarFiltro('cancelado')">cancelados</button>
         </div>
         <div class="tabla-header-right">
           <button class="btn-actualizar" onclick="window.cargarPedidos()">
@@ -225,26 +266,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </button>
         </div>
       </div>
-      <div class="tabla-wrapper">
-        <table class="tabla-pedidos">
-          <thead>
-            <tr>
-              <th class="col-id">#</th>
-              <th class="col-tipo">tipo</th>
-              <th class="col-url">url</th>
-              <th class="col-perfiles">perf</th>
-              <th class="col-minutos">min</th>
-              <th class="col-duracion">duracion</th>
-              <th class="col-costo">costo</th>
-              <th class="col-estado">estado</th>
-              <th class="col-fecha">fecha</th>
-              <th class="col-acciones">acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-pedidos-body">
-            <tr><td colspan="10" class="tabla-empty"><i class="fas fa-spinner fa-pulse"></i>cargando pedidos...</td></tr>
-          </tbody>
-        </table>
+      <div id="lista-pedidos-horizontal" class="lista-pedidos-horizontal">
+        <div class="lista-empty"><i class="fas fa-spinner fa-pulse"></i>cargando pedidos...</div>
       </div>
     </div>
   </div>
@@ -261,6 +284,7 @@ var _ped_estado = {
   filtro: 'todos',
   todosPedidos: [],
   intervalId: null,
+  programacionVisible: false,
 };
 
 window.mostrarMensaje = function(texto, tipo) {
@@ -278,6 +302,12 @@ window.mostrarMensaje = function(texto, tipo) {
     msg.style.display = 'none';
     msg.className = 'pedido-msg';
   }
+};
+
+window.toggleProgramacion = function() {
+  _ped_estado.programacionVisible = !_ped_estado.programacionVisible;
+  var el = $('programacion-fields');
+  if (el) el.classList.toggle('visible', _ped_estado.programacionVisible);
 };
 
 window.obtenerToken = function() {
@@ -358,6 +388,19 @@ window.crearPedido = function() {
   var btn = $('btn-crear-pedido');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> creando...'; }
 
+  // programacion
+  var horaInicio = $('ped-hora-inicio') ? valor('ped-hora-inicio') : '';
+  var horaFin = $('ped-hora-fin') ? valor('ped-hora-fin') : '';
+  // convertir datetime-local (local) a iso utc
+  if (horaInicio) {
+    var d = new Date(horaInicio);
+    if (!isNaN(d.getTime())) horaInicio = d.toISOString();
+  }
+  if (horaFin) {
+    var d = new Date(horaFin);
+    if (!isNaN(d.getTime())) horaFin = d.toISOString();
+  }
+
   var data = {
     url: url,
     seguidores: seguidores,
@@ -366,6 +409,8 @@ window.crearPedido = function() {
     nivel_comentarios: nivel,
     tipo: _ped_estado.tipo,
   };
+  if (horaInicio) data.hora_inicio = horaInicio;
+  if (horaFin) data.hora_fin = horaFin;
 
   fetch('/api/pedidos/crear', {
     method: 'POST',
@@ -395,23 +440,19 @@ window.aplicarFiltro = function(filtro) {
   document.querySelectorAll('.filtro-btn').forEach(function(b) {
     b.classList.toggle('active', b.getAttribute('data-filtro') === filtro);
   });
-  window.renderizarTabla(_ped_estado.todosPedidos);
+  window.renderizarCards(_ped_estado.todosPedidos);
 };
 
-window.renderizarTabla = function(pedidos) {
-  var body = $('tabla-pedidos-body');
-  if (!body) return;
+window.renderizarCards = function(pedidos) {
+  var contenedor = $('lista-pedidos-horizontal');
+  if (!contenedor) return;
 
   var filtro = _ped_estado.filtro;
   var filtrados = pedidos;
   if (filtro && filtro !== 'todos') {
-    if (filtro === 'vip') {
-      filtrados = pedidos.filter(function(p) { return (p.tipo || '').toLowerCase() === 'vip'; });
-    } else {
-      filtrados = pedidos.filter(function(p) {
-        return (p.estado || '').toLowerCase() === filtro.toLowerCase();
-      });
-    }
+    filtrados = pedidos.filter(function(p) {
+      return (p.estado || '').toLowerCase() === filtro.toLowerCase();
+    });
   }
 
   var totalLabel = $('total-pedidos-label');
@@ -419,78 +460,80 @@ window.renderizarTabla = function(pedidos) {
 
   if (filtrados.length === 0) {
     var msg = 'no hay pedidos' + (filtro !== 'todos' ? ' con filtro "' + filtro + '"' : ' aun. crea tu primer pedido arriba.');
-    body.innerHTML = '<tr><td colspan="10" class="tabla-empty">' + msg + '</td></tr>';
+    contenedor.innerHTML = '<div class="lista-empty">' + msg + '</div>';
     return;
   }
 
-  var rows = filtrados.map(function(p) {
-    var estadoCls = (p.estado || 'desconocido').toLowerCase().replace(/\s+/g, '-');
+  var cards = filtrados.map(function(p) {
+    var estadoCls = (p.estado || 'desconocido').toLowerCase().replace(/\s+/g, '_');
     var esPendiente = estadoCls === 'pendiente';
-    var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en-progreso' || estadoCls === 'enviado';
-    var esDetenido = estadoCls === 'detenido';
+    var esProgreso = estadoCls === 'en_progreso' || estadoCls === 'trabajando' || estadoCls === 'en-progreso';
+    var esProgramado = estadoCls === 'programado';
+    var esDetenido = estadoCls === 'detenido' || estadoCls === 'cancelado';
     var esFallido = estadoCls === 'fallido';
-    var esCancelable = esPendiente || esTrabajando;
-    var esVip = (p.tipo || '').toLowerCase() === 'vip';
-    var costo = p.costo_total || p.costo || 0;
+    var esCompletado = estadoCls === 'completado';
+    var esCancelable = esPendiente || esProgreso || esProgramado;
 
-    var accionesHtml = '<div class="acciones-cell">';
+    var accionesHtml = '<div class="pacciones">';
     if (esPendiente) {
-      accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i> eliminar</button>';
+      accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar"><i class="fas fa-trash-alt"></i></button>';
     }
-    if (esTrabajando) {
-      accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener pedido"><i class="fas fa-stop-circle"></i> detener</button>';
+    if (esProgreso) {
+      accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener"><i class="fas fa-stop-circle"></i></button>';
+    }
+    if (esProgramado) {
+      accionesHtml += '<button class="btn-accion btn-cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar programado"><i class="fas fa-ban"></i></button>';
     }
     if (esDetenido || esFallido) {
-      accionesHtml += '<button class="btn-accion btn-reabrir" onclick="window.reabrirPedido(' + p.id + ')" title="reintentar pedido"><i class="fas fa-redo-alt"></i> reintentar</button>';
+      accionesHtml += '<button class="btn-accion btn-reabrir" onclick="window.reabrirPedido(' + p.id + ')" title="reintentar"><i class="fas fa-redo-alt"></i></button>';
     }
     if (esCancelable) {
-      accionesHtml += '<button class="btn-accion btn-cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancela el pedido, pero no hay devolucion ni reembolso"><i class="fas fa-ban"></i> cancelar</button>';
+      accionesHtml += '<button class="btn-accion btn-cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar"><i class="fas fa-ban"></i></button>';
     }
     accionesHtml += '</div>';
 
     var urlMostrar = p.url || '-';
-    var urlCorta = urlMostrar.length > 35 ? urlMostrar.substring(0, 35) + '...' : urlMostrar;
+    var urlCorta = urlMostrar.length > 40 ? urlMostrar.substring(0, 40) + '...' : urlMostrar;
     var fecha = p.fecha_creacion || p.created_at || '-';
     if (fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
 
-    var duracion = p.minutos || '-';
-    if (typeof duracion === 'number') duracion = duracion + ' min';
+    var duracion = p.minutos || p.duracion_horas || '-';
+    if (typeof duracion === 'number' && duracion < 100) duracion = duracion + ' min';
+    else if (typeof duracion === 'number') duracion = duracion + 'h';
 
-    var mins = p.minutos || '-';
-    if (typeof mins === 'number') mins = mins + '\'';
+    var costo = p.costo_total || p.costo || 0;
+    var costoStr = typeof costo === 'number' ? costo.toFixed(2) : costo;
 
-    var tipoBadge = '<span class="badge-tipo ' + (esVip ? 'vip' : 'normal') + '">' + (p.tipo || 'normal') + '</span>';
+    var tipoBadge = '<span class="pbadge-tipo ' + ((p.tipo || '').toLowerCase() === 'vip' ? 'vip' : 'normal') + '">' + (p.tipo || 'normal') + '</span>';
 
-    return '<tr' + (esVip ? ' class="vip-row"' : '') + '>' +
-      '<td class="col-id">' + (p.id || '#') + '</td>' +
-      '<td class="col-tipo">' + tipoBadge + '</td>' +
-      '<td class="col-url"><span class="truncate-url" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></td>' +
-      '<td class="col-perfiles text-center" style="text-align:center">' + (p.perfiles || '-') + '</td>' +
-      '<td class="col-minutos text-center" style="text-align:center">' + mins + '</td>' +
-      '<td class="col-duracion">' + duracion + '</td>' +
-      '<td class="col-costo">' + (typeof costo === 'number' ? costo.toFixed(2) : costo) + ' kbt</td>' +
-      '<td class="col-estado"><span class="badge-estado ' + estadoCls + '">' + (p.estado || '?') + '</span></td>' +
-      '<td class="col-fecha">' + fecha + '</td>' +
-      '<td class="col-acciones">' + accionesHtml + '</td>' +
-    '</tr>';
+    return '<div class="pedido-card-h">' +
+      '<div class="pcampo pid">#' + (p.id || '') + '</div>' +
+      '<div class="pcampo purll"><span class="plabel">url</span><span class="pvalor" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></div>' +
+      '<div class="pcampo pperfiles"><span class="plabel">perf</span><span class="pvalor">' + (p.perfiles || '-') + '</span></div>' +
+      '<div class="pcampo pduracion"><span class="plabel">dur</span><span class="pvalor">' + duracion + '</span></div>' +
+      '<div class="pcampo pcosto"><span class="plabel">costo</span><span class="pvalor">' + costoStr + ' kbt</span></div>' +
+      '<div class="pcampo pestado"><span class="plabel">estado</span><span class="pbadge ' + estadoCls + '">' + (p.estado || '?') + '</span></div>' +
+      '<div class="pcampo pfecha"><span class="plabel">fecha</span><span class="pvalor">' + fecha + '</span></div>' +
+      accionesHtml +
+    '</div>';
   });
 
-  body.innerHTML = rows.join('');
+  contenedor.innerHTML = cards.join('');
 };
 
 window.cargarPedidos = function() {
-  var body = $('tabla-pedidos-body');
-  if (!body) return;
+  var contenedor = $('lista-pedidos-horizontal');
+  if (!contenedor) return;
 
   fetch('/api/pedidos/mis_pedidos', { headers: window.getHeaders() })
   .then(function(r) { return r.json(); })
   .then(function(data) {
     var pedidos = data.pedidos || [];
     _ped_estado.todosPedidos = pedidos;
-    window.renderizarTabla(pedidos);
+    window.renderizarCards(pedidos);
   })
   .catch(function(err) {
-    body.innerHTML = '<tr><td colspan="10" class="tabla-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i>error al cargar pedidos: ' + err.message + '</td></tr>';
+    contenedor.innerHTML = '<div class="lista-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i>error al cargar pedidos: ' + err.message + '</div>';
   });
 };
 
