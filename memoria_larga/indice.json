@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "ultima_actualizacion": "2026-12-05T18:49",
+  "ultima_actualizacion": "2026-12-05T19:57",
   "contadores": {
-    "errores_resueltos": 12,
-    "decisiones_registradas": 5,
-    "archivos_memoria": 8
+    "errores_resueltos": 13,
+    "decisiones_registradas": 6,
+    "archivos_memoria": 10
   },
   "archivos": {
     "decisiones": [
@@ -25,6 +25,8 @@
   "nuevos_archivos_20261205": [
     "pcmaster/scripts/db_pedidos_ext.py",
     "pcmaster/scripts/api_pedidos_agendamiento.py",
-    "pcmaster/_test_agendamiento.py"
+    "pcmaster/scripts/procesador_cola.py",
+    "pcmaster/scripts/server.py",
+    "pcmaster/scripts/pedidos_vigilante.py"
   ]
 }

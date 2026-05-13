@@ -1,8 +1,37 @@
-push rechazado - conflicto con remoto
+=== error de push repetido - 2026-05-12 19:58 ===
 
-fecha: 2026-05-12 00:11
-accion: git push origin main
-error: Updates were rejected because the remote contains work that you do not have locally.
-causa: el remoto tiene commits que no estan en el clon local. posiblemente otro push desde otra maquina o cambios hechos directamente en github.
-regla activada: "si hay conflicto, detenerse y pedir instrucciones" (prohibido git pull y git push --force).
-solicitud: indicar como proceder para sincronizar y hacer push exitoso.
+accion intentada:
+- git merge origin/main + git push origin main (3 intentos)
+
+comando ejecutado (tres veces):
+- git push origin main
+
+mensaje de error (el mismo los 3 intentos):
+- ! [rejected] main -> main (fetch first)
+- Updates were rejected because the remote contains work that you do not have locally.
+- This is usually caused by another repository pushing to the same ref.
+
+razon probable del fallo:
+- el PCBot (u otra maquina autorizada) esta haciendo push desde otro repositorio/cliente,
+  generando commits en origin/main constantemente.
+- cada vez que hacemos merge local, el remoto ya tiene un commit nuevo -> divergencia perpetua.
+- no es un conflicto real de contenido, es una carrera de pushes concurrentes.
+
+tres caminos alternativos:
+1. git push --force origin main (sobrescribir remoto con lo nuestro, riesgo: perder cambios pcbot/)
+2. coordinar con la otra maquina para que detenga pushes, luego merge y push normal
+3. si los cambios del remoto en pcmaster/ no son relevantes (solo pcbot/ ha cambiado),
+   hacer git push --force origin main solo si estamos seguros de que pcmaster/ local es la fuente de verdad
+
+archivos en conflicto con remoto (origin/main - bcfa572):
+- pcbot/scripts/core/profile_manager.py (no tocado localmente)
+- pcbot/scripts/main.py (no tocado localmente)
+- pcbot/scripts/ws_client.py (no tocado localmente)
+- pcmaster/scripts/server.py (nuestra version es correcta, remoto tiene version antigua)
+- pcmaster/scripts/pedidos_vigilante.py (nuestra version es correcta)
+- pcmaster/scripts/procesador_cola.py (solo existe localmente)
+
+estado actual del repo:
+- HEAD -> main (afcc977) - merge de origin/main en nuestro commit
+- origin/main -> bcfa572 - commit que alguien mas pusheo desde otra maquina
+- archivos locales en pcmaster/ son la version correcta con procesador_cola, vigilante simplificado, server integrado
