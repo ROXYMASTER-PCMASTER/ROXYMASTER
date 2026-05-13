@@ -197,14 +197,17 @@
         var esVip = p.tipo === 'vip';
         var costo = p.costo_total || p.costo || 0;
 
-        var accionesHtml = '<div class="acciones-cell">';
-        if (esPendiente || esProgramado) {
-          accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i></button>';
-        }
-        if (esTrabajando) {
-          accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener pedido"><i class="fas fa-stop-circle"></i></button>';
-        }
-        accionesHtml += '</div>';
+      var accionesHtml = '<div class="acciones-cell">';
+      if (esPendiente || esProgramado || esTrabajando) {
+        accionesHtml += '<button class="btn-accion cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar pedido">cancelar</button>';
+      }
+      if (esPendiente || esProgramado) {
+        accionesHtml += '<button class="btn-accion btn-eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar pedido"><i class="fas fa-trash-alt"></i></button>';
+      }
+      if (esTrabajando) {
+        accionesHtml += '<button class="btn-accion btn-detener" onclick="window.detenerPedido(' + p.id + ')" title="detener pedido"><i class="fas fa-stop-circle"></i></button>';
+      }
+      accionesHtml += '</div>';
 
         var urlMostrar = p.url || '-';
         var urlCorta = urlMostrar.length > 30 ? urlMostrar.substring(0, 30) + '...' : urlMostrar;
@@ -253,6 +256,27 @@
         window.cargarPedidos();
       } else {
         window.mostrarMensaje(resp.json.detail || 'error al eliminar pedido', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+    });
+  };
+
+  // --- cancelar pedido ---
+  window.cancelarPedido = function(id) {
+    if (!confirm('cancelar pedido #' + id + '?')) return;
+    fetch('/api/pedidos/' + id + '/cancelar', {
+      method: 'POST',
+      headers: window.getHeaders(),
+    })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+    .then(function(resp) {
+      if (resp.status >= 200 && resp.status < 300) {
+        window.mostrarMensaje('pedido #' + id + ' cancelado', 'success');
+        window.cargarPedidos();
+      } else {
+        window.mostrarMensaje(resp.json.detail || 'error al cancelar pedido', 'error');
       }
     })
     .catch(function(err) {
