@@ -998,41 +998,33 @@ class OrchestratorLocal:
 
         try:
             ws_id = self.roxy.get_workspace_id()
-            logger.info(f"workspace_id obtenido = {ws_id}")
         except Exception as e:
-            logger.error(f"error en get_workspace_id: {e}")
+            logger.error(f"error obteniendo workspace id: {e}")
             ws_id = None
 
         if not ws_id:
-            return {"ok": False, "error": "no se pudo obtener workspace_id de roxybrowser", "comando": "recargar_perfiles"}
+            return {"ok": False, "error": "no se pudo obtener workspace id", "comando": "recargar_perfiles"}
 
         try:
-            perfiles = self.roxy.get_profiles(ws_id)
-            logger.info(f"perfiles obtenidos: {len(perfiles) if perfiles else 0}")
+            perfiles = self.roxy.get_profiles_detallados()
         except Exception as e:
-            logger.error(f"error en get_profiles: {e}")
+            logger.error(f"error obteniendo perfiles detallados: {e}")
             perfiles = []
 
-        if not perfiles:
-            resultado = {"ok": True, "workspace_id": ws_id, "perfiles": []}
-        else:
-            resultado = {
-                "ok": True,
-                "workspace_id": ws_id,
-                "perfiles": [{"nombre": p["windowName"], "hash": p["dirId"]} for p in perfiles],
-            }
-
-        if self.ws_client is not None:
+        if perfiles:
             try:
-                await self.ws_client.send_response({
-                    "tipo": "respuesta_recargar_perfiles",
-                    "comando_id": cmd_id,
-                    **resultado,
-                })
-                logger.info("respuesta recarga enviada exitosamente")
+                self.pm.register_profiles(perfiles)
+                logger.info(f"perfiles recargados: {len(perfiles)} registrados")
             except Exception as e:
-                logger.error(f"error enviando respuesta recarga: {e}", exc_info=True)
-        else:
-            logger.warning("ws_client es None, no se puede enviar la respuesta")
+                logger.error(f"error registrando perfiles: {e}")
+                return {"ok": False, "error": f"error registrando perfiles: {e}", "comando": "recargar_perfiles"}
 
-        return resultado
+        return {
+            "ok": True,
+            "tipo": "recargar_perfiles",
+            "datos": {
+                "workspace_id": ws_id,
+                "perfiles_count": len(perfiles),
+                "perfiles": [{"id": p.get("id", ""), "name": p.get("name", p.get("id", ""))} for p in perfiles[:50]],
+            },
+        }
