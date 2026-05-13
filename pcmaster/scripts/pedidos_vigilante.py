@@ -1,10 +1,10 @@
-# pedidos_vigilante.py - monitoreo de pedidos, reemplazo de perfiles caidos,
-# y transicion de estados pendiente->enviado->trabajando + programado
-# modulo para vigilante de pedidos, se ejecuta como tarea asincrona
-# dependencias: heartbeat_cache, db, orchestrator
+# pedidos_vigilante.py - monitoreo de pedidos, reemplazo de perfiles caidos
+# y perfiles con url incorrecta. finaliza pedidos expirados.
+# modulo simplificado: la cola fifo y el agendamiento los maneja
+# procesador_cola.py
+# dependencias: heartbeat_cache, ws_manager, db
 
 import asyncio
-import json
 import logging
 from datetime import datetime, timezone
 
@@ -31,10 +31,8 @@ async def monitorear_pedidos():
     - pedidos expirados -> finalizar
     - perfiles caidos -> reemplazar
     - perfiles con url incorrecta -> reemplazar
-    - pedidos pendientes/enviados -> procesar transicion
-    - pedidos programados -> procesar si ya es hora
     """
-    logger.info("vigilante de pedidos iniciado")
+    logger.info("vigilante de pedidos iniciado (intervalo 30s)")
     while True:
         try:
             await _ciclo_vigilante()
@@ -44,15 +42,12 @@ async def monitorear_pedidos():
 
 
 async def _ciclo_vigilante():
-    """ejecuta una ronda de verificacion sobre todos los pedidos activos."""
-
-    # --- PASO 1: procesar pedidos pendientes, enviados y programados ---
-    await _procesar_pendientes_enviados_y_programados()
-
-    # --- PASO 2: verificar pedidos en progreso (trabajando, en_progreso) ---
+    """ejecuta una ronda de verificacion sobre todos los pedidos activos.
+    solo procesa pedidos en 'en_progreso' o 'trabajando'.
+    los estados 'pendiente', 'programado' los maneja procesador_cola.py."""
     pedidos = ejecutar_sql(
         "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
-        "nivel_comentarios, fecha_creacion, estado "
+        "nivel_comentarios, fecha_creacion, fecha_inicio, estado "
         "from pedidos where estado in ('trabajando', 'en_progreso')"
     )
     if not pedidos:
@@ -70,226 +65,26 @@ async def _ciclo_vigilante():
             )
 
 
-# ---------------------------------------------------------------------------
-# procesar pedidos en estados pendiente / enviado / programado
-# ---------------------------------------------------------------------------
-async def _procesar_pendientes_enviados_y_programados():
-    """busca pedidos en 'pendiente', 'enviado' o 'programado' y los transiciona.
-
-    - 'programado': si hora_inicio_programada ya llego, pasar a 'pendiente'
-    - 'pendiente': intenta enviar comando via orchestrator si no hay comando en db
-    - 'enviado': verifica si el comando ya fue confirmado por el pcbot
-                 (comandos.estado = 'enviado' o heartbeat_cache tiene perfiles activos)
-    """
-    pedidos_a_procesar = ejecutar_sql(
-        "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
-        "nivel_comentarios, tipo_pedido, comando_id, fecha_creacion, estado, "
-        "hora_inicio_programada, hora_fin_programada "
-        "from pedidos where estado in ('pendiente', 'enviado', 'programado') "
-        "order by fecha_creacion asc"
-    )
-    if not pedidos_a_procesar:
-        return
-
-    logger.info("[VIGILANTE] procesando %s pedidos pendientes/enviados/programados", len(pedidos_a_procesar))
-
-    for pedido in pedidos_a_procesar:
-        pedido_id = pedido["id"]
-        estado_actual = pedido["estado"]
-
-        try:
-            if estado_actual == "programado":
-                await _procesar_programado(pedido)
-            elif estado_actual == "pendiente":
-                await _procesar_pendiente(pedido)
-            elif estado_actual == "enviado":
-                await _procesar_enviado(pedido)
-        except Exception as e:
-            logger.error("[VIGILANTE] error procesando pedido %s estado=%s: %s",
-                         pedido_id, estado_actual, str(e)[:200])
-
-
-async def _procesar_programado(pedido: dict):
-    """verifica si un pedido programado ya puede ejecutarse.
-    si hora_inicio_programada ya paso, transiciona a 'pendiente'
-    para que el flujo normal lo procese."""
-    pedido_id = pedido["id"]
-    hora_inicio_str = pedido.get("hora_inicio_programada")
-
-    if not hora_inicio_str:
-        logger.warning("[VIGILANTE] pedido %s en estado 'programado' sin hora_inicio_programada, pasando a pendiente", pedido_id)
-        ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
-        return
-
-    ahora = _ahora_dt()
-    try:
-        # hora_inicio_programada viene en iso 8601 (ej: 2026-12-05T20:30:00+00:00)
-        if '+' in hora_inicio_str or 'Z' in hora_inicio_str:
-            hora_inicio_str_limpio = hora_inicio_str.replace('Z', '+00:00')
-            hora_inicio = datetime.fromisoformat(hora_inicio_str_limpio)
-        else:
-            hora_inicio = datetime.strptime(hora_inicio_str, "%Y-%m-%d %H:%M:%S")
-            hora_inicio = hora_inicio.replace(tzinfo=timezone.utc)
-
-        if ahora >= hora_inicio:
-            logger.info("[VIGILANTE] pedido %s programado: hora_inicio %s ya llego, transicionando a pendiente",
-                        pedido_id, hora_inicio_str)
-            ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
-        else:
-            logger.debug("[VIGILANTE] pedido %s programado: esperando hasta %s",
-                         pedido_id, hora_inicio_str)
-    except Exception as e:
-        logger.error("[VIGILANTE] pedido %s programado: error parseando hora_inicio '%s': %s",
-                     pedido_id, hora_inicio_str, str(e)[:200])
-        # si hay error de parsing, pasar a pendiente para no bloquear
-        ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
-
-
-async def _procesar_pendiente(pedido: dict):
-    """intenta enviar el comando de un pedido pendiente via orchestrator.
-    si el comando ya existe en la tabla comandos, solo actualiza estado.
-    si no existe, crea el comando."""
-    pedido_id = pedido["id"]
-    uid = pedido["usuario_id"]
-    comando_id = pedido["comando_id"]
-
-    # verificar si el comando ya existe
-    cmd_existente = ejecutar_sql_unico(
-        "select estado from comandos where comando_id = ?",
-        (comando_id,),
-    )
-
-    if cmd_existente and cmd_existente["estado"] in ("enviado", "pendiente"):
-        # comando ya existe, actualizar pedido a enviado
-        ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-        logger.info("[VIGILANTE] pedido %s: comando %s ya existe con estado '%s', transicionando a enviado",
-                    pedido_id, comando_id, cmd_existente["estado"])
-        return
-
-    if cmd_existente and cmd_existente["estado"] in ("completado", "fallido"):
-        logger.info("[VIGILANTE] pedido %s: comando %s ya esta %s, marcando pedido como completado",
-                    pedido_id, comando_id, cmd_existente["estado"])
-        ejecutar_sql("update pedidos set estado = 'completado' where id = ?", (pedido_id,))
-        return
-
-    # no existe comando -> intentar crear via orchestrator
-    parametros = {
-        "url": pedido["url"],
-        "cantidad": pedido["cantidad_perfiles"],
-        "duracion": int(pedido["duracion_horas"] * 3600),
-        "nivel_comentarios": pedido.get("nivel_comentarios", "basico"),
-    }
-
-    # incluir campos de agendamiento si el pedido fue programado
-    hora_inicio = pedido.get("hora_inicio_programada")
-    hora_fin = pedido.get("hora_fin_programada")
-    if hora_inicio:
-        parametros["hora_inicio"] = hora_inicio
-    if hora_fin:
-        parametros["hora_fin"] = hora_fin
-
-    # buscar pcbot_id del usuario
-    usuario = ejecutar_sql_unico(
-        "select pcbot_id from usuarios where id = ?",
-        (uid,),
-    )
-    if not usuario or not usuario["pcbot_id"]:
-        logger.warning("[VIGILANTE] pedido %s: usuario %s no tiene pcbot_id, no se puede enviar comando",
-                       pedido_id, uid)
-        return
-
-    try:
-        from orchestrator import crear_comando as orc_crear_comando
-        orc_result = await orc_crear_comando(
-            tipo="asignar",
-            parametros=parametros,
-            pcbot_id=usuario["pcbot_id"],
-            comando_id=comando_id,
-        )
-
-        if orc_result.get("exito"):
-            nuevo_estado = orc_result.get("estado", "pendiente")
-            ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-            logger.info("[VIGILANTE] pedido %s: comando creado y %s via orchestrator",
-                        pedido_id, nuevo_estado)
-        else:
-            logger.warning("[VIGILANTE] pedido %s: orchestrator fallo al crear comando: %s",
-                           pedido_id, orc_result.get("error"))
-    except Exception as e:
-        logger.error("[VIGILANTE] pedido %s: excepcion en orchestrator: %s",
-                     pedido_id, str(e)[:200])
-
-
-async def _procesar_enviado(pedido: dict):
-    """verifica si un pedido en estado 'enviado' ya fue confirmado por el pcbot.
-    confirmacion = el comando esta en estado 'enviado' y el pcbot tiene perfiles activos
-    (segun heartbeat_cache) que coinciden con la url del pedido."""
-    pedido_id = pedido["id"]
-    uid = pedido["usuario_id"]
-    comando_id = pedido["comando_id"]
-    url_pedido = pedido["url"]
-
-    # buscar pcbot_id del usuario
-    usuario = ejecutar_sql_unico(
-        "select pcbot_id from usuarios where id = ?",
-        (uid,),
-    )
-    if not usuario or not usuario["pcbot_id"]:
-        logger.warning("[VIGILANTE] pedido %s enviado: usuario %s no tiene pcbot_id",
-                       pedido_id, uid)
-        return
-
-    pcbot_id = usuario["pcbot_id"]
-
-    # verificar si el comando fue marcado como enviado en la tabla comandos
-    cmd = ejecutar_sql_unico(
-        "select estado from comandos where comando_id = ?",
-        (comando_id,),
-    )
-    if cmd and cmd["estado"] == "enviado":
-        # comando fue enviado al pcbot -> verificar si el pcbot ya esta ejecutando
-        perfiles_activos = heartbeat_cache.obtener_perfiles_activos(pcbot_id)
-        if perfiles_activos:
-            # ver si algun perfil activo tiene la url del pedido
-            perfiles_coincidentes = [
-                p for p in perfiles_activos
-                if p.get("url") == url_pedido
-            ]
-            if perfiles_coincidentes:
-                # el pcbot ya esta trabajando en este pedido -> transicionar
-                ejecutar_sql("update pedidos set estado = 'trabajando' where id = ?", (pedido_id,))
-                logger.info("[VIGILANTE] pedido %s: transicionando enviado -> trabajando "
-                            "(%s perfiles activos coinciden con url)",
-                            pedido_id, len(perfiles_coincidentes))
-                return
-
-        # si no hay perfiles activos coincidentes, esperar
-        logger.debug("[VIGILANTE] pedido %s: comando enviado pero pcbot %s no muestra perfiles activos aun",
-                     pedido_id, pcbot_id)
-    elif cmd and cmd["estado"] == "pendiente":
-        logger.debug("[VIGILANTE] pedido %s: comando %s aun pendiente en cola de orchestrator",
-                     pedido_id, comando_id)
-    else:
-        # comando no encontrado -> reintentar
-        logger.warning("[VIGILANTE] pedido %s: comando %s no encontrado en db, "
-                       "reintentando envio",
-                       pedido_id, comando_id)
-        ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
-
-
 async def _verificar_pedido(pedido: dict, ahora: datetime):
-    """verifica estado de un pedido y actua si es necesario.
+    """verifica estado de un pedido activo y actua si es necesario.
     usa heartbeat_cache para obtener los perfiles activos reales
     y comparar urls."""
     pedido_id = pedido["id"]
-
-    # calcular tiempo restante usando fecha_creacion + duracion_horas
-    fecha_creacion_str = pedido.get("fecha_creacion")
-    if not fecha_creacion_str:
+    fecha_inicio_str = pedido.get("fecha_inicio") or pedido.get("fecha_creacion")
+    if not fecha_inicio_str:
         return
 
-    fecha_inicio = datetime.strptime(fecha_creacion_str, "%Y-%m-%d %H:%M:%S")
-    fecha_inicio = fecha_inicio.replace(tzinfo=timezone.utc)
+    try:
+        if "+" in fecha_inicio_str or "Z" in fecha_inicio_str:
+            limpia = fecha_inicio_str.replace("Z", "+00:00")
+            fecha_inicio = datetime.fromisoformat(limpia)
+        else:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d %H:%M:%S")
+            fecha_inicio = fecha_inicio.replace(tzinfo=timezone.utc)
+    except Exception:
+        logger.warning("pedido %s: no se pudo parsear fecha_inicio '%s'", pedido_id, fecha_inicio_str)
+        return
+
     transcurrido = (ahora - fecha_inicio).total_seconds()
     duracion_horas = pedido.get("duracion_horas", 0)
     duracion_seg = duracion_horas * 3600
@@ -312,7 +107,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         logger.info("pedido %s sin asignaciones activas, reasignando", pedido_id)
         cantidad_pedido = pedido.get("cantidad_perfiles", 1)
         for _ in range(cantidad_pedido):
-            await _asignar_perfil(pedido, tiempo_restante)
+            await _asignar_perfil_reemplazo(pedido, tiempo_restante)
         return
 
     # contar perfiles caidos o con url incorrecta
@@ -361,7 +156,8 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         url_actual = perfil_en_cache.get("url", "")
         if url_pedido and url_actual and url_actual != url_pedido:
             logger.info(
-                "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) para pedido %s",
+                "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) "
+                "para pedido %s",
                 perfil_id, pcbot_id, url_actual, url_pedido, pedido_id,
             )
             # marcar asignacion como fallida por url incorrecta
@@ -390,7 +186,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             perfiles_fallidos, pedido_id,
         )
         for _ in range(perfiles_fallidos):
-            await _asignar_perfil(pedido, tiempo_restante)
+            await _asignar_perfil_reemplazo(pedido, tiempo_restante)
 
 
 async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:
@@ -400,7 +196,6 @@ async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:
         resultado = await enviar_comando_al_pcbot(usuario_id, comando)
         if isinstance(resultado, dict):
             return resultado
-        # si devolvio bool o None, convertir a dict
         exito = bool(resultado)
         return {"exito": exito, "error": "" if exito else "resultado inesperado"}
     except Exception as e:
@@ -408,10 +203,11 @@ async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:
         return {"exito": False, "error": str(e)[:200]}
 
 
-async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
-    """asigna un perfil libre al pedido.
+async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
+    """asigna un perfil libre como reemplazo de uno caido.
     busca perfiles libres en heartbeat_cache para el pcbot del usuario,
-    envia comando asignar y registra en pedido_asignaciones."""
+    envia comando asignar y registra en pedido_asignaciones.
+    duracion = tiempo restante del pedido en segundos."""
     usuario_id = pedido.get("usuario_id")
     if not usuario_id:
         logger.warning("pedido %s sin usuario_id", pedido.get("id"))
@@ -431,7 +227,6 @@ async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
         return False
 
     # buscar perfil libre desde heartbeat_cache
-    # perfil libre = existe en el heartbeat del pcbot pero NO esta activo
     libres_cache = heartbeat_cache.obtener_perfiles_libres(pcbot_id)
     if not libres_cache:
         logger.warning("no hay perfiles libres en pcbot %s segun heartbeat", pcbot_id)
@@ -471,18 +266,11 @@ async def _asignar_perfil(pedido: dict, duracion: float) -> bool:
         "insert into pedido_asignaciones "
         "(pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado) "
         "values (?, ?, ?, ?, ?, ?, 'activo')",
-        (
-            pedido["id"],
-            perfil_elegido,
-            pcbot_id,
-            url,
-            duracion_int,
-            ahora_str,
-        ),
+        (pedido["id"], perfil_elegido, pcbot_id, url, duracion_int, ahora_str),
     )
 
     logger.info(
-        "perfil %s asignado a pedido %s en pcbot %s por %s seg",
+        "perfil %s reasignado a pedido %s en pcbot %s por %s seg (reemplazo)",
         perfil_elegido, pedido["id"], pcbot_id, duracion_int,
     )
     return True
@@ -537,7 +325,8 @@ async def _finalizar_pedido(pedido: dict):
     comando_id = pedido.get("comando_id")
     if comando_id:
         ejecutar_sql(
-            "update comandos set estado = 'completado' where comando_id = ? and estado != 'completado'",
+            "update comandos set estado = 'completado' "
+            "where comando_id = ? and estado != 'completado'",
             (comando_id,),
         )
 

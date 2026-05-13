@@ -31,6 +31,7 @@ from tasks import iniciar_tareas_periodicas, inicializar_registros_tareas
 from tokenomics import inicializar_tokenomics, emitir_kbt_admin
 from db_pedidos_vigilante import crear_tablas_vigilante
 from pedidos_vigilante import monitorear_pedidos
+from procesador_cola import procesar_cola_pedidos
 
 # routers api
 from api_heartbeat import router as heartbeat_router
@@ -155,6 +156,10 @@ async def lifespan(app: FastAPI):
     # iniciar vigilante de pedidos
     tarea_vigilante = asyncio.create_task(monitorear_pedidos())
     logger.info("vigilante de pedidos iniciado")
+
+    # iniciar procesador de cola fifo
+    tarea_cola = asyncio.create_task(procesar_cola_pedidos())
+    logger.info("procesador de cola de pedidos iniciado")
 
     yield  # servidor corriendo
 
