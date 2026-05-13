@@ -269,7 +269,7 @@ async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
     pedidos = ejecutar_sql(
         """select id, url, seguidores_streamer, cantidad_perfiles, duracion_horas,
                   nivel_comentarios, tipo_pedido, costo_tokens, estado, comando_id,
-                  fecha_creacion
+                  fecha_creacion, hora_inicio_programada, hora_fin_programada
            from pedidos
            where usuario_id = ?
            order by fecha_creacion desc""",
@@ -279,13 +279,15 @@ async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
     # mapear nombres de campos para compatibilidad con frontend
     pedidos_mapeados = []
     for p in pedidos:
+        duracion_horas = p["duracion_horas"] or 0
         pedidos_mapeados.append({
             "id": p["id"],
             "url": p["url"],
             "seguidores": p["seguidores_streamer"],
             "perfiles": p["cantidad_perfiles"],
-            "duracion": p["duracion_horas"],
-            "minutos": int(p["duracion_horas"] * 60),
+            "duracion": duracion_horas,
+            "duracion_horas": duracion_horas,
+            "minutos": int(duracion_horas * 60),
             "nivel_comentarios": p["nivel_comentarios"],
             "tipo": p["tipo_pedido"],
             "costo": p["costo_tokens"],
@@ -294,6 +296,8 @@ async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
             "comando_id": p["comando_id"],
             "fecha_creacion": p["fecha_creacion"],
             "created_at": p["fecha_creacion"],
+            "hora_inicio_programada": p["hora_inicio_programada"],
+            "hora_fin_programada": p["hora_fin_programada"],
         })
 
     return {

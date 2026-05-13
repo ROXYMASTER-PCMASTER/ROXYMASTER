@@ -179,11 +179,11 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
     if not es_programado:
         logger.info("[PEDIDO-AGENDA] pedido inmediato %s, enviando comando", pedido_id)
 
-        duracion_minutos = int(horas * 60)
+        duracion_seg = int(horas * 3600)
         parametros_pedido = {
             "url": url,
             "cantidad": perfiles,
-            "duracion": duracion_minutos,
+            "duracion": duracion_seg,
             "nivel_comentarios": nivel_comentarios,
         }
 
