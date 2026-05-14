@@ -309,7 +309,9 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                 if datos.get("tipo") == "heartbeat":
                     _conexiones_ws[pcbot_id]["ultimo_heartbeat"] = time.time()
                     heartbeat_cache.registrar_heartbeat(pcbot_id, datos)
-                    await _procesar_heartbeat(pcbot_id, datos)
+                    # nuevo modelo centralizado: procesar eventos y disparar match
+                    from orchestrator_ext import procesar_heartbeat_eventos
+                    await procesar_heartbeat_eventos(pcbot_id, datos)
                     await _enviar_pendientes(pcbot_id)
                     await websocket.send_json({"tipo": "ack"})
                     continue
@@ -343,14 +345,14 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
             eliminar_conexion(pcbot_id=pcbot_id)
         except Exception:
             pass
-        # TAREA 2: marcar asignaciones activas como fallido al desconectarse el pcbot
+        # TAREA 2: marcar asignaciones en ejecucion como fallido al desconectarse el pcbot
         try:
             ahora = _ahora_str()
             ejecutar_sql(
-                "UPDATE pedido_asignaciones SET estado = 'fallido', fin = ? WHERE pcbot_id = ? AND estado = 'activo'",
+                "UPDATE pedido_asignaciones SET estado = 'fallido', fin = ? WHERE pcbot_id = ? AND estado = 'ejecutando'",
                 (ahora, pcbot_id)
             )
-            logger.info(f"asignaciones activas de {pcbot_id} marcadas como fallido por desconexion")
+            logger.info(f"asignaciones ejecutando de {pcbot_id} marcadas como fallido por desconexion")
         except Exception as e:
             logger.warning(f"error limpiando asignaciones de {pcbot_id}: {e}")
         logger.info(f"pcbot desconectado: {pcbot_id}")
@@ -389,147 +391,6 @@ async def _enviar_heartbeat_control(websocket):
         await websocket.send_json({"payload": payload, "firma": firma, "timestamp": ts})
     except Exception:
         pass
-
-
-# ---------------------------------------------------------------------------
-# procesar heartbeat del pcbot
-# ---------------------------------------------------------------------------
-async def _procesar_heartbeat(pcbot_id: str, datos: dict):
-    """procesa heartbeat del pcbot: actualiza info, perfiles y tokens minados.
-    v3-fix: obtiene usuario_id desde computadoras o usuarios.
-    usa insert or replace sin columnas inexistentes."""
-    _pcbot_info[pcbot_id] = _pcbot_info.get(pcbot_id, {})
-    _pcbot_info[pcbot_id]["ultimo_heartbeat"] = _ahora_str()
-    _pcbot_info[pcbot_id]["uptime_segundos"] = datos.get("uptime", 0)
-    _pcbot_info[pcbot_id]["kbt_acumulados"] = datos.get("kbt_acumulados", 0)
-    _pcbot_info[pcbot_id]["perfiles_activos"] = datos.get("perfiles_activos", 0)
-    _pcbot_info[pcbot_id]["estado"] = datos.get("estado", "conectado")
-
-    # persistir heartbeat en pcbots_registrados
-    try:
-        kbt = datos.get("kbt_acumulados", 0)
-        perfiles_act = datos.get("perfiles_activos", 0)
-        uptime = datos.get("uptime", 0)
-        ejecutar_sql(
-            """update pcbots_registrados set
-               kbt_acumulados = ?, perfiles_activos = ?, uptime_segundos = ?,
-               ultimo_heartbeat = ?, estado = ?
-               where pcbot_id = ?""",
-            (kbt, perfiles_act, uptime, _ahora_str(), datos.get("estado", "conectado"), pcbot_id),
-        )
-    except Exception as _he:
-        print(f"[orchestrator] error persistiendo heartbeat: {_he}")
-
-    # obtener usuario_id vinculado al pcbot
-    usuario_id = None
-    try:
-        comp_row = ejecutar_sql_unico(
-            "select usuario_id from computadoras where pcbot_id = ?", (pcbot_id,)
-        )
-        if comp_row and comp_row.get("usuario_id"):
-            usuario_id = int(comp_row["usuario_id"])
-    except Exception:
-        pass
-
-    if not usuario_id:
-        try:
-            user_row = ejecutar_sql_unico(
-                "select id from usuarios where pcbot_id = ? limit 1", (pcbot_id,)
-            )
-            if user_row:
-                usuario_id = int(user_row["id"])
-        except Exception:
-            pass
-
-    if not usuario_id:
-        logger.warning(
-            "no se pudo obtener usuario_id para pcbot %s. usando fallback usuario_id=0.",
-            pcbot_id,
-        )
-        usuario_id = 0
-
-    # actualizar/insertar cada perfil del heartbeat
-    now_str = _ahora_str()
-    for perfil in datos.get("perfiles", []):
-        perfil_id = perfil.get("profile_id", perfil.get("id", ""))
-        if not perfil_id:
-            continue
-
-        activo = perfil.get("activo", 0)
-        state = perfil.get("state", perfil.get("estado", ""))
-        if state:
-            activo_int = 1 if state.lower() == "active" else 0
-        else:
-            activo_int = 1 if activo else 0
-
-        tiempo_seg = perfil.get("tiempo_conectado_seg", 0)
-        nombre = perfil.get("nombre", "") or f"perfil_{perfil_id}"
-
-        try:
-            with get_db_context() as conn:
-                existe = conn.execute(
-                    "select id from perfiles_roxy where hash = ? and pcbot_id = ? limit 1",
-                    (perfil_id, pcbot_id),
-                ).fetchone()
-                if existe:
-                    conn.execute(
-                        """update perfiles_roxy set
-                           usuario_id = ?, computadora_id = ?, nombre = ?, activo = ?,
-                           tiempo_activo_seg = ?, ultimo_heartbeat = ?, pcbot_id = ?
-                           where hash = ? and pcbot_id = ?""",
-                        (usuario_id, pcbot_id, nombre,
-                         activo_int, tiempo_seg, now_str, pcbot_id,
-                         perfil_id, pcbot_id),
-                    )
-                else:
-                    conn.execute(
-                        """insert into perfiles_roxy
-                           (hash, usuario_id, computadora_id, nombre, activo,
-                            tiempo_activo_seg, ultimo_heartbeat, pcbot_id)
-                           values (?, ?, ?, ?, ?, ?, ?, ?)""",
-                        (perfil_id, usuario_id, pcbot_id, nombre,
-                         activo_int, tiempo_seg, now_str, pcbot_id),
-                    )
-                conn.commit()
-        except Exception as e:
-            logger.warning("error actualizando perfil %s: %s", perfil_id, e)
-
-        # si el perfil no esta activo, completar asignaciones activas
-        if activo_int == 0:
-            try:
-                asignaciones = ejecutar_sql(
-                    """select id from pedido_asignaciones
-                       where perfil_id = ? and estado = 'activo'""",
-                    (perfil_id,),
-                )
-                for asig in asignaciones:
-                    asig_id = asig["id"]
-                    ahora = _ahora_str()
-                    ejecutar_sql(
-                        """update pedido_asignaciones
-                           set estado = 'completado', fin = ?
-                           where id = ?""",
-                        (ahora, asig_id),
-                    )
-                    logger.info(
-                        "asignacion %s completada por liberacion de perfil %s",
-                        asig_id, perfil_id,
-                    )
-            except Exception as e:
-                logger.warning(
-                    "error completando asignaciones por perfil %s: %s",
-                    perfil_id, e,
-                )
-
-    # si no se enviaron perfiles, marcar los de este pcbot como inactivos
-    if not datos.get("perfiles"):
-        try:
-            ejecutar_sql(
-                "update perfiles_roxy set activo = 0 where pcbot_id = ? and ultimo_heartbeat < ?",
-                (pcbot_id, (datetime.now().timestamp() - 180)),
-            )
-        except Exception as e:
-            logger.warning(f"error marcando perfiles inactivos: {e}")
 
 
 # ---------------------------------------------------------------------------

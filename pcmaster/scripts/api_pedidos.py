@@ -14,8 +14,7 @@ from tokenomics_core import (
     _cargar_params,
 )
 from auth import verificar_token_opcional
-from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
-from orchestrator import crear_comando as orc_crear_comando
+# (asignacion inmediata eliminada - ahora el procesador_cola maneja la planificacion)
 
 logger = logging.getLogger("roxymaster.api_pedidos")
 
@@ -78,7 +77,7 @@ async def calcular_costo_endpoint(request: Request, sesion: dict = Depends(verif
 # ---------------------------------------------------------------------------
 @router.post("/crear")
 async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_opcional)):
-    """crea un pedido de servicio, descuenta tokens y envia comando al pcbot."""
+    """crea un pedido de servicio, descuenta tokens y lo deja agendado para el procesador_cola."""
     uid = _usuario_requerido(sesion)
     try:
         body = await request.json()
@@ -134,7 +133,7 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
         """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
            duracion_horas, nivel_comentarios, tipo_pedido, costo_tokens, estado,
            comando_id, fecha_creacion)
-           values (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?, ?)""",
+           values (?, ?, ?, ?, ?, ?, ?, ?, 'agendado', ?, ?)""",
         (uid, url, seguidores, perfiles, horas, nivel_comentarios, tipo_pedido,
          costo_tokens, comando_id, ahora),
     )
@@ -157,7 +156,7 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
          ahora),
     )
 
-    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} — queda en pendiente para la cola fifo")
+    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} — queda agendado para planificacion centralizada")
     return {
         "exito": True,
         "pedido_id": pedido_id,
@@ -231,8 +230,8 @@ async def eliminar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token
         raise HTTPException(status_code=404, detail="pedido no encontrado")
     if pedido["usuario_id"] != uid:
         raise HTTPException(status_code=403, detail="no tienes permiso para eliminar este pedido")
-    if pedido["estado"] not in ("pendiente",):
-        raise HTTPException(status_code=400, detail="solo se pueden eliminar pedidos pendientes")
+    if pedido["estado"] not in ("pendiente", "agendado"):
+        raise HTTPException(status_code=400, detail="solo se pueden eliminar pedidos pendientes o agendados")
 
     # reembolsar tokens
     costo = float(pedido["costo_tokens"])
@@ -302,7 +301,7 @@ async def reabrir_pedido(pedido_id: int, sesion: dict = Depends(verificar_token_
     if pedido["estado"] not in ("detenido", "fallido"):
         raise HTTPException(status_code=400, detail="solo se pueden reabrir pedidos detenidos o fallidos")
 
-    ejecutar_sql("update pedidos set estado = 'pendiente' where id = ?", (pedido_id,))
+    ejecutar_sql("update pedidos set estado = 'agendado' where id = ?", (pedido_id,))
     logger.info(f"[PEDIDO] pedido #{pedido_id} reabierto por usuario {uid}")
 
     return {"exito": True, "mensaje": f"pedido #{pedido_id} reabierto, sera reprocesado"}
@@ -324,8 +323,8 @@ async def cancelar_pedido(pedido_id: int, sesion: dict = Depends(verificar_token
         raise HTTPException(status_code=404, detail="pedido no encontrado")
     if pedido["usuario_id"] != uid:
         raise HTTPException(status_code=403, detail="no tienes permiso para cancelar este pedido")
-    if pedido["estado"] not in ("pendiente", "enviado", "trabajando", "en-progreso", "en_progreso"):
-        raise HTTPException(status_code=400, detail="solo se pueden cancelar pedidos pendientes, enviados o en progreso")
+    if pedido["estado"] not in ("agendado", "pendiente", "enviado", "trabajando", "en-progreso", "en_progreso"):
+        raise HTTPException(status_code=400, detail="solo se pueden cancelar pedidos en estado agendado, pendiente, enviado o en progreso")
 
     costo = float(pedido["costo_tokens"])
     ejecutar_sql("update pedidos set estado = 'finalizado' where id = ?", (pedido_id,))

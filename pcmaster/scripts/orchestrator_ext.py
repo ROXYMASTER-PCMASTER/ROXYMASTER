@@ -183,19 +183,22 @@ def _ahora_str() -> str:
 
 async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
     """procesa un mensaje recibido via websocket desde un pcbot.
-    wrapper de compatibilidad para server.py."""
+    wrapper de compatibilidad para server.py.
+    v2 centralizado: usa procesar_heartbeat_eventos en vez de _procesar_heartbeat."""
     from orchestrator import (
         _conexiones_ws, _pcbot_info, _cola_comandos, _pending_commands,
-        _procesar_heartbeat, _procesar_respuesta, _procesar_alerta, _enviar_pendientes,
+        _procesar_respuesta, _procesar_alerta, _enviar_pendientes,
     )
     tipo = mensaje.get("tipo", "")
 
     if tipo == "heartbeat":
-        logger.info("[HB-DEBUG] Heartbeat recibido de %s, datos=%s", pcbot_id, str(mensaje)[:150])
-        # actualizar heartbeat_cache siempre que se recibe un heartbeat
+        logger.info("[HB-DEBUG] Heartbeat recibido de %s, eventos=%s",
+                     pcbot_id, len(mensaje.get("eventos", [])))
+        # actualizar heartbeat_cache
         heartbeat_cache.registrar_heartbeat(pcbot_id, mensaje)
-        logger.info("[HB] Heartbeat recibido de %s, enviando ack", pcbot_id)
-        await _procesar_heartbeat(pcbot_id, mensaje)
+        logger.info("[HB] Heartbeat recibido de %s, procesando eventos", pcbot_id)
+        # nuevo modelo centralizado: solo eventos + match
+        await procesar_heartbeat_eventos(pcbot_id, mensaje)
         await _enviar_pendientes(pcbot_id)
     elif tipo == "respuesta_recargar_perfiles":
         req_id = mensaje.get("comando_id")
@@ -249,6 +252,137 @@ async def enviar_comando_pcbot(usuario_id: int, comando: dict) -> bool:
         return True
     except:
         return False
+
+
+async def procesar_heartbeat_eventos(pcbot_id: str, datos: dict):
+    """procesa un heartbeat del nuevo modelo basado solo en eventos.
+    v2 centralizado: no recorre perfiles, solo procesa eventos explicitos.
+    luego dispara el match de planificacion."""
+    from db import ejecutar_sql_unico
+    from procesador_cola import ejecutar_ciclo_match
+
+    eventos = datos.get("eventos", [])
+    logger.info("[HB-EVENTOS] heartbeat de %s con %s eventos", pcbot_id, len(eventos))
+
+    for evento in eventos:
+        try:
+            await _procesar_evento_perfil(pcbot_id, evento)
+        except Exception as e:
+            logger.error("[HB-EVENTOS] error procesando evento %s: %s",
+                         evento.get("tipo"), str(e)[:200])
+
+    # disparar el match de planificacion justo despues de procesar eventos
+    await ejecutar_ciclo_match()
+
+
+async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
+    """procesa un evento individual del heartbeat.
+    tipos soportados: perfil_caido, nuevo_perfil, reinicio, liberacion_anticipada"""
+    from db import ejecutar_sql, ejecutar_insercion
+
+    tipo = evento.get("tipo", "")
+    perfil_id = evento.get("perfil_id", "")
+    ahora_str = _ahora_str()
+
+    if tipo == "perfil_caido":
+        if not perfil_id:
+            logger.warning("[HB-EVENTOS] perfil_caido sin perfil_id en %s", pcbot_id)
+            return
+        logger.info("[HB-EVENTOS] perfil_caido: %s en pcbot %s", perfil_id, pcbot_id)
+        # marcar perfil como inactivo
+        ejecutar_sql(
+            "update perfiles_roxy set activo = 0, url_actual = null "
+            "where hash = ? and pcbot_id = ?",
+            (perfil_id, pcbot_id),
+        )
+        # marcar asignaciones activas como fallidas
+        ejecutar_sql(
+            "update pedido_asignaciones set estado = 'fallido', fin = ? "
+            "where perfil_id = ? and pcbot_id = ? and estado = 'ejecutando'",
+            (ahora_str, perfil_id, pcbot_id),
+        )
+
+    elif tipo == "nuevo_perfil":
+        if not perfil_id:
+            logger.warning("[HB-EVENTOS] nuevo_perfil sin perfil_id en %s", pcbot_id)
+            return
+        logger.info("[HB-EVENTOS] nuevo_perfil: %s en pcbot %s", perfil_id, pcbot_id)
+        # verificar si ya existe
+        existe = ejecutar_sql_unico(
+            "select id from perfiles_roxy where hash = ? and pcbot_id = ?",
+            (perfil_id, pcbot_id),
+        )
+        if not existe:
+            nombre = evento.get("nombre", "") or f"perfil_{perfil_id[:8]}"
+            ejecutar_insercion(
+                """insert into perfiles_roxy
+                   (hash, pcbot_id, nombre, activo, ultimo_heartbeat)
+                   values (?, ?, ?, 0, ?)""",
+                (perfil_id, pcbot_id, nombre, ahora_str),
+            )
+            logger.info("[HB-EVENTOS] nuevo perfil %s registrado en bd", perfil_id)
+        else:
+            # ya existe, solo actualizar estado
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0, "
+                "ultimo_heartbeat = ? where hash = ? and pcbot_id = ?",
+                (ahora_str, perfil_id, pcbot_id),
+            )
+
+    elif tipo == "reinicio":
+        logger.info("[HB-EVENTOS] reinicio en pcbot %s", pcbot_id)
+        perfiles_actuales = evento.get("perfiles_actuales", [])
+        if perfiles_actuales:
+            # marcar perfiles que ya no existen como inactivos
+            placeholders = ",".join("?" for _ in perfiles_actuales)
+            params = [pcbot_id] + list(perfiles_actuales)
+            ejecutar_sql(
+                f"update perfiles_roxy set activo = 0 "
+                f"where pcbot_id = ? and hash not in ({placeholders})",
+                params,
+            )
+            # marcar los actuales como disponibles (activo=1 para que el match los encuentre)
+            ejecutar_sql(
+                f"update perfiles_roxy set activo = 1, "
+                f"url_actual = null, ultimo_heartbeat = ? "
+                f"where pcbot_id = ? and hash in ({placeholders})",
+                [ahora_str, pcbot_id] + list(perfiles_actuales),
+            )
+            # marcar asignaciones activas como fallidas por reinicio
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido', fin = ? "
+                "where pcbot_id = ? and estado = 'ejecutando'",
+                (ahora_str, pcbot_id),
+            )
+        else:
+            # sin lista, marcar todo como inactivo
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 "
+                "where pcbot_id = ?",
+                (pcbot_id,),
+            )
+
+    elif tipo == "liberacion_anticipada":
+        if not perfil_id:
+            logger.warning("[HB-EVENTOS] liberacion_anticipada sin perfil_id en %s", pcbot_id)
+            return
+        logger.info("[HB-EVENTOS] liberacion_anticipada: %s en pcbot %s", perfil_id, pcbot_id)
+        # liberar el perfil antes de lo previsto
+        ejecutar_sql(
+            "update perfiles_roxy set activo = 0, liberacion_estimada = null "
+            "where hash = ? and pcbot_id = ?",
+            (perfil_id, pcbot_id),
+        )
+        # completar la asignacion activa
+        ejecutar_sql(
+            "update pedido_asignaciones set estado = 'completado', fin = ? "
+            "where perfil_id = ? and pcbot_id = ? and estado = 'ejecutando'",
+            (ahora_str, perfil_id, pcbot_id),
+        )
+
+    else:
+        logger.debug("[HB-EVENTOS] tipo de evento desconocido: %s en pcbot %s",
+                     tipo, pcbot_id)
 
 
 async def enviar_recargar_perfiles(pcbot_id: str, roxy_api_key: str) -> dict:

@@ -31,7 +31,7 @@ from tasks import iniciar_tareas_periodicas, inicializar_registros_tareas
 from tokenomics import inicializar_tokenomics, emitir_kbt_admin
 from db_pedidos_vigilante import crear_tablas_vigilante
 from pedidos_vigilante import monitorear_pedidos
-from procesador_cola import procesar_cola_pedidos
+from procesador_cola import ejecutar_ciclo_match
 
 # routers api
 from api_heartbeat import router as heartbeat_router
@@ -158,9 +158,9 @@ async def lifespan(app: FastAPI):
     tarea_vigilante = asyncio.create_task(monitorear_pedidos())
     logger.info("vigilante de pedidos iniciado")
 
-    # iniciar procesador de cola fifo
-    tarea_cola = asyncio.create_task(procesar_cola_pedidos())
-    logger.info("procesador de cola de pedidos iniciado")
+    # procesador de cola: ahora se ejecuta bajo demanda tras heartbeats
+    # no hay bucle continuo; el match se dispara desde orchestrator
+    logger.info("procesador de cola (bajo demanda) listo - no hay bucle continuo")
 
     yield  # servidor corriendo
 
@@ -389,7 +389,7 @@ async def diag_cola():
     # pedidos pendientes
     try:
         from db import ejecutar_sql
-        pedidos = ejecutar_sql("select id, usuario_id, url, cantidad_perfiles, duracion_horas, estado, fecha_creacion from pedidos where estado in ('pendiente','programado') order by fecha_creacion asc", fetchall=True)
+        pedidos = ejecutar_sql("select id, usuario_id, url, cantidad_perfiles, duracion_horas, estado, fecha_creacion from pedidos where estado in ('agendado','programado') order by fecha_creacion asc", fetchall=True)
         resultado["pedidos_pendientes"] = []
         for p in pedidos:
             resultado["pedidos_pendientes"].append({

@@ -1,7 +1,7 @@
-﻿# procesador_cola.py - procesador fifo de cola de pedidos
+﻿# procesador_cola.py - procesador fifo de cola de pedidos (v2 centralizado)
 # roxymaster v8.3 - utf-8 sin bom, nombres en minusculas
-# modulo independiente que procesa pedidos pendientes y programados
-# y los asigna perfil por perfil a los pcbots del usuario
+# modulo independiente que procesa pedidos agendados y los asigna
+# segun el nuevo modelo de planificacion centralizada en bd.
 # parte principal del modulo; funciones auxiliares en procesador_cola_ext.py
 
 import asyncio
@@ -10,7 +10,6 @@ import logging
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
-import heartbeat_cache
 from ws_manager import (
     obtener_pcbots_de_usuario,
     obtener_pcbot_de_usuario,
@@ -23,304 +22,295 @@ from procesador_cola_ext import (
     _ahora_str,
     _ahora_dt,
     _enviar_comando_seguro,
-    _liberar_reservas_caducadas,
     _obtener_pcbots_usuario,
 )
 
 logger = logging.getLogger("procesador_cola")
 
 # ---------------------------------------------------------------------------
-# parametros configurables del ritmo de entrega
-# (posteriormente se leeran de bd o dashboard)
+# parametros del nuevo modelo centralizado
 # ---------------------------------------------------------------------------
-PERFILES_POR_LOTE_NORMAL = 10   # cuantos perfiles asignar por ciclo para pedidos normales
-PERFILES_POR_LOTE_VIP = 20      # idem para pedidos vip
-INTERVALO_ENTRE_LOTES = 10      # segundos entre ciclos de asignacion (coincide con el ciclo del procesador)
-TIMEOUT_RESERVA = 15            # segundos que un perfil puede estar en 'reservado' sin confirmar
+TIEMPO_ESPERA_CONFIRMACION = 35   # segundos maximo para que pcbot confirme
+INTERVALO_CICLO = 35               # segundos entre ciclos (30s heartbeat + 5s margen)
+
+# estados de pedido_asignaciones en el nuevo modelo:
+# planificado: pcmaster decidio que este perfil va a este pedido, aun no se envio
+# ejecutando: se envio comando al pcbot y se confirmo (o se asume)
+# completado: el perfil termino su tiempo y se libero
+# fallido: no se pudo ejecutar
 
 
 # ---------------------------------------------------------------------------
-# bucle principal
+# punto de entrada: ejecutar un ciclo de match a demanda
 # ---------------------------------------------------------------------------
-async def procesar_cola_pedidos():
-    """bucle principal del procesador de cola fifo.
-    se ejecuta cada INTERVALO_ENTRE_LOTES segundos y procesa:
-    - pedidos en estado 'programado' cuya hora_inicio ya llego -> pendiente
-    - pedidos en estado 'pendiente' -> asigna perfiles y pasa a en_progreso
+async def ejecutar_ciclo_match():
+    """ejecuta un ciclo de match inmediatamente.
+    llamada desde orchestrator tras recibir un heartbeat del pcbot.
+    no tiene su propio bucle sleep."""
+    try:
+        await _ciclo_match()
+    except Exception as e:
+        logger.error("[MATCH] error en ciclo match: %s", str(e)[:400])
+
+
+# ---------------------------------------------------------------------------
+# ciclo principal de match (se ejecuta bajo demanda, no en bucle)
+# ---------------------------------------------------------------------------
+async def _ciclo_match():
+    """ejecuta una ronda de match entre pedidos agendados y perfiles libres.
+
+    logica:
+    1. liberar asignaciones que vencieron (completadas por tiempo)
+    2. obtener pedidos agendados ordenados fifo
+    3. obtener perfiles libres (activo=1 sin asignaciones activas)
+    4. para cada pedido, asignar perfiles uno a uno:
+       - insertar 'planificado' en pedido_asignaciones
+       - enviar comando al pcbot
+       - si exito -> 'ejecutando'; si fallo -> 'fallido'
+    5. marcar pedidos completados como 'en_progreso'
     """
-    logger.info(
-        "procesador de cola pedidos iniciado (intervalo %ss)",
-        INTERVALO_ENTRE_LOTES,
-    )
-    while True:
-        try:
-            await _ciclo_procesador()
-        except Exception as e:
-            logger.error("error en ciclo procesador cola: %s", str(e)[:200])
-        await asyncio.sleep(INTERVALO_ENTRE_LOTES)
-
-
-async def _ciclo_procesador():
-    """ejecuta una ronda de procesamiento de la cola fifo."""
-
     ahora = _ahora_dt()
+    ahora_str = _ahora_str()
 
-    # paso 1: liberar reservas caducadas antes de procesar nuevos pedidos
-    await _liberar_reservas_caducadas()
+    # paso 0: liberar asignaciones que ya cumplieron su duracion
+    await _liberar_asignaciones_vencidas()
 
-    # obtener pedidos pendientes, programados o en_progreso con asignaciones incompletas
-    # (incluye pedidos que quedaron colgados tras reconexion o que necesitan mas perfiles)
-    # fifo estricto: order by fecha_creacion asc
-    pedidos = ejecutar_sql(
-        "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
-        "nivel_comentarios, tipo_pedido, comando_id, fecha_creacion, estado, "
-        "hora_inicio_programada, hora_fin_programada "
-        "from pedidos "
-        "where estado in ('pendiente', 'programado') "
-        "   or (estado = 'en_progreso' "
-        "       and not exists ( "
-        "           select 1 from pedido_asignaciones pa "
-        "           where pa.pedido_id = pedidos.id "
-        "           and pa.estado in ('activo', 'reservado') "
-        "       ) "
-        "   ) "
-        "order by fecha_creacion asc"
-    )
+    # paso 1: obtener pedidos agendados (y programados que ya llegaron)
+    pedidos = _obtener_pedidos_planificables()
     if not pedidos:
+        logger.debug("[MATCH] no hay pedidos planificables")
         return
 
-    logger.info("[COLA] procesando %s pedidos pendientes/programados/en_progreso", len(pedidos))
+    logger.info("[MATCH] procesando %s pedidos planificables", len(pedidos))
 
     for pedido in pedidos:
-        pedido_id = pedido["id"]
-        estado_actual = pedido["estado"]
-
-        # log especifico para pedidos en_progreso sin asignaciones activas
-        if estado_actual == "en_progreso":
-            logger.info(
-                "pedido %s en_progreso sin asignaciones activas, reintentando",
-                pedido_id,
-            )
-
         try:
-
-            # si es programado, verificar si ya llego su hora de inicio
-            if estado_actual == "programado":
-                hora_inicio_prog = pedido.get("hora_inicio_programada") or ""
-                if hora_inicio_prog:
-                    try:
-                        # intentar parsear en formato iso o "%Y-%m-%d %H:%M:%S"
-                        if "+" in hora_inicio_prog or "Z" in hora_inicio_prog:
-                            limpia = hora_inicio_prog.replace("Z", "+00:00")
-                            inicio_dt = datetime.fromisoformat(limpia)
-                        else:
-                            inicio_dt = datetime.strptime(
-                                hora_inicio_prog, "%Y-%m-%d %H:%M:%S"
-                            )
-                            inicio_dt = inicio_dt.replace(tzinfo=timezone.utc)
-                    except Exception:
-                        # si no se puede parsear, asumir que ya paso
-                        inicio_dt = ahora - timedelta(seconds=1)
-
-                    if inicio_dt > ahora:
-                        # aun no es hora, saltar este pedido
-                        logger.info(
-                            "[COLA] pedido %s programado para %s, aun no es hora",
-                            pedido_id, hora_inicio_prog,
-                        )
-                        continue
-
-                # pasar a pendiente
-                logger.info(
-                    "[COLA] pedido %s programado, hora llegada, pasando a pendiente",
-                    pedido_id,
-                )
-                ejecutar_sql(
-                    "update pedidos set estado = 'pendiente' where id = ?",
-                    (pedido_id,),
-                )
-                estado_actual = "pendiente"
-
-            if estado_actual not in ("pendiente", "en_progreso"):
-                continue
-
-            await _procesar_pedido_pendiente(pedido)
-
+            await _planificar_pedido(pedido, ahora_str, ahora)
         except Exception as e:
-            logger.error(
-                "[COLA] error procesando pedido %s: %s",
-                pedido_id, str(e)[:400],
-            )
+            logger.error("[MATCH] error planificando pedido %s: %s",
+                         pedido.get("id"), str(e)[:400])
 
 
-async def _procesar_pedido_pendiente(pedido: dict):
-    """asigna perfiles gradualmente a un pedido pendiente.
-    implementa entrega por lotes configurables para evitar saturar el pcbot."""
+def _obtener_pedidos_planificables() -> list:
+    """obtiene pedidos agendados y programados listos para planificar.
+
+    returns:
+        list[dict]: pedidos ordenados por fecha_creacion asc (fifo)
+    """
+    ahora = _ahora_dt()
+    return ejecutar_sql(
+        """select id, usuario_id, url, cantidad_perfiles, duracion_horas,
+                  nivel_comentarios, tipo_pedido, comando_id, fecha_creacion,
+                  estado, hora_inicio_programada, hora_fin_programada
+           from pedidos
+           where estado = 'agendado'
+              or (estado = 'programado'
+                  and hora_inicio_programada is not null
+                  and hora_inicio_programada <= ?)
+           order by fecha_creacion asc""",
+        (_ahora_str(),),
+    )
+
+
+async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime):
+    """planifica un pedido: busca perfiles libres, crea asignaciones
+    y envia comandos al pcbot."""
     pedido_id = pedido["id"]
     usuario_id = pedido.get("usuario_id")
+    cantidad_total = pedido.get("cantidad_perfiles", 1)
+    url = pedido.get("url", "")
+    nivel_comentarios = pedido.get("nivel_comentarios", 0)
+    duracion_horas = pedido.get("duracion_horas", 0)
 
     if not usuario_id:
-        logger.warning("[COLA] pedido %s sin usuario_id", pedido_id)
+        logger.warning("[MATCH] pedido %s sin usuario_id", pedido_id)
         ejecutar_sql(
             "update pedidos set estado = 'fallido' where id = ?",
             (pedido_id,),
         )
         return
 
+    # pasar de programado -> agendado si aplica
+    if pedido["estado"] == "programado":
+        ejecutar_sql(
+            "update pedidos set estado = 'agendado' where id = ?",
+            (pedido_id,),
+        )
+
+    # contar asignaciones en marcha para este pedido
+    asignadas = _contar_asignaciones_activas(pedido_id)
+    pendientes = cantidad_total - asignadas
+
+    if pendientes <= 0:
+        logger.info("[MATCH] pedido %s ya tiene %d/%d asignaciones, pasando a en_progreso",
+                    pedido_id, asignadas, cantidad_total)
+        ejecutar_sql(
+            "update pedidos set estado = 'en_progreso', fecha_inicio = ? where id = ?",
+            (ahora_str, pedido_id),
+        )
+        return
+
     # obtener pcbots del usuario
     pcbots = _obtener_pcbots_usuario(usuario_id)
     if not pcbots:
-        logger.warning("[COLA] usuario %s sin pcbots conectados", usuario_id)
+        logger.info("[MATCH] usuario %s sin pcbots conectados, pedido %s queda agendado",
+                    usuario_id, pedido_id)
         return
 
-    cantidad_total = pedido.get("cantidad_perfiles", 1)
-    tipo_pedido = pedido.get("tipo_pedido", "normal")
+    # obtener perfiles libres (conectados al pcbot sin asignaciones activas)
+    perfiles_libres = _obtener_perfiles_libres(pcbots, pendientes)
+    if not perfiles_libres:
+        logger.info("[MATCH] no hay perfiles libres para pedido %s", pedido_id)
+        return
 
-    # contar asignaciones actuales (activas + reservadas) para este pedido
-    asignadas = ejecutar_sql_unico(
+    logger.info("[MATCH] pedido %s: %d pendientes, %d perfiles libres disponibles",
+                pedido_id, pendientes, len(perfiles_libres))
+
+    # asignar perfiles uno a uno
+    for perfil in perfiles_libres[:pendientes]:
+        exito = await _asignar_perfil_planificado(
+            pedido_id, usuario_id, url, duracion_horas,
+            nivel_comentarios, perfil,
+        )
+        if exito:
+            asignadas += 1
+
+    # verificar si el pedido ya se completo
+    if asignadas >= cantidad_total:
+        ejecutar_sql(
+            "update pedidos set estado = 'en_progreso', fecha_inicio = ? where id = ?",
+            (ahora_str, pedido_id),
+        )
+        logger.info("[MATCH] pedido %s: planificacion completa (%d/%d), estado -> en_progreso",
+                    pedido_id, asignadas, cantidad_total)
+    else:
+        logger.info("[MATCH] pedido %s: planificados %d/%d, continuara en siguiente ciclo",
+                    pedido_id, asignadas, cantidad_total)
+
+
+def _contar_asignaciones_activas(pedido_id: int) -> int:
+    """cuenta asignaciones activas no vencidas para un pedido."""
+    result = ejecutar_sql_unico(
         "select count(*) as total from pedido_asignaciones "
-        "where pedido_id = ? and estado in ('activo', 'reservado')",
+        "where pedido_id = ? and estado in ('planificado', 'ejecutando')",
         (pedido_id,),
     )
-    asignados_actuales = asignadas["total"] if asignadas else 0
-    cantidad_pendiente = cantidad_total - asignados_actuales
+    return result["total"] if result else 0
 
-    if cantidad_pendiente <= 0:
-        # todas las asignaciones ya estan completas -> pasar a en_progreso
-        ahora_str = _ahora_str()
-        ejecutar_sql(
-            "update pedidos set estado = 'en_progreso', fecha_inicio = ? where id = ?",
-            (ahora_str, pedido_id),
-        )
-        logger.info(
-            "[COLA] pedido %s: ya asignados %d/%d, estado -> en_progreso",
-            pedido_id, asignados_actuales, cantidad_total,
-        )
-        return
 
-    # calcular lote maximo para este ciclo
-    lote_maximo = PERFILES_POR_LOTE_VIP if tipo_pedido == "vip" else PERFILES_POR_LOTE_NORMAL
-    logger.info(
-        "[COLA] pedido %s: %d/%d asignados, %d pendientes, lote maximo=%d, tipo=%s",
-        pedido_id, asignados_actuales, cantidad_total,
-        cantidad_pendiente, lote_maximo, tipo_pedido,
-    )
+def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:
+    """obtiene perfiles libres de los pcbots especificados.
 
-    perfiles_a_asignar = min(cantidad_pendiente, lote_maximo)
+    EN EL NUEVO MODELO CENTRALIZADO:
+    un perfil se considera libre si:
+    - activo = 1 (conectado al pcbot)
+    - no tiene asignaciones activas en pedido_asignaciones (planificado o ejecutando)
+    - o liberacion_estimada <= ahora (perfil que termino y debe liberarse)
+
+    NOTA: en el modelo anterior se usaba activo=0 para perfiles libres.
+    ahora activo=1 significa "conectado", activo=0 significa "desconectado/caido".
+    la ocupacion se determina por pedido_asignaciones, no por activo.
+
+    returns:
+        list[dict]: perfiles disponibles con keys: perfil_id, pcbot_id, hash
+    """
+    ahora_str = _ahora_str()
+    libres = []
 
     for pcbot_id in pcbots:
-        if perfiles_a_asignar <= 0:
-            break
-
-        # obtener perfiles libres desde heartbeat_cache (excluye los ya asignados y caidos)
-        libres = heartbeat_cache.obtener_perfiles_libres(pcbot_id)
-        if not libres:
-            continue
-
-        # filtrar perfiles que ya estan asignados a este pedido
-        asignados_ids = ejecutar_sql(
-            "select perfil_id from pedido_asignaciones "
-            "where pedido_id = ? and perfil_id is not null",
-            (pedido_id,),
+        # perfiles conectados (activo=1) sin asignaciones activas
+        resultados = ejecutar_sql(
+            """select pr.hash as perfil_id, pr.pcbot_id, pr.liberacion_estimada
+               from perfiles_roxy pr
+               where pr.pcbot_id = ?
+                 and pr.activo = 1
+                 and not exists (
+                     select 1 from pedido_asignaciones pa
+                     where pa.perfil_id = pr.hash
+                       and pa.estado in ('planificado', 'ejecutando')
+                 )
+               order by pr.liberacion_estimada asc nulls last""",
+            (pcbot_id,),
         )
-        asignados_set = {
-            a["perfil_id"] for a in (asignados_ids or []) if a.get("perfil_id")
-        }
+        for r in (resultados or []):
+            libres.append({
+                "perfil_id": r["perfil_id"],
+                "pcbot_id": pcbot_id,
+                "hash": r["perfil_id"],
+            })
 
-        elegibles = [p for p in libres if p.get("profile_id") not in asignados_set]
-
-        if not elegibles:
-            continue
-
-        cuantos = min(perfiles_a_asignar, len(elegibles))
-        logger.info(
-            "[COLA] pcbot %s: %d perfiles elegibles, asignando %d de %d",
-            pcbot_id, len(elegibles), cuantos, perfiles_a_asignar,
+    # incluir perfiles que estan por liberarse (liberacion_estimada <= ahora + 5s)
+    cinco_seg = (_ahora_dt() + timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
+    for pcbot_id in pcbots:
+        resultados = ejecutar_sql(
+            """select pr.hash as perfil_id, pr.pcbot_id, pr.liberacion_estimada
+               from perfiles_roxy pr
+               where pr.pcbot_id = ?
+                 and pr.activo = 1
+                 and pr.liberacion_estimada is not null
+                 and pr.liberacion_estimada <= ?
+                 and not exists (
+                     select 1 from pedido_asignaciones pa
+                     where pa.perfil_id = pr.hash
+                       and pa.estado in ('planificado', 'ejecutando')
+                 )
+               order by pr.liberacion_estimada asc""",
+            (pcbot_id, cinco_seg),
         )
+        for r in (resultados or []):
+            libres.append({
+                "perfil_id": r["perfil_id"],
+                "pcbot_id": pcbot_id,
+                "hash": r["perfil_id"],
+            })
 
-        por_asignar_elegidos = elegibles[:cuantos]
-
-        for perfil in por_asignar_elegidos:
-            perfil_id = perfil.get("profile_id", "")
-            if not perfil_id:
-                continue
-            exito = await _asignar_perfil(pedido, pcbot_id, perfil_id)
-            if exito:
-                perfiles_a_asignar -= 1
-                asignados_actuales += 1
-
-    if asignados_actuales >= cantidad_total:
-        ahora_str = _ahora_str()
-        ejecutar_sql(
-            "update pedidos set estado = 'en_progreso', fecha_inicio = ? where id = ?",
-            (ahora_str, pedido_id),
-        )
-        logger.info(
-            "[COLA] pedido %s: asignacion completa (%d/%d), estado -> en_progreso",
-            pedido_id, asignados_actuales, cantidad_total,
-        )
-    else:
-        logger.info(
-            "[COLA] pedido %s: asignados %d/%d, continuara en siguiente ciclo",
-            pedido_id, asignados_actuales, cantidad_total,
-        )
+    return libres[:maximo]
 
 
-async def _asignar_perfil(pedido: dict, pcbot_id: str, perfil_id: str) -> bool:
-    """asigna un perfil especifico a un pedido usando el nuevo flujo reserva/confirmacion.
-    paso 1: insertar 'reservado' con timeout en pedido_asignaciones.
-    paso 2: enviar comando al pcbot.
-    paso 3: si exito -> 'activo'; si fallo -> 'fallido'."""
-    pedido_id = pedido["id"]
-    usuario_id = pedido.get("usuario_id")
-    url = pedido.get("url", "")
-    nivel_comentarios = pedido.get("nivel_comentarios", 0)
-    duracion_horas = pedido.get("duracion_horas", 0)
+async def _asignar_perfil_planificado(
+    pedido_id: int,
+    usuario_id: int,
+    url: str,
+    duracion_horas: float,
+    nivel_comentarios: int,
+    perfil: dict,
+) -> bool:
+    """asigna un perfil especifico a un pedido usando el nuevo flujo planificado.
+
+    paso 1: insertar 'planificado' en pedido_asignaciones.
+    paso 2: enviar comando 'asignar' al pcbot.
+    paso 3: si exito -> 'ejecutando'; si fallo -> 'fallido'."""
+    pcbot_id = perfil["pcbot_id"]
+    perfil_id = perfil["perfil_id"]
+    comando_id = str(uuid4())
+    ahora_str = _ahora_str()
 
     if not duracion_horas or duracion_horas <= 0:
         duracion_seg = 60
     else:
-        duracion_seg = duracion_horas * 3600
+        duracion_seg = int(duracion_horas * 3600)
 
-    ahora_str = _ahora_str()
-    comando_id = str(uuid4())
-    hora_inicio = pedido.get("hora_inicio_programada")
-    hora_fin = pedido.get("hora_fin_programada")
+    # calcular liberacion_estimada
+    liberacion_dt = _ahora_dt() + timedelta(seconds=duracion_seg)
+    liberacion_str = liberacion_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    # paso 1: calcular timeout y registrar como 'reservado'
-    timeout_dt = _ahora_dt() + timedelta(seconds=TIMEOUT_RESERVA)
-    timeout_str = timeout_dt.strftime("%Y-%m-%d %H:%M:%S")
-
+    # paso 1: insertar planificado
     try:
         ejecutar_insercion(
-            "insert into pedido_asignaciones "
-            "(pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado, "
-            "comando_id, timeout) "
-            "values (?, ?, ?, ?, ?, ?, 'reservado', ?, ?)",
-            (pedido_id, perfil_id, pcbot_id, url, duracion_seg, ahora_str,
-             comando_id, timeout_str),
+            """insert into pedido_asignaciones
+               (pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado,
+                comando_id, liberacion_estimada)
+               values (?, ?, ?, ?, ?, ?, 'planificado', ?, ?)""",
+            (pedido_id, perfil_id, pcbot_id, url, duracion_seg,
+             ahora_str, comando_id, liberacion_str),
         )
     except Exception as e:
-        logger.error(
-            "[COLA] error insertando asignacion reservada para perfil %s: %s",
-            perfil_id, str(e)[:200],
-        )
+        logger.error("[MATCH] error insertando asignacion planificada perfil %s: %s",
+                     perfil_id, str(e)[:200])
         return False
 
-    # contar asignaciones actuales para log
-    asignadas = ejecutar_sql_unico(
-        "select count(*) as total from pedido_asignaciones "
-        "where pedido_id = ? and estado in ('activo', 'reservado')",
-        (pedido_id,),
-    )
-    asignados_actuales = asignadas["total"] if asignadas else 0
-    cantidad_total = pedido.get("cantidad_perfiles", 1)
-
-    logger.info(
-        "[COLA] perfil %s reservado para pedido %s (pcbot=%s, timeout=%s, %d/%d)",
-        perfil_id, pedido_id, pcbot_id, timeout_str,
-        asignados_actuales, cantidad_total,
-    )
+    logger.info("[MATCH] perfil %s planificado para pedido %s (pcbot=%s, libre_aprox=%s)",
+                perfil_id, pedido_id, pcbot_id, liberacion_str)
 
     # paso 2: construir y enviar comando
     parametros = {
@@ -331,78 +321,130 @@ async def _asignar_perfil(pedido: dict, pcbot_id: str, perfil_id: str) -> bool:
         "perfil_id": perfil_id,
     }
 
-    if hora_inicio:
-        parametros["hora_inicio"] = hora_inicio
-    if hora_fin:
-        parametros["hora_fin"] = hora_fin
-
     comando = {
         "tipo": "asignar",
         "comando_id": comando_id,
         "parametros": parametros,
     }
 
-    logger.info(
-        "[COLA] enviando comando asignar perfil %s a pcbot %s para pedido %s",
-        perfil_id, pcbot_id, pedido_id,
-    )
+    logger.info("[MATCH] enviando comando asignar perfil %s a pcbot %s para pedido %s",
+                perfil_id, pcbot_id, pedido_id)
 
-    resultado = await _enviar_comando_seguro(int(usuario_id), comando, pcbot_id)
+    resultado = await _enviar_comando_seguro(usuario_id, comando, pcbot_id)
 
-    # paso 3: procesar respuesta del pcbot
+    # paso 3: procesar respuesta
     if resultado.get("exito"):
-        # el pcbot recibio y acepto el comando
-        try:
-            ejecutar_sql(
-                "update pedido_asignaciones set estado = 'activo', timeout = null "
-                "where comando_id = ? and estado = 'reservado'",
-                (comando_id,),
-            )
-        except Exception as e:
-            logger.error(
-                "[COLA] error confirmando asignacion %s: %s",
-                comando_id, str(e)[:200],
-            )
-            return False
-
-        logger.info(
-            "[COLA] perfil %s confirmado por pcbot %s para pedido %s (%d/%d)",
-            perfil_id, pcbot_id, pedido_id,
-            asignados_actuales, cantidad_total,
+        ejecutar_sql(
+            "update pedido_asignaciones set estado = 'ejecutando' "
+            "where comando_id = ? and estado = 'planificado'",
+            (comando_id,),
         )
-
-        # si con esta asignacion se completa la cantidad deseada, pasar a en_progreso
-        if asignados_actuales >= cantidad_total:
-            ejecutar_sql(
-                "update pedidos set estado = 'en_progreso', fecha_inicio = ? where id = ?",
-                (ahora_str, pedido_id),
-            )
-            logger.info(
-                "[COLA] pedido %s: asignacion completa (%d/%d), estado -> en_progreso",
-                pedido_id, asignados_actuales, cantidad_total,
-            )
-
+        # actualizar liberacion_estimada en perfiles_roxy
+        ejecutar_sql(
+            "update perfiles_roxy set activo = 1, liberacion_estimada = ? "
+            "where hash = ? and pcbot_id = ?",
+            (liberacion_str, perfil_id, pcbot_id),
+        )
+        logger.info("[MATCH] perfil %s -> ejecutando en pcbot %s para pedido %s",
+                    perfil_id, pcbot_id, pedido_id)
         return True
     else:
-        # el pcbot rechazo el comando o hubo error de comunicacion
         error_msg = resultado.get("error", "error desconocido")
-        logger.warning(
-            "[COLA] fallo comando perfil %s en pcbot %s para pedido %s: %s",
-            perfil_id, pcbot_id, pedido_id, error_msg,
+        logger.warning("[MATCH] fallo comando perfil %s en pcbot %s: %s",
+                       perfil_id, pcbot_id, error_msg)
+        ejecutar_sql(
+            "update pedido_asignaciones set estado = 'fallido' "
+            "where comando_id = ? and estado = 'planificado'",
+            (comando_id,),
         )
+        return False
+
+
+async def _liberar_asignaciones_vencidas():
+    """libera asignaciones cuya duracion ya vencio.
+
+    busca asignaciones en estado 'ejecutando' cuya liberacion_estimada ya paso,
+    las marca como 'completado' y libera el perfil asociado.
+    """
+    ahora_str = _ahora_str()
+    vencidas = ejecutar_sql(
+        """select id, perfil_id, pcbot_id, pedido_id
+           from pedido_asignaciones
+           where estado = 'ejecutando'
+             and liberacion_estimada is not null
+             and liberacion_estimada <= ?""",
+        (ahora_str,),
+    )
+
+    if not vencidas:
+        return
+
+    for asig in vencidas:
+        try:
+            # marcar asignacion como completada
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'completado', fin = ? "
+                "where id = ? and estado = 'ejecutando'",
+                (ahora_str, asig["id"]),
+            )
+            # liberar perfil: mantener activo=1 (sigue conectado) pero quitar liberacion_estimada
+            if asig.get("perfil_id") and asig.get("pcbot_id"):
+                ejecutar_sql(
+                    "update perfiles_roxy set liberacion_estimada = null "
+                    "where hash = ? and pcbot_id = ?",
+                    (asig["perfil_id"], asig["pcbot_id"]),
+                )
+            logger.info("[MATCH] asignacion %s completada (vencio duracion), perfil %s liberado",
+                        asig["id"], asig.get("perfil_id"))
+        except Exception as e:
+            logger.error("[MATCH] error liberando asignacion %s: %s",
+                         asig["id"], str(e)[:200])
+
+    # verificar si hay pedidos completados (todas sus asignaciones estan completadas/fallidas)
+    pedidos_a_cerrar = ejecutar_sql(
+        """select p.id from pedidos p
+           where p.estado = 'en_progreso'
+             and not exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.pedido_id = p.id
+                   and pa.estado in ('planificado', 'ejecutando')
+             )
+             and exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.pedido_id = p.id
+                   and pa.estado in ('completado', 'fallido')
+             )"""
+    )
+    for pedido in (pedidos_a_cerrar or []):
         try:
             ejecutar_sql(
-                "update pedido_asignaciones set estado = 'fallido' "
-                "where comando_id = ? and estado = 'reservado'",
-                (comando_id,),
+                "update pedidos set estado = 'completado', fecha_fin = ? where id = ?",
+                (ahora_str, pedido["id"]),
             )
-            logger.info(
-                "[COLA] asignacion %s del perfil %s marcada como fallida",
-                comando_id, perfil_id,
-            )
+            logger.info("[MATCH] pedido %s completado (todas las asignaciones finalizadas)",
+                        pedido["id"])
         except Exception as e:
-            logger.error(
-                "[COLA] error marcando asignacion como fallida: %s",
-                str(e)[:200],
+            logger.error("[MATCH] error cerrando pedido %s: %s",
+                         pedido["id"], str(e)[:200])
+
+    # eliminar asignaciones huérfanas (planificado sin respuesta por >35s)
+    timeout_dt = _ahora_dt() - timedelta(seconds=TIEMPO_ESPERA_CONFIRMACION)
+    timeout_str = timeout_dt.strftime("%Y-%m-%d %H:%M:%S")
+    colgadas = ejecutar_sql(
+        """select id, perfil_id, pcbot_id, pedido_id from pedido_asignaciones
+           where estado = 'planificado'
+             and inicio is not null
+             and inicio <= ?""",
+        (timeout_str,),
+    )
+    for asig in (colgadas or []):
+        try:
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
             )
-        return False
+            logger.warning("[MATCH] asignacion planificada %s marcada fallida por timeout (>%ss)",
+                          asig["id"], TIEMPO_ESPERA_CONFIRMACION)
+        except Exception as e:
+            logger.error("[MATCH] error marcando timeout asignacion %s: %s",
+                         asig["id"], str(e)[:200])

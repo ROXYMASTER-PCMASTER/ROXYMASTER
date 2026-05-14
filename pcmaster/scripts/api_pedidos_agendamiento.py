@@ -141,7 +141,7 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
 
     # --- determinar estado inicial ---
     # ambos casos (programado y pendiente) los maneja procesador_cola.py
-    estado_inicial = "programado" if es_programado else "pendiente"
+    estado_inicial = "programado" if es_programado else "agendado"
 
     # --- guardar en bd con campos de agendamiento ---
     ahora = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -197,7 +197,7 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
             ),
         }
 
-    # pedido inmediato (pendiente)
+    # pedido inmediato (agendado)
     return {
         "exito": True,
         "pedido_id": pedido_id,
@@ -205,9 +205,9 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
         "comando_id": comando_id,
         "comando_enviado": False,
         "programado": False,
-        "estado": "pendiente",
+        "estado": "agendado",
         "mensaje": (
-            "pedido creado en cola pendiente. sera procesado por la cola fifo "
-            "y asignado a perfiles disponibles en los proximos segundos."
+            "pedido agendado para planificacion centralizada. "
+            "sera procesado en el proximo ciclo de heartbeat."
         ),
     }

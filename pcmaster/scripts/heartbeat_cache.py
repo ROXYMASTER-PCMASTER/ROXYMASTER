@@ -1,119 +1,50 @@
-# heartbeat_cache.py - cache en memoria del ultimo heartbeat de cada pcbot. roxymaster v8.3
-# modulo intermedio para que el vigilante de pedidos acceda a datos de heartbeat
-# sin depender de ws_manager ni de bd. utf-8 sin bom, <= 150 lineas
+# heartbeat_cache.py - cache minimo de ultimo heartbeat y eventos. roxymaster v8.3
+# en el nuevo modelo centralizado, el heartbeat solo transporta eventos.
+# este modulo almacena timestamp y eventos para diagnostico.
+# utf-8 sin bom, nombres en minusculas
 
 import logging
 from datetime import datetime
 
 logger = logging.getLogger("roxymaster.heartbeat_cache")
 
-# ---------------------------------------------------------------------------
-# cache en memoria: _cache[pcbot_id] = dict completo del ultimo heartbeat
-# ---------------------------------------------------------------------------
+# cache: {pcbot_id: {"ultimo_hb": str, "eventos": list, "recibido_en": str}}
 _cache: dict = {}
 
 
 def registrar_heartbeat(pcbot_id: str, datos: dict) -> None:
-    """almacena el contenido completo del ultimo heartbeat de un pcbot.
-    datos debe incluir "tipo", "pcbot_id", "uptime", "uptime_sec", "perfiles", etc.
-    cada perfil puede incluir "state": "activo"|"libre"|"caido" ademas de
-    "profile_id", "activo", "url", "tiempo_conectado_seg"."""
+    """almacena el timestamp y los eventos del ultimo heartbeat de un pcbot.
+    en el nuevo modelo, datos["eventos"] es una lista de eventos explicitos.
+    si no hay eventos, solo se actualiza el timestamp."""
     if not pcbot_id or not datos:
         return
-    perfiles_procesados = []
-    for p in datos.get("perfiles", []):
-        entry = {
-            "profile_id": p.get("profile_id", p.get("id", "")),
-            "activo": bool(p.get("activo", False)),
-            "url": p.get("url", ""),
-            "tiempo_conectado_seg": p.get("tiempo_conectado_seg", 0),
-            "state": p.get("estado", p.get("state", "activo" if p.get("activo", False) else "libre")),
-        }
-        perfiles_procesados.append(entry)
 
-    _cache[pcbot_id] = {
-        "pcbot_id": pcbot_id,
-        "uptime": datos.get("uptime", ""),
-        "uptime_sec": datos.get("uptime_sec", 0),
-        "perfiles": perfiles_procesados,
-        "recibido_en": datetime.now().isoformat(),
-    }
-    logger.debug("heartbeat cache actualizado para pcbot %s (%d perfiles)",
-                 pcbot_id, len(_cache[pcbot_id]["perfiles"]))
+    eventos = datos.get("eventos", [])
+    entry = _cache.get(pcbot_id, {})
+    entry["ultimo_hb"] = datetime.now().isoformat()
+    entry["recibido_en"] = datetime.now().isoformat()
+    entry["pcbot_id"] = pcbot_id
+
+    if eventos:
+        entry["eventos"] = list(eventos)  # copia superficial
+        logger.debug("heartbeat cache: pcbot %s recibio %d eventos",
+                     pcbot_id, len(eventos))
+    else:
+        entry["eventos"] = []
+        logger.debug("heartbeat cache: pcbot %s heartbeat sin eventos", pcbot_id)
+
+    _cache[pcbot_id] = entry
 
 
 def obtener_heartbeat(pcbot_id: str) -> dict:
-    """devuelve el dict completo del ultimo heartbeat, o dict vacio."""
+    """devuelve el dict del ultimo heartbeat o dict vacio."""
     return _cache.get(pcbot_id, {})
 
 
-def obtener_perfiles_activos(pcbot_id: str) -> list:
-    """devuelve lista de perfiles con activo=true del ultimo heartbeat.
-    cada elemento: {"profile_id", "activo", "url", "tiempo_conectado_seg", "state"}"""
+def ultimo_evento(pcbot_id: str) -> list:
+    """devuelve la lista de eventos del ultimo heartbeat."""
     hb = _cache.get(pcbot_id, {})
-    perfiles = hb.get("perfiles", [])
-    return [
-        {
-            "profile_id": p.get("profile_id", ""),
-            "activo": bool(p.get("activo", False)),
-            "url": p.get("url", ""),
-            "tiempo_conectado_seg": p.get("tiempo_conectado_seg", 0),
-            "state": p.get("estado", p.get("state", "activo")),
-        }
-        for p in perfiles
-        if p.get("activo", False)
-    ]
-
-
-def obtener_url_perfil(pcbot_id: str, profile_id: str) -> str:
-    """busca un perfil en el cache del pcbot y devuelve su url.
-    retorna string vacio si no lo encuentra."""
-    hb = _cache.get(pcbot_id, {})
-    for p in hb.get("perfiles", []):
-        pid = p.get("profile_id", "")
-        if pid == profile_id:
-            return p.get("url", "")
-    return ""
-
-
-def obtener_estado_perfil(pcbot_id: str, profile_id: str) -> str:
-    """busca un perfil en el cache del pcbot y devuelve su state.
-    retorna 'libre' como fallback si no se encuentra perfil (backwards-compat)."""
-    hb = _cache.get(pcbot_id, {})
-    for p in hb.get("perfiles", []):
-        pid = p.get("profile_id", "")
-        if pid == profile_id:
-            state = p.get("estado", p.get("state", ""))
-            if state:
-                return state
-            # fallback si no tiene state: usar activo bool
-            p_activo = p.get("activo", False)
-            return "activo" if p_activo else "libre"
-    return "libre"
-
-
-def obtener_perfiles_libres(pcbot_id: str) -> list:
-    """devuelve lista de profile_id que estan en el cache pero no activos.
-    son candidatos a ser reasignados.
-    nota: excluye perfiles con state='caido' (requieren intervencion manual)."""
-    hb = _cache.get(pcbot_id, {})
-    perfiles = hb.get("perfiles", [])
-    libres = []
-    for p in perfiles:
-        pid = p.get("profile_id", "")
-        activo = bool(p.get("activo", False))
-        state = p.get("estado", p.get("state", ""))
-        # excluir caidos
-        if state == "caido":
-            continue
-        if not activo and pid:
-            libres.append({
-                "profile_id": pid,
-                "url": p.get("url", ""),
-                "tiempo_conectado_seg": p.get("tiempo_conectado_seg", 0),
-                "state": state if state else "libre",
-            })
-    return libres
+    return hb.get("eventos", [])
 
 
 def limpiar_cache(pcbot_id: str = None) -> None:
@@ -129,24 +60,24 @@ def test_cache():
     datos = {
         "tipo": "heartbeat",
         "pcbot_id": "PCWILMER",
-        "uptime": "22h 9m",
-        "uptime_sec": 79751,
-        "perfiles": [
-            {"profile_id": "perf1", "activo": True, "url": "https://kick.com/canal1",
-             "tiempo_conectado_seg": 1234, "state": "activo"},
-            {"profile_id": "perf2", "activo": False, "url": "",
-             "tiempo_conectado_seg": 0, "state": "caido"},
-            {"profile_id": "perf3", "activo": False, "url": "",
-             "tiempo_conectado_seg": 0, "state": "libre"},
-            {"profile_id": "perf4", "activo": True, "url": "https://kick.com/canal3",
-             "tiempo_conectado_seg": 567, "state": "activo"},
+        "eventos": [
+            {"tipo": "perfil_caido", "perfil_id": "abc123"},
+            {"tipo": "nuevo_perfil", "perfil_id": "def456"},
         ],
     }
     registrar_heartbeat("PCWILMER", datos)
-    print("activos:", obtener_perfiles_activos("PCWILMER"))
-    print("url perf1:", obtener_url_perfil("PCWILMER", "perf1"))
-    print("estado perf2:", obtener_estado_perfil("PCWILMER", "perf2"))
-    print("libres (no incluye caidos):", obtener_perfiles_libres("PCWILMER"))
+    print("cache:", _cache.get("PCWILMER"))
+    print("eventos:", ultimo_evento("PCWILMER"))
+
+    # heartbeat sin eventos
+    datos_sin_eventos = {
+        "tipo": "heartbeat",
+        "pcbot_id": "PCWILMER",
+        "eventos": [],
+    }
+    registrar_heartbeat("PCWILMER", datos_sin_eventos)
+    print("ultimo hb:", obtener_heartbeat("PCWILMER"))
+    print("eventos:", ultimo_evento("PCWILMER"))
 
 
 if __name__ == "__main__":
