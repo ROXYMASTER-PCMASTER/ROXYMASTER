@@ -1,0 +1,988 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\PCMASTER\\Desktop\\roxymaster\\pcmaster']
+INFO:     Uvicorn running on http://0.0.0.0:8086 (Press CTRL+C to quit)
+INFO:     Started reloader process [17400] using WatchFiles
+C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\scripts\api_monitoreo.py:83: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  nivel: str = Query(None, regex="^(info|warn|error|debug)$"),
+2026-05-12 23:29:12,479 [roxymaster.server] INFO: routers registrados: auth, kbt, dashboard_core, dashboard_ext, marketplace, comandos, admin, superadmin, tokenomics, roxykey, mensajes, public_perfiles, public_finanzas, public_referidos, public_sistema, public_marketplace_ext, dashboard, encriptacion, monitoreo, pedidos, retiros, referidos, version, computadoras, pedidos_acciones, pedidos_agendamiento
+INFO:     Started server process [5300]
+INFO:     Waiting for application startup.
+2026-05-12 23:29:12,495 [roxymaster.server] INFO: iniciando roxymaster server v8.3...
+2026-05-12 23:29:12,495 [roxymaster.server] INFO: configuracion cargada: puerto=8086
+2026-05-12 23:29:12,495 [roxymaster.server] INFO: base de datos inicializada: C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\data\roxymaster.db
+2026-05-12 23:29:12,495 [roxymaster.db_pedidos_ext] INFO: [DB_EXT] columna hora_inicio_programada ya existe
+2026-05-12 23:29:12,495 [roxymaster.db_pedidos_ext] INFO: [DB_EXT] columna hora_fin_programada ya existe
+2026-05-12 23:29:12,495 [roxymaster.db_pedidos_ext] INFO: [DB_EXT] columnas de agendamiento verificadas/agregadas correctamente
+2026-05-12 23:29:12,495 [roxymaster.server] INFO: columnas de agendamiento verificadas/agregadas
+2026-05-12 23:29:12,511 [roxymaster.db_pedidos_vigilante] INFO: tabla pedido_asignaciones verificada/creada
+2026-05-12 23:29:12,511 [roxymaster.server] INFO: tablas del vigilante de pedidos creadas
+2026-05-12 23:29:12,512 [roxymaster.tasks] INFO: registros de tareas inicializados
+2026-05-12 23:29:12,545 [roxymaster.server] INFO: tareas periodicas iniciadas
+2026-05-12 23:29:12,545 [roxymaster.server] INFO: vigilante de pedidos iniciado
+2026-05-12 23:29:12,545 [roxymaster.server] INFO: procesador de cola de pedidos iniciado
+2026-05-12 23:29:12,545 [roxymaster.tasks] INFO: iniciando tareas periodicas...
+2026-05-12 23:29:12,566 [vigilante_pedidos] INFO: vigilante de pedidos iniciado (intervalo 30s)
+2026-05-12 23:29:12,566 [procesador_cola] INFO: procesador de cola pedidos iniciado (intervalo 10s)
+2026-05-12 23:29:12,566 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     Application startup complete.
+INFO:     100.85.100.109:50836 - "WebSocket /ws/PCWILMER" [accepted]
+2026-05-12 23:29:21,901 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+INFO:     100.85.100.109:50837 - "WebSocket /ws/PCWILMER" [accepted]
+2026-05-12 23:29:21,905 [roxymaster.server] INFO: pcbot conectado via ws: PCWILMER
+INFO:     connection open
+INFO:     connection open
+2026-05-12 23:29:21,914 [roxymaster.ws_manager] INFO: [WS-DIAG] registrar_conexion OK: usuario=33 pcbot=PCWILMER
+2026-05-12 23:29:21,915 [roxymaster.server] INFO: [DIAG-SYNC-WS] usuario 33 registrado en ws_manager via mensaje tipo=handshake
+2026-05-12 23:29:21,919 [roxymaster.ws_manager] INFO: [WS-DIAG] registrar_conexion OK: usuario=33 pcbot=PCWILMER
+2026-05-12 23:29:21,919 [roxymaster.server] INFO: [DIAG-SYNC-WS] usuario 33 registrado en ws_manager via mensaje tipo=handshake
+2026-05-12 23:29:21,919 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 57m', 'uptime_sec': 3465, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:28:21.89343
+2026-05-12 23:29:21,920 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:29:21,933 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:21,945 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:21,945 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:21,969 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:21,980 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:21,983 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:29:21,984 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 4m', 'uptime_sec': 294, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:28:21.897088Z
+2026-05-12 23:29:21,984 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:29:22,002 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:22,003 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:22,019 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:22,026 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:22,036 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:22,038 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:29:22,580 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:29:32,579 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:29:42,580 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:29:52,047 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 58m', 'uptime_sec': 3496, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:28:52.02832
+2026-05-12 23:29:52,047 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:29:52,065 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,072 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,083 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,092 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,104 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,107 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:29:52,108 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 5m', 'uptime_sec': 325, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:28:52.074785Z
+2026-05-12 23:29:52,109 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:29:52,122 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,135 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,147 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,156 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,164 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:29:52,165 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:29:52,583 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:02,580 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:12,603 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:22,204 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 58m', 'uptime_sec': 3526, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:29:22.18471
+2026-05-12 23:30:22,204 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:30:22,210 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,226 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,226 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,226 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,226 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,242 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:30:22,265 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 5m', 'uptime_sec': 355, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:29:22.246700Z
+2026-05-12 23:30:22,265 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:30:22,266 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,281 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,281 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,281 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,296 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:22,296 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:30:22,644 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:32,649 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:42,667 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:43,072 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=6 horas=0.016666666666666666 costo=0.00333
+2026-05-12 23:30:43,072 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:30:43,072 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=150
+2026-05-12 23:30:43,088 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:30:43,088 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:30:43,088 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:30:43,088 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_b569af71e88c", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 6, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:30:43,088 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:30:43,088 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_b569af71e88c
+2026-05-12 23:30:43,088 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:30:43,088 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:30:43,090 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:30:43,097 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #150 usuario=33 costo=0.00333 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:30:52,372 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 6m', 'uptime_sec': 385, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:29:52.353774Z
+2026-05-12 23:30:52,373 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:30:52,393 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:52,393 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:52,408 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:52,408 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:52,408 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:52,408 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:30:52,672 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:30:53,104 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 59m', 'uptime_sec': 3557, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:29:53.08453
+2026-05-12 23:30:53,104 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:30:53,133 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:53,133 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:53,141 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:53,141 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:53,153 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:30:53,155 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:31:02,686 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:12,691 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:22,493 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 6m', 'uptime_sec': 415, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:30:22.474082Z
+2026-05-12 23:31:22,493 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:31:22,509 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:22,525 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:22,525 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:22,533 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:22,533 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:22,533 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:31:22,691 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:31:23,207 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 59m', 'uptime_sec': 3587, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:30:23.18812
+2026-05-12 23:31:23,207 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:31:23,223 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:23,227 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:23,232 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:23,237 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:23,242 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:23,244 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:31:32,687 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:39,333 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=6 horas=0.016666666666666666 costo=0.00333
+2026-05-12 23:31:39,333 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=151
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:31:39,350 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_d868bf4eb613", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 6, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:31:39,350 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_d868bf4eb613
+2026-05-12 23:31:39,350 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:31:39,350 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:31:39,365 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:31:39,373 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #151 usuario=33 costo=0.00333 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:42,686 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:52,636 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 7m', 'uptime_sec': 445, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:30:52.606184Z
+2026-05-12 23:31:52,636 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:31:52,652 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:52,667 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:52,675 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:52,682 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:52,689 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:52,692 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:31:52,696 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:31:54,397 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 0m', 'uptime_sec': 3618, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:30:54.378294
+2026-05-12 23:31:54,398 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:31:54,409 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:54,419 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:54,425 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:54,433 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:54,435 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:31:54,435 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:31:57,254 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:31:57,255 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:31:57,264 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=152
+2026-05-12 23:31:57,269 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:31:57,269 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:31:57,269 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:31:57,269 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_72e58f57cf96", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:31:57,269 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:31:57,269 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_72e58f57cf96
+2026-05-12 23:31:57,269 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:31:57,269 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:31:57,275 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:31:57,287 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #152 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:00,876 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:32:00,876 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:32:00,885 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=153
+2026-05-12 23:32:00,894 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:32:00,894 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:00,894 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:32:00,894 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_7223f803c279", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:32:00,894 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:32:00,894 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_7223f803c279
+2026-05-12 23:32:00,895 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:00,895 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:32:00,895 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:32:00,905 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #153 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:02,701 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:32:04,302 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:32:04,302 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=154
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:32:04,319 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_6a55e187fa4e", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:32:04,319 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_6a55e187fa4e
+2026-05-12 23:32:04,319 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:04,330 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:32:04,330 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:32:04,341 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #154 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:08,722 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:32:08,722 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:32:08,734 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=155
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:32:08,741 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_d7bdcf8d2639", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_d7bdcf8d2639
+2026-05-12 23:32:08,741 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:08,741 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:32:08,741 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:32:08,751 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #155 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:12,701 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:32:13,166 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:32:13,166 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:32:13,176 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=156
+2026-05-12 23:32:13,186 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:32:13,186 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:13,186 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:32:13,186 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_eb5a29aa0027", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:32:13,186 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:32:13,186 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_eb5a29aa0027
+2026-05-12 23:32:13,186 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:13,187 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:32:13,187 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:32:13,195 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #156 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:22,712 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:32:22,792 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 7m', 'uptime_sec': 475, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:31:22.772497Z
+2026-05-12 23:32:22,792 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:32:22,801 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:22,818 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:22,818 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:22,840 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:22,850 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:22,854 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:32:25,229 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] uid=33 url=https://kick.com/FANTASMITAKELI perfiles=1 horas=0.016666666666666666 costo=0.000555
+2026-05-12 23:32:25,229 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 1/6: insertando pedido en bd uid=33 url=https://kick.com/FANTASMITAKELI
+2026-05-12 23:32:25,240 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 2/6: pedido insertado id=157
+2026-05-12 23:32:25,253 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid=33) - conexiones activas en ws_manager
+2026-05-12 23:32:25,253 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:25,253 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='PCWILMER' tipo=str
+2026-05-12 23:32:25,253 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='PCWILMER': {"tipo": "asignar", "comando_id": "pedido_14cedd291cd9", "parametros": {"url": "https://kick.com/FANTASMITAKELI", "cantidad": 1, "duracion": 60, "nivel_comentarios": "basico"}}
+2026-05-12 23:32:25,253 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pcbot_id='PCWILMER' presente en ws_manager? CHEQUEAR LOGS
+2026-05-12 23:32:25,253 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id=33) pcbot_id='PCWILMER' comando_id=pedido_14cedd291cd9
+2026-05-12 23:32:25,253 [roxymaster.ws_manager] INFO: [WS-DIAG] obtener_pcbot_de_usuario(33) -> 'PCWILMER'
+2026-05-12 23:32:25,253 [roxymaster.ws_manager] INFO: [WS-DIAG] enviado a pcbot PCWILMER tipo=asignar
+2026-05-12 23:32:25,256 [roxymaster.api_pedidos] INFO: [PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={"exito": true}
+2026-05-12 23:32:25,265 [roxymaster.api_pedidos] INFO: [PEDIDO-DIAG] pedido creado #157 usuario=33 costo=0.000555 pcbot_id='PCWILMER'
+INFO:     181.176.72.106:0 - "POST /api/pedidos/crear HTTP/1.1" 200 OK
+2026-05-12 23:32:25,266 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 0m', 'uptime_sec': 3649, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:31:25.238879
+2026-05-12 23:32:25,266 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:32:25,270 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:25,286 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:25,286 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:25,306 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:25,312 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:25,312 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:32,723 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:42,720 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:32:52,722 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:32:52,943 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 8m', 'uptime_sec': 505, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:31:52.923576Z
+2026-05-12 23:32:52,944 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:32:52,955 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:52,970 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:52,977 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:52,992 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:52,997 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:53,005 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:32:55,395 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 1m', 'uptime_sec': 3679, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:31:55.376098
+2026-05-12 23:32:55,396 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:32:55,407 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:55,422 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:55,430 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:55,440 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:55,447 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:32:55,447 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:33:02,721 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:33:12,706 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:33:22,705 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:33:23,100 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 8m', 'uptime_sec': 536, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:32:23.054913Z
+2026-05-12 23:33:23,100 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:33:23,125 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:23,137 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:23,148 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:23,160 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:23,174 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:23,179 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:33:25,535 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 1m', 'uptime_sec': 3709, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:32:25.515686
+2026-05-12 23:33:25,536 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:33:25,540 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:25,555 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:25,555 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:25,571 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:25,576 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:25,580 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:33:32,722 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET / HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET / HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET / HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET / HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET / HTTP/1.1" 200 OK
+INFO:     181.176.72.106:0 - "GET /css/estilo_gamer.css HTTP/1.1" 404 Not Found
+INFO:     181.176.72.106:0 - "GET /js/main.js HTTP/1.1" 404 Not Found
+INFO:     181.176.72.106:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2026-05-12 23:33:42,723 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:33:52,723 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:33:53,288 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 9m', 'uptime_sec': 566, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:32:53.267940Z
+2026-05-12 23:33:53,288 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:33:53,390 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:53,397 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:53,405 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:53,405 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:53,421 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:53,425 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:33:55,606 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 2m', 'uptime_sec': 3739, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:32:55.586111
+2026-05-12 23:33:55,606 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:33:55,626 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:55,636 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:55,645 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:55,655 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:55,663 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:33:55,663 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:34:02,723 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'scripts\procesador_cola.py'. Reloading...
+ 2026-05-12 23:34:12,722 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:34:22,705 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:34:23,489 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 9m', 'uptime_sec': 596, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:33:23.468348Z
+2026-05-12 23:34:23,489 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:34:23,507 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:23,507 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:23,524 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:23,533 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:23,543 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:23,546 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:34:25,705 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 2m', 'uptime_sec': 3769, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:33:25.684327
+2026-05-12 23:34:25,705 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:34:25,745 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:25,778 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:25,789 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:25,805 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:25,805 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:25,805 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:34:32,706 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:34:42,707 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:34:52,709 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:34:53,579 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 10m', 'uptime_sec': 626, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:33:53.559251
+2026-05-12 23:34:53,580 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:34:53,591 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:53,606 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:53,606 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:53,628 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:53,635 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:53,638 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:34:55,857 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 3m', 'uptime_sec': 3799, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:33:55.837359
+2026-05-12 23:34:55,858 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:34:55,877 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:55,885 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:55,891 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:55,891 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:55,911 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:34:55,914 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:35:02,706 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:35:12,710 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:35:22,726 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:35:23,702 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 10m', 'uptime_sec': 656, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:34:23.681763
+2026-05-12 23:35:23,702 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:35:23,713 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:23,713 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:23,724 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:23,724 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:23,740 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:23,740 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:35:26,016 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 3m', 'uptime_sec': 3830, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:34:25.993762
+2026-05-12 23:35:26,016 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:35:26,039 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:26,055 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:26,067 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:26,079 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:26,085 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:26,085 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:35:32,746 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:35:42,755 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:35:52,772 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:35:53,805 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 11m', 'uptime_sec': 686, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:34:53.784628
+2026-05-12 23:35:53,806 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:35:53,832 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:53,858 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:53,859 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:53,875 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:53,875 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:53,875 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:35:56,176 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 4m', 'uptime_sec': 3860, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:34:56.155616
+2026-05-12 23:35:56,177 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:35:56,197 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:56,197 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:56,213 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:56,231 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:56,242 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:35:56,243 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:36:02,780 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:36:12,794 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:36:22,804 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:36:23,974 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 11m', 'uptime_sec': 716, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:35:23.952541
+2026-05-12 23:36:23,974 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:36:23,985 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:24,000 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:24,021 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:24,027 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:24,043 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:24,043 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:36:26,336 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 4m', 'uptime_sec': 3890, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:35:26.315220
+2026-05-12 23:36:26,336 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:36:26,357 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:26,373 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:26,373 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:26,396 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:26,400 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:26,400 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:36:32,822 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:36:42,820 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:36:52,838 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:36:54,133 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 12m', 'uptime_sec': 747, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:35:54.111856
+2026-05-12 23:36:54,133 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:36:54,160 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:54,174 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:54,189 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:54,197 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:54,197 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:54,197 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:36:56,493 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 5m', 'uptime_sec': 3920, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:35:56.471844
+2026-05-12 23:36:56,493 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:36:56,514 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:56,514 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:56,530 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:56,548 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:56,557 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:36:56,557 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:37:02,840 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:37:12,854 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:37:22,857 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:37:24,293 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 12m', 'uptime_sec': 777, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:36:24.270973
+2026-05-12 23:37:24,293 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:37:24,303 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:24,319 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:24,319 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:24,344 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:24,346 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:24,346 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:37:26,648 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 5m', 'uptime_sec': 3950, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:36:26.626095
+2026-05-12 23:37:26,648 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:37:26,662 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:26,678 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:26,678 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:26,702 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:26,705 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:26,705 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:37:32,853 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:37:42,875 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:37:52,892 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:37:54,420 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 13m', 'uptime_sec': 807, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:36:54.398098
+2026-05-12 23:37:54,420 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:37:54,447 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:54,447 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:54,475 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:54,475 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:54,491 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:54,506 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:37:56,748 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 6m', 'uptime_sec': 3980, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:36:56.725760
+2026-05-12 23:37:56,748 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:37:56,769 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:56,785 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:56,785 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:56,811 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:56,812 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:37:56,828 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:38:02,902 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:38:12,904 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:38:22,914 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:38:24,575 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 13m', 'uptime_sec': 837, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:37:24.553454
+2026-05-12 23:38:24,575 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:38:24,580 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:24,596 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:24,596 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:24,610 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:24,610 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:24,610 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:38:26,885 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 6m', 'uptime_sec': 4010, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:37:26.863813
+2026-05-12 23:38:26,886 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:38:26,906 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:26,906 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:26,922 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:26,922 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:26,946 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:26,948 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:38:32,918 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:38:42,925 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     204.101.161.15:0 - "GET / HTTP/1.1" 200 OK
+INFO:     204.101.161.15:0 - "GET / HTTP/1.1" 200 OK
+2026-05-12 23:38:52,918 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     204.101.161.15:0 - "GET /css/estilo_gamer.css HTTP/1.1" 404 Not Found
+INFO:     204.101.161.15:0 - "GET /js/main.js HTTP/1.1" 404 Not Found
+INFO:     204.101.161.15:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2026-05-12 23:38:54,642 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 14m', 'uptime_sec': 867, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:37:54.620571
+2026-05-12 23:38:54,643 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:38:54,653 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:54,653 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:54,669 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:54,688 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:54,697 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:54,697 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:38:57,027 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 7m', 'uptime_sec': 4041, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:37:57.004813
+2026-05-12 23:38:57,027 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:38:57,042 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:57,042 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:57,058 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:57,058 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:57,083 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:38:57,085 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:39:02,915 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:39:12,927 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:39:22,922 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:39:24,777 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 14m', 'uptime_sec': 897, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:38:24.755427
+2026-05-12 23:39:24,778 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:39:24,789 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:24,789 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:24,804 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:24,804 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:24,828 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:24,831 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:39:27,153 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 7m', 'uptime_sec': 4071, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:38:27.131434
+2026-05-12 23:39:27,154 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:39:27,171 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:27,171 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:27,184 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:27,184 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:27,203 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:27,206 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:39:32,922 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:39:42,943 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:39:52,941 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:39:54,907 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 15m', 'uptime_sec': 927, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:38:54.884582
+2026-05-12 23:39:54,907 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:39:54,933 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:54,933 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:54,949 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:54,949 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:54,967 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:54,970 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:39:57,276 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 8m', 'uptime_sec': 4101, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:38:57.253796
+2026-05-12 23:39:57,276 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:39:57,294 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:57,295 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:57,295 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:57,310 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:57,327 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:39:57,330 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:40:02,938 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:40:12,936 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:40:22,944 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:40:25,050 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 15m', 'uptime_sec': 958, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:39:25.028132
+2026-05-12 23:40:25,051 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:40:25,061 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:25,061 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:25,077 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:25,077 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:25,098 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:25,101 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:40:27,418 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 8m', 'uptime_sec': 4131, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:39:27.394707
+2026-05-12 23:40:27,418 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:40:27,424 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:27,440 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:27,440 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:27,440 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:27,456 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:27,456 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:40:32,950 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:40:42,960 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:40:52,974 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:40:55,190 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 16m', 'uptime_sec': 988, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:39:55.167047
+2026-05-12 23:40:55,190 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:40:55,216 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:55,234 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:55,243 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:55,243 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:55,259 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:55,259 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:40:57,502 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 9m', 'uptime_sec': 4161, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:39:57.479689
+2026-05-12 23:40:57,502 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:40:57,518 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:57,534 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:57,540 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:57,562 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:57,565 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:40:57,565 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:41:02,962 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:41:12,945 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:41:22,967 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:41:25,356 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 16m', 'uptime_sec': 1018, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:40:25.33315
+2026-05-12 23:41:25,356 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:41:25,367 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:25,367 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:25,383 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:25,383 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:25,404 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:25,407 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:41:27,639 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 9m', 'uptime_sec': 4191, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:40:27.616396
+2026-05-12 23:41:27,640 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:41:27,656 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:27,656 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:27,671 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:27,671 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:27,688 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:27,691 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:41:32,985 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:41:43,004 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:41:53,025 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:41:55,428 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 17m', 'uptime_sec': 1048, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:40:55.40464
+2026-05-12 23:41:55,428 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:41:55,439 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:55,454 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:55,454 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:55,475 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:55,482 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:55,482 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:41:57,747 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 10m', 'uptime_sec': 4221, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:40:57.72459
+2026-05-12 23:41:57,748 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:41:57,751 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:57,767 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:57,767 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:57,783 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:57,783 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:41:57,798 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:42:03,031 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:42:13,054 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:42:23,064 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:42:25,542 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 17m', 'uptime_sec': 1078, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:41:25.51798
+2026-05-12 23:42:25,542 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:42:25,552 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:25,562 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:25,576 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:25,578 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:25,578 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:25,596 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:42:27,840 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 10m', 'uptime_sec': 4251, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:41:27.81609
+2026-05-12 23:42:27,840 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:42:27,849 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:27,849 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:27,864 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:27,873 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:27,875 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:27,875 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:42:33,072 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:42:43,078 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:42:53,087 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:42:55,670 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 18m', 'uptime_sec': 1108, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:41:55.64652
+2026-05-12 23:42:55,670 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:42:55,681 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:55,696 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:55,696 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:55,719 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:55,724 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:55,724 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:42:57,972 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 11m', 'uptime_sec': 4281, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:41:57.94854
+2026-05-12 23:42:57,972 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:42:57,992 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:57,992 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:58,008 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:58,023 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:58,039 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:42:58,039 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:43:03,103 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:43:13,128 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:43:23,132 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:43:25,793 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 18m', 'uptime_sec': 1138, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:42:25.76947
+2026-05-12 23:43:25,793 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:43:25,804 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:25,804 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:25,820 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:25,820 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:25,842 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:25,845 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:43:28,124 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 11m', 'uptime_sec': 4312, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:42:28.10050
+2026-05-12 23:43:28,124 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:43:28,137 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:28,153 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:28,170 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:28,170 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:28,181 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:28,181 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:43:33,130 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:43:43,135 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+INFO:     2a06:98c0:3600::103:0 - "GET /wp-admin/install.php?step=1 HTTP/1.1" 404 Not Found
+2026-05-12 23:43:53,157 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:43:55,929 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 19m', 'uptime_sec': 1168, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:42:55.90464
+2026-05-12 23:43:55,929 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:43:56,004 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:56,020 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:56,020 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:56,035 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:56,051 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:56,051 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:43:58,262 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 12m', 'uptime_sec': 4342, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:42:58.23836
+2026-05-12 23:43:58,262 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:43:58,293 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:58,293 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:58,317 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:58,320 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:58,336 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:43:58,336 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:44:03,150 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:44:13,161 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:44:23,161 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:44:26,127 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 19m', 'uptime_sec': 1199, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:43:26.10289
+2026-05-12 23:44:26,127 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:44:26,153 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:26,179 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:26,180 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:26,195 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:26,195 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:26,195 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:44:28,411 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 12m', 'uptime_sec': 4372, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:43:28.38690
+2026-05-12 23:44:28,411 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:44:28,427 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:28,442 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:28,442 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:28,458 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:28,476 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:28,479 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:44:33,162 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:44:43,163 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:44:53,174 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:44:56,271 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 20m', 'uptime_sec': 1229, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:43:56.24702
+2026-05-12 23:44:56,271 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:44:56,320 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:56,325 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:56,325 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:56,325 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:56,341 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:56,341 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:44:58,564 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 13m', 'uptime_sec': 4402, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:43:58.54066
+2026-05-12 23:44:58,565 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:44:58,595 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:58,595 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:58,612 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:58,619 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:58,621 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:44:58,621 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:45:03,187 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:45:13,188 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:45:23,191 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:45:26,427 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 20m', 'uptime_sec': 1259, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:44:26.40327
+2026-05-12 23:45:26,428 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:45:26,445 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:26,461 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:26,461 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:26,461 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:26,483 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:26,486 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:45:28,707 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 13m', 'uptime_sec': 4432, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:44:28.68336
+2026-05-12 23:45:28,708 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:45:28,724 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:28,739 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:28,743 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:28,762 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:28,770 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:28,770 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+INFO:     127.0.0.1:49780 - "GET /api/health HTTP/1.1" 200 OK
+2026-05-12 23:45:33,205 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:45:43,220 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:45:53,221 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:45:56,562 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 21m', 'uptime_sec': 1289, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:44:56.53775
+2026-05-12 23:45:56,562 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:45:56,587 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:56,587 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:56,602 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:56,610 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:56,615 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:56,615 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:45:58,859 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 14m', 'uptime_sec': 4462, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:44:58.83472
+2026-05-12 23:45:58,859 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:45:58,897 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:58,923 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:58,923 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:58,955 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:58,955 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:45:58,970 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:46:03,227 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:46:13,254 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:46:23,266 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:46:26,676 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 21m', 'uptime_sec': 1319, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:45:26.65100
+2026-05-12 23:46:26,676 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:46:26,702 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:26,727 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:26,729 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:26,745 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:26,761 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:26,761 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:46:29,054 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 14m', 'uptime_sec': 4493, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:45:29.03019
+2026-05-12 23:46:29,055 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:46:29,071 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:29,086 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:29,086 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:29,113 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:29,120 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:29,120 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:46:33,263 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:46:43,270 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:46:53,261 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:46:56,822 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 22m', 'uptime_sec': 1349, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:45:56.79699
+2026-05-12 23:46:56,822 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:46:56,849 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:56,849 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:56,864 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:56,882 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:56,891 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:56,891 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:46:59,209 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 15m', 'uptime_sec': 4523, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:45:59.18397
+2026-05-12 23:46:59,209 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:46:59,230 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:59,246 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:59,246 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:59,273 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:59,273 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:46:59,288 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+INFO:     205.169.39.4:0 - "GET / HTTP/1.1" 200 OK
+INFO:     205.169.39.4:0 - "GET /css/estilo_gamer.css HTTP/1.1" 404 Not Found
+INFO:     205.169.39.4:0 - "GET /js/main.js HTTP/1.1" 404 Not Found
+2026-05-12 23:47:03,241 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:47:13,259 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:47:23,243 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:47:26,957 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 22m', 'uptime_sec': 1379, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:46:26.93149
+2026-05-12 23:47:26,957 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:47:26,968 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:26,983 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:27,003 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:27,010 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:27,010 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:27,025 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:47:29,356 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 15m', 'uptime_sec': 4553, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:46:29.33090
+2026-05-12 23:47:29,356 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:47:29,377 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:29,393 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:29,393 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:29,419 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:29,420 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:29,436 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:47:33,251 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:47:43,258 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:47:53,269 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+2026-05-12 23:47:57,095 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '0h 23m', 'uptime_sec': 1410, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:46:57.06946
+2026-05-12 23:47:57,095 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:47:57,123 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:57,123 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:57,148 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:57,151 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:57,169 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:57,169 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:47:59,526 [orchestrator] INFO: [HB-DEBUG] Heartbeat recibido de PCWILMER, datos={'tipo': 'heartbeat', 'pcbot_id': 'PCWILMER', 'uptime': '1h 16m', 'uptime_sec': 4583, 'modo': 'offline', 'conectado_desde': '2026-05-13T04:46:59.50083
+2026-05-12 23:47:59,526 [orchestrator] INFO: [HB] Heartbeat recibido de PCWILMER, enviando ack
+2026-05-12 23:47:59,542 [orchestrator] WARNING: error actualizando perfil cdbe0ca01ebb6216fcfaf7b820f321ee: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:59,558 [orchestrator] WARNING: error actualizando perfil 96aa36332bf522e7f201a5d0e913287c: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:59,559 [orchestrator] WARNING: error actualizando perfil 747a3c2406e0c8f1454bd379e5558e5b: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:59,572 [orchestrator] WARNING: error actualizando perfil 2e137cbf9db8a38c6b6d244556adfd47: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:59,589 [orchestrator] WARNING: error actualizando perfil 9713f2ca9fb3570bd20fc87c3507beb6: table perfiles_roxy has no column named creado_en
+2026-05-12 23:47:59,593 [orchestrator] INFO: [ORCH-DIAG] _enviar_pendientes: pcbot_id=PCWILMER cantidad=0
+2026-05-12 23:48:03,262 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:48:13,269 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados
+INFO:     181.176.72.106:0 - "GET /api/pedidos/mis_pedidos HTTP/1.1" 200 OK
+2026-05-12 23:48:23,268 [procesador_cola] INFO: [COLA] procesando 8 pedidos pendientes/programados

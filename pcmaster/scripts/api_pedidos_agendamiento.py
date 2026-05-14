@@ -1,6 +1,7 @@
 # api_pedidos_agendamiento.py - endpoint para crear pedidos con agendamiento por hora
 # roxymaster v8.3 - utf-8 sin bom, nombres en minusculas
 # modulo separado porque api_pedidos.py ya supera 400 lineas
+# v2: eliminado envio directo al pcbot, delegado a procesador_cola.py (cola fifo)
 
 import json
 import logging
@@ -12,8 +13,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
 from tokenomics_core import calcular_costo_streamer
 from auth import verificar_token_opcional
-from ws_manager import obtener_pcbot_de_usuario, enviar_comando_al_pcbot
-from orchestrator import crear_comando as orc_crear_comando
 
 logger = logging.getLogger("roxymaster.api_pedidos_agendamiento")
 
@@ -39,6 +38,9 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
 
     campos obligatorios: url, seguidores, perfiles, minutos (o horas).
     campos opcionales: hora_inicio, hora_fin (formato iso 8601 utc).
+
+    nota: el envio al pcbot lo maneja procesador_cola.py (cola fifo) de forma async.
+    este endpoint solo valida, descuenta tokens, y guarda en bd.
     """
     uid = _usuario_requerido(sesion)
     try:
@@ -138,10 +140,11 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
     comando_id = f"pedido_{uuid.uuid4().hex[:12]}"
 
     # --- determinar estado inicial ---
+    # ambos casos (programado y pendiente) los maneja procesador_cola.py
     estado_inicial = "programado" if es_programado else "pendiente"
 
     # --- guardar en bd con campos de agendamiento ---
-    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ahora = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     hora_inicio_iso = hora_inicio_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00") if hora_inicio_dt else None
     hora_fin_iso = hora_fin_dt.strftime("%Y-%m-%dT%H:%M:%S+00:00") if hora_fin_dt else None
 
@@ -175,88 +178,36 @@ async def crear_pedido_con_agenda(request: Request, sesion: dict = Depends(verif
          ahora),
     )
 
-    # --- para pedidos inmediatos, enviar comando al pcbot ---
-    if not es_programado:
-        logger.info("[PEDIDO-AGENDA] pedido inmediato %s, enviando comando", pedido_id)
-
-        duracion_seg = int(horas * 3600)
-        parametros_pedido = {
-            "url": url,
-            "cantidad": perfiles,
-            "duracion": duracion_seg,
-            "nivel_comentarios": nivel_comentarios,
-        }
-
-        pcbot_id = obtener_pcbot_de_usuario(uid)
-
-        payload_exacto = {
-            "tipo": "asignar",
+    # --- respuesta generica para ambos casos ---
+    # el envio al pcbot lo realiza procesador_cola.py (cola fifo)
+    if es_programado:
+        return {
+            "exito": True,
+            "pedido_id": pedido_id,
+            "costo_tokens": costo_tokens,
             "comando_id": comando_id,
-            "parametros": parametros_pedido,
+            "comando_enviado": False,
+            "programado": True,
+            "estado": "programado",
+            "hora_inicio": hora_inicio_iso,
+            "hora_fin": hora_fin_iso,
+            "mensaje": (
+                f"pedido programado para ejecutarse desde {hora_inicio_iso} hasta {hora_fin_iso}. "
+                "sera procesado por la cola fifo."
+            ),
         }
-        logger.info("[PEDIDO-AGENDA] payload: %s", json.dumps(payload_exacto, ensure_ascii=False))
 
-        resultado_orch = await enviar_comando_al_pcbot(
-            usuario_id=uid,
-            comando=payload_exacto,
-        )
-
-        if resultado_orch.get("exito"):
-            ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-            logger.info("[PEDIDO-AGENDA] pedido %s enviado a pcbot con exito", pedido_id)
-            return {
-                "exito": True,
-                "pedido_id": pedido_id,
-                "costo_tokens": costo_tokens,
-                "comando_id": comando_id,
-                "comando_enviado": True,
-                "mensaje": "pedido creado y comando enviado al pcbot",
-            }
-        else:
-            logger.warning("[PEDIDO-AGENDA] fallo envio directo, intentando orchestrator fallback")
-            try:
-                usuario = ejecutar_sql_unico(
-                    "select pcbot_id from usuarios where id = ?", (uid,)
-                )
-                if usuario and usuario["pcbot_id"]:
-                    orc_result = await orc_crear_comando(
-                        tipo="asignar",
-                        parametros=parametros_pedido,
-                        pcbot_id=usuario["pcbot_id"],
-                        comando_id=comando_id,
-                    )
-                    if orc_result.get("exito"):
-                        ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-                        return {
-                            "exito": True,
-                            "pedido_id": pedido_id,
-                            "costo_tokens": costo_tokens,
-                            "comando_id": comando_id,
-                            "comando_enviado": True,
-                            "mensaje": "pedido creado y comando encolado en orchestrator",
-                        }
-            except Exception as e:
-                logger.error("[PEDIDO-AGENDA] fallback exception: %s", str(e)[:200])
-
-            return {
-                "exito": True,
-                "pedido_id": pedido_id,
-                "costo_tokens": costo_tokens,
-                "comando_id": comando_id,
-                "comando_enviado": False,
-                "mensaje": "pedido creado pero no se pudo enviar el comando. se reintentara.",
-            }
-
-    # --- pedido programado ---
+    # pedido inmediato (pendiente)
     return {
         "exito": True,
         "pedido_id": pedido_id,
         "costo_tokens": costo_tokens,
         "comando_id": comando_id,
         "comando_enviado": False,
-        "programado": True,
-        "estado": "programado",
-        "hora_inicio": hora_inicio_iso,
-        "hora_fin": hora_fin_iso,
-        "mensaje": f"pedido programado para ejecutarse desde {hora_inicio_iso} hasta {hora_fin_iso}",
+        "programado": False,
+        "estado": "pendiente",
+        "mensaje": (
+            "pedido creado en cola pendiente. sera procesado por la cola fifo "
+            "y asignado a perfiles disponibles en los proximos segundos."
+        ),
     }

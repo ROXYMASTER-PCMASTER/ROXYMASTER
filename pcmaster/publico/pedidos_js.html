@@ -10,6 +10,7 @@
   var estado = {
     tipo: 'normal',
     intervalId: null,
+    programado: false,
   };
 
   // --- helpers ---
@@ -75,6 +76,19 @@
     window.calcularCosto();
   };
 
+  // --- toggle programacion ---
+  window.toggleProgramacion = function(modo) {
+    estado.programado = (modo === 'programar');
+    document.querySelectorAll('.prog-btn').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-prog') === modo);
+    });
+    var fields = $('prog-fields');
+    if (fields) {
+      fields.classList.toggle('visible', estado.programado);
+    }
+    window.calcularCosto();
+  };
+
   // --- calcular costo ---
   window.calcularCosto = function() {
     var seguidores = parseInt(valor('ped-seguidores')) || 0;
@@ -95,11 +109,18 @@
     var multNivel = { basico: 1, normal: 1.5, intenso: 2.5 };
     var multVip = estado.tipo === 'vip' ? 2.0 : 1.0;
     var costo = seguidores * perfiles * horas * tasaBase * (multNivel[nivel] || 1) * multVip;
+
+    // recargo del 10% por programacion
+    var recargoProg = estado.programado ? 1.10 : 1.0;
+    costo = costo * recargoProg;
+
     var costoStr = costo.toFixed(4);
 
     costoEl.innerHTML = (estado.tipo === 'vip' ? 'vip ' : '') + costoStr + ' <span class="small">kbt</span>';
     costoEl.className = 'valor' + (estado.tipo === 'vip' ? ' vip' : '');
-    detalleEl.textContent = seguidores + ' seguidores x ' + perfiles + ' perfiles x ' + horas.toFixed(1) + 'h';
+    var detalle = seguidores + ' seguidores x ' + perfiles + ' perfiles x ' + horas.toFixed(1) + 'h';
+    if (estado.programado) detalle += ' (+10% programacion)';
+    detalleEl.textContent = detalle;
     if (estado.tipo === 'vip') detalleEl.className = 'detalle-linea vip';
     else detalleEl.className = 'detalle-linea';
   };
@@ -138,6 +159,7 @@
       minutos: minutos,
       nivel_comentarios: nivel,
       tipo: estado.tipo,
+      programado: estado.programado,
     };
 
     // agregar campos de agendamiento solo si estan presentes
@@ -145,7 +167,7 @@
     if (horaFin) data.hora_fin = horaFin;
 
     // decidir endpoint segun si hay agendamiento
-    var esProgramado = horaInicio !== '';
+    var esProgramado = estado.programado || horaInicio !== '';
     var endpoint = esProgramado ? '/api/pedidos/crear_con_agenda' : '/api/pedidos/crear';
 
     fetch(endpoint, {
@@ -195,6 +217,9 @@
         var esProgramado = estadoCls === 'programado';
         var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en_progreso';
         var esVip = p.tipo === 'vip';
+        // mapear estado pendiente -> "esperando" visualmente
+        var estadoTexto = (p.estado || '?');
+        if (estadoTexto.toLowerCase() === 'pendiente') estadoTexto = 'esperando';
         var costo = p.costo_total || p.costo || 0;
         var costoStr = typeof costo === 'number' ? costo.toFixed(2) : costo;
 
@@ -208,7 +233,7 @@
 
         // acciones
         var accHtml = '';
-        if (esPendiente || esProgramado || esTrabajando) {
+        if (estadoCls !== 'completado') {
           accHtml += '<button class="btn-paccion cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar">cancelar</button>';
         }
         if (esPendiente) {
@@ -226,7 +251,7 @@
           '<span class="pcampo"><span class="plabel">perfiles</span><span class="pvalor">' + (p.perfiles || '-') + '</span></span>' +
           '<span class="pcampo"><span class="plabel">duracion</span><span class="pvalor">' + duracion + '</span></span>' +
           '<span class="pcampo"><span class="plabel">costo</span><span class="pvalor costo' + (esVip ? ' vip' : '') + '">' + costoStr + ' kbt</span></span>' +
-          '<span class="pcampo"><span class="pbadge ' + estadoCls + '">' + (p.estado || '?') + '</span></span>' +
+          '<span class="pcampo"><span class="pbadge ' + estadoCls + '">' + estadoTexto + '</span></span>' +
           '<span class="pcampo"><span class="plabel">fecha</span><span class="pvalor">' + fecha + '</span></span>' +
           '<span class="pacciones">' + accHtml + '</span>' +
         '</div>';
@@ -304,7 +329,7 @@
 
   // --- configurar eventos del formulario ---
   function configurarEventos() {
-    ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios'].forEach(function(id) {
+    ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios','ped-hora-inicio','ped-hora-fin'].forEach(function(id) {
       var el = $(id);
       if (el) {
         el.addEventListener('input', window.calcularCosto);
@@ -367,6 +392,7 @@
 
   // --- inicializacion principal ---
   window.inicializarPanelPedidos = function() {
+    estado.programado = false;
     configurarEventos();
     window.calcularCosto();
     window.cargarPedidos();

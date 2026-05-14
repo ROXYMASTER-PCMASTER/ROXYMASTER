@@ -29,8 +29,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .pedido-msg.success{display:block;background:rgba(0,255,136,.1);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
 @keyframes msgSlideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 /* grid principal */
-.pedido-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-@media(max-width:900px){.pedido-grid{grid-template-columns:1fr}}
+.pedido-grid{display:flex;flex-direction:column;gap:1.25rem}
 /* card formulario - layout horizontal */
 .card-pedido{background:linear-gradient(135deg,#151b2f,#0f0a28);border:1px solid rgba(124,58,237,.12);border-radius:16px;padding:1.4rem}
 .card-titulo{font-size:.95rem;font-weight:800;color:#e2e8f0;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;width:100%}
@@ -72,6 +71,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .btn-crear:hover .btn-tooltip{opacity:1}
 /* wrap responsive */
 @media(max-width:700px){#card-formulario{flex-direction:column;align-items:stretch}.pedido-field{flex:1 1 100%;min-width:unset}}
+
+/* === BLOQUE PROGRAMACION (toggle + campos fecha) === */
+.prog-toggle-group{display:flex;gap:.25rem;margin-top:.2rem}
+.prog-btn{padding:.3rem .7rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:6px;color:#94a3b8;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase;letter-spacing:.5px}
+.prog-btn:hover{border-color:#7c3aed;color:#a78bfa}
+.prog-btn.active{background:rgba(124,58,237,.12);border-color:#7c3aed;color:#a78bfa}
+.prog-fields{display:none;flex-wrap:wrap;gap:.5rem;flex:1 1 100%;padding:.5rem;background:rgba(124,58,237,.04);border:1px solid rgba(124,58,237,.1);border-radius:8px;margin-top:.4rem}
+.prog-fields.visible{display:flex}
+.prog-fields .pedido-field{flex:1 1 180px}
+.prog-hint{font-size:.6rem;color:#64748b;width:100%;margin-top:.1rem}
 
 /* === LISTA HORIZONTAL DE PEDIDOS === */
 /* cada pedido es un card-horizontal con todos los campos en fila */
@@ -228,6 +237,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
           <button type="button" class="toggle-btn" data-tipo="vip" onclick="window.setTipo('vip')">vip</button>
         </div>
       </div>
+
+      <!-- bloque programacion: toggle + campos fecha + costo extra -->
+      <div class="pedido-field">
+        <label>programar</label>
+        <div class="prog-toggle-group">
+          <button type="button" class="prog-btn" data-prog="ahora" onclick="window.toggleProgramacion('ahora')">ahora</button>
+          <button type="button" class="prog-btn" data-prog="programar" onclick="window.toggleProgramacion('programar')">programar</button>
+        </div>
+      </div>
+      <div class="prog-fields" id="prog-fields">
+        <div class="pedido-field">
+          <label for="ped-hora-inicio">inicio (fecha y hora)</label>
+          <input type="datetime-local" id="ped-hora-inicio">
+        </div>
+        <div class="pedido-field">
+          <label for="ped-hora-fin">fin (opcional)</label>
+          <input type="datetime-local" id="ped-hora-fin">
+        </div>
+        <div class="prog-hint">deja en blanco "programar" para ejecutar ahora. la hora se convierte a utc.</div>
+      </div>
+
       <div class="costo-visor">
         <div class="label">costo estimado</div>
         <div class="valor" id="costo-valor">0.00 <span class="small">kbt</span></div>
@@ -311,6 +341,7 @@ function valor(id) { var el = $(id); return el ? el.value : ''; }
 var _ped_estado = {
   tipo: 'normal',
   intervalId: null,
+  programado: false,
 };
 
 var _extLoadingPromise = null;
@@ -343,7 +374,7 @@ async function cargarFuncionesExtendidas() {
 }
 
 function configurarEventos() {
-  ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios'].forEach(function(id) {
+  ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios','ped-hora-inicio','ped-hora-fin'].forEach(function(id) {
     var el = $(id);
     if (el) {
       el.addEventListener('input', window.calcularCosto);
@@ -369,6 +400,7 @@ window.limpiarIntervaloPedidos = function() {
 };
 
 window.inicializarPanelPedidos = async function() {
+  _ped_estado.programado = false;
   await cargarFuncionesExtendidas();
   configurarEventos();
   if (typeof window.calcularCosto === 'function') window.calcularCosto();

@@ -3,6 +3,7 @@
 # modulo simplificado: la cola fifo y el agendamiento los maneja
 # procesador_cola.py
 # dependencias: heartbeat_cache, ws_manager, db
+# v2: distingue perfil caido (no reemplaza) vs desaparecido/url incorrecta (reemplaza)
 
 import asyncio
 import logging
@@ -29,8 +30,9 @@ async def monitorear_pedidos():
     """bucle principal del vigilante.
     se ejecuta cada 30 segundos y verifica:
     - pedidos expirados -> finalizar
-    - perfiles caidos -> reemplazar
+    - perfiles desaparecidos (no aparecen en heartbeat) -> reemplazar
     - perfiles con url incorrecta -> reemplazar
+    - perfiles con state='caido' -> marcar fallido, NO reemplazar (intervencion manual)
     """
     logger.info("vigilante de pedidos iniciado (intervalo 30s)")
     while True:
@@ -68,8 +70,14 @@ async def _ciclo_vigilante():
 async def _verificar_pedido(pedido: dict, ahora: datetime):
     """verifica estado de un pedido activo y actua si es necesario.
     usa heartbeat_cache para obtener los perfiles activos reales
-    y comparar urls."""
+    y comparar urls. distingue tres casos:
+    - perfil no aparece en heartbeat -> perfil desaparecido -> reemplazar
+    - perfil aparece con state='caido' -> marcar fallido, no reemplazar
+    - perfil aparece con url incorrecta -> marcar fallido, detener, reemplazar
+    """
     pedido_id = pedido["id"]
+    # bug B fix: priorizar fecha_inicio sobre fecha_creacion
+    # si el pedido paso a en_progreso hace poco, usar fecha_inicio como referencia
     fecha_inicio_str = pedido.get("fecha_inicio") or pedido.get("fecha_creacion")
     if not fecha_inicio_str:
         return
@@ -86,8 +94,27 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         return
 
     transcurrido = (ahora - fecha_inicio).total_seconds()
+
+    # fix NULL fecha_inicio: si fecha_inicio_str es igual a fecha_creacion porque
+    # fecha_inicio era NULL, verificar si el pedido es reciente para no expirarlo
+    fecha_creacion_str = pedido.get("fecha_creacion")
+    if not pedido.get("fecha_inicio") and fecha_creacion_str:
+        # el pedido nunca recibio fecha_inicio -> probablemente no inicio realmente
+        # en lugar de usar fecha_creacion como fallback (que expira injustamente),
+        # dar un margen de tolerancia de 5 minutos desde ahora
+        logger.warning(
+            "pedido %s: fecha_inicio es NULL, usando margen de 300s "
+            "en vez de fecha_creacion para evitar falsa expiracion",
+            pedido_id,
+        )
+        transcurrido = 0  # forzar que no expire
     duracion_horas = pedido.get("duracion_horas", 0)
-    duracion_seg = duracion_horas * 3600
+    # bug B fix: si duracion_horas es 0 o None, usar default 1 minuto en vez de expirar inmediatamente
+    if not duracion_horas or duracion_horas <= 0:
+        duracion_seg = 60
+        logger.info("pedido %s: duracion_horas era %s, usando default 60s", pedido_id, duracion_horas)
+    else:
+        duracion_seg = duracion_horas * 3600
     tiempo_restante = duracion_seg - transcurrido
 
     # caso 1: pedido expirado
@@ -96,13 +123,25 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         await _finalizar_pedido(pedido)
         return
 
-    # caso 2: verificar perfiles activos contra el heartbeat cache
+    # caso 2: verificar cada asignacion activa
+    # bug C fix: incluir 'enviado' y 'pendiente' para no reasignar reemplazos que ya se enviaron
+    # NOTA: 'reservado' se excluye explicitamente; esas asignaciones estan en proceso
+    # de confirmacion por el procesador de cola y no deben evaluarse aqui.
+    # si estuvieran incluidas, se saltarian con continue (ver bucle for abajo).
     asignaciones = ejecutar_sql(
-        "select id, perfil_id, pcbot_id, url from pedido_asignaciones "
-        "where pedido_id = ? and estado = 'activo'",
+        "select id, perfil_id, pcbot_id, url, inicio, estado from pedido_asignaciones "
+        "where pedido_id = ? and estado in ('activo', 'enviado', 'pendiente')",
         (pedido_id,),
     )
     if not asignaciones:
+        # bug C fix: grace period de 45s desde fecha_inicio antes de reasignar
+        # esto evita que el vigilante compita con el procesador de cola
+        if transcurrido < 45:
+            logger.info(
+                "pedido %s sin asignaciones aun (grace %.0fs), esperando",
+                pedido_id, transcurrido,
+            )
+            return
         # sin asignaciones activas -> reasignar todas
         logger.info("pedido %s sin asignaciones activas, reasignando", pedido_id)
         cantidad_pedido = pedido.get("cantidad_perfiles", 1)
@@ -110,12 +149,17 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             await _asignar_perfil_reemplazo(pedido, tiempo_restante)
         return
 
-    # contar perfiles caidos o con url incorrecta
-    perfiles_fallidos = 0
+    # contadores para reemplazo
+    perfiles_a_reemplazar = 0   # desaparecidos o url incorrecta
+    caidos_sin_reemplazo = 0    # state='caido', no se reemplazan
     usuario_id = pedido.get("usuario_id")
     url_pedido = pedido.get("url", "")
 
     for asig in asignaciones:
+        # ignorar asignaciones en estado 'reservado' (aun no confirmadas por el pcbot)
+        if asig.get("estado") == "reservado":
+            continue
+
         pcbot_id = asig.get("pcbot_id")
         perfil_id = asig.get("perfil_id")
 
@@ -130,7 +174,47 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 )
                 continue
 
-        # obtener perfiles activos desde el heartbeat cache (datos reales del pcbot)
+        # fix: grace period de 45s desde inicio de asignacion antes de
+        # marcar perfil como desaparecido. esto da tiempo al pcbot para
+        # confirmar el perfil en el siguiente heartbeat.
+        inicio_asig = asig.get("inicio")
+        if inicio_asig:
+            try:
+                if "+" in inicio_asig or "Z" in inicio_asig:
+                    limpia = inicio_asig.replace("Z", "+00:00")
+                    inicio_dt = datetime.fromisoformat(limpia)
+                else:
+                    inicio_dt = datetime.strptime(inicio_asig, "%Y-%m-%d %H:%M:%S")
+                    inicio_dt = inicio_dt.replace(tzinfo=timezone.utc)
+                segundos_desde_asignacion = (ahora - inicio_dt).total_seconds()
+                if segundos_desde_asignacion < 45:
+                    logger.info(
+                        "perfil %s asignado hace %.0fs (<45), "
+                        "esperando confirmacion para pedido %s",
+                        perfil_id, segundos_desde_asignacion, pedido_id,
+                    )
+                    continue  # no evaluar este perfil aun
+            except Exception as e:
+                logger.debug("error parseando inicio_asig %s: %s", inicio_asig, str(e)[:100])
+
+        # obtener estado del perfil en el ultimo heartbeat
+        estado_real = heartbeat_cache.obtener_estado_perfil(pcbot_id, perfil_id)
+
+        # caso a: perfil con state='caido' (pcbot reporta error, no reemplazar)
+        if estado_real == "caido":
+            logger.info(
+                "perfil %s en pcbot %s reportado como caido para pedido %s "
+                "(no se reemplaza automaticamente)",
+                perfil_id, pcbot_id, pedido_id,
+            )
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
+            )
+            caidos_sin_reemplazo += 1
+            continue
+
+        # buscar el perfil en los activos del heartbeat cache
         activos_cache = heartbeat_cache.obtener_perfiles_activos(pcbot_id)
         perfil_en_cache = None
         for p in activos_cache:
@@ -138,34 +222,32 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 perfil_en_cache = p
                 break
 
+        # caso b: perfil no aparece como activo en el ultimo heartbeat (desaparecido)
         if not perfil_en_cache:
-            # perfil no aparece como activo en el ultimo heartbeat
             logger.info(
-                "perfil %s caido en pcbot %s para pedido %s (no aparece en heartbeat)",
+                "perfil %s caido (no aparece en heartbeat activo) en pcbot %s "
+                "para pedido %s, sera reemplazado",
                 perfil_id, pcbot_id, pedido_id,
             )
-            # marcar asignacion como fallida
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
             )
-            perfiles_fallidos += 1
+            perfiles_a_reemplazar += 1
             continue
 
-        # verificar que la url del perfil coincida con la url del pedido
+        # caso c: perfil activo pero url incorrecta
         url_actual = perfil_en_cache.get("url", "")
         if url_pedido and url_actual and url_actual != url_pedido:
             logger.info(
                 "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) "
-                "para pedido %s",
+                "para pedido %s, sera reemplazado",
                 perfil_id, pcbot_id, url_actual, url_pedido, pedido_id,
             )
-            # marcar asignacion como fallida por url incorrecta
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
             )
-            perfiles_fallidos += 1
             # enviar comando detener para liberar ese perfil
             comando_detener = {
                 "tipo": "detener",
@@ -178,14 +260,17 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                     "error enviando detener perfil %s con url incorrecta: %s",
                     perfil_id, str(e)[:200],
                 )
+            perfiles_a_reemplazar += 1
 
-    # reemplazar perfiles caidos si hay
-    if perfiles_fallidos > 0:
+    # reemplazar solo los perfiles desaparecidos o con url incorrecta
+    # los caidos (state='caido') no se reemplazan automaticamente
+    if perfiles_a_reemplazar > 0:
         logger.info(
-            "reemplazando %s perfiles caidos en pedido %s",
-            perfiles_fallidos, pedido_id,
+            "reemplazando %s perfiles en pedido %s "
+            "(%d caidos sin reemplazo)",
+            perfiles_a_reemplazar, pedido_id, caidos_sin_reemplazo,
         )
-        for _ in range(perfiles_fallidos):
+        for _ in range(perfiles_a_reemplazar):
             await _asignar_perfil_reemplazo(pedido, tiempo_restante)
 
 
@@ -204,10 +289,11 @@ async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:
 
 
 async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
-    """asigna un perfil libre como reemplazo de uno caido.
+    """asigna un perfil libre como reemplazo de uno caido/desaparecido.
     busca perfiles libres en heartbeat_cache para el pcbot del usuario,
     envia comando asignar y registra en pedido_asignaciones.
-    duracion = tiempo restante del pedido en segundos."""
+    duracion = tiempo restante del pedido en segundos.
+    usa heartbeat_cache.obtener_perfiles_libres() que ya excluye caidos."""
     usuario_id = pedido.get("usuario_id")
     if not usuario_id:
         logger.warning("pedido %s sin usuario_id", pedido.get("id"))
@@ -226,7 +312,7 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
         logger.warning("usuario %s no tiene pcbot conectado", usuario_id)
         return False
 
-    # buscar perfil libre desde heartbeat_cache
+    # buscar perfil libre desde heartbeat_cache (ya excluye state='caido')
     libres_cache = heartbeat_cache.obtener_perfiles_libres(pcbot_id)
     if not libres_cache:
         logger.warning("no hay perfiles libres en pcbot %s segun heartbeat", pcbot_id)

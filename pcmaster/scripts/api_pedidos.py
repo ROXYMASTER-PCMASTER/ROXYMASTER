@@ -129,7 +129,7 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
 
     # LOG-ANTES: antes de insertar pedido en bd
     logger.info(f"[PEDIDO-LOG] paso 1/6: insertando pedido en bd uid={uid} url={url}")
-    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ahora = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     pedido_id = ejecutar_insercion(
         """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
            duracion_horas, nivel_comentarios, tipo_pedido, costo_tokens, estado,
@@ -157,104 +157,13 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
          ahora),
     )
 
-    # enviar comando al pcbot
-    duracion_minutos = int(horas * 60)
-
-    parametros_pedido = {
-        "url": url,
-        "cantidad": perfiles,
-        "duracion": duracion_minutos,
-        "nivel_comentarios": nivel_comentarios,
-    }
-
-    # LOG-ANTES: consultar pcbot_id
-    logger.info(f"[PEDIDO-LOG] paso 3/6: consultando obtener_pcbot_de_usuario(uid={uid}) - conexiones activas en ws_manager")
-    pcbot_id = obtener_pcbot_de_usuario(uid)
-    logger.info(f"[PEDIDO-LOG] paso 4/6: obtener_pcbot_de_usuario devolvio pcbot_id='{pcbot_id}' tipo={type(pcbot_id).__name__}")
-
-    # log del payload exacto que se enviara al pcbot (para depuracion)
-    payload_exacto = {
-        "tipo": "asignar",
-        "comando_id": comando_id,
-        "parametros": parametros_pedido,
-    }
-    logger.info(f"[PEDIDO-DIAG] PAYLOAD_EXACTO a enviar a pcbot_id='{pcbot_id}': {json.dumps(payload_exacto, ensure_ascii=False)}")
-    logger.info(f"[PEDIDO-DIAG] pcbot_id='{pcbot_id}' presente en ws_manager? CHEQUEAR LOGS")
-
-    # LOG-ANTES: enviar comando
-    logger.info(f"[PEDIDO-LOG] paso 5/6: llamando enviar_comando_al_pcbot(usuario_id={uid}) pcbot_id='{pcbot_id}' comando_id={comando_id}")
-    resultado_orch = await enviar_comando_al_pcbot(
-        usuario_id=uid,
-        comando={
-            "tipo": "asignar",
-            "comando_id": comando_id,
-            "parametros": parametros_pedido,
-        },
-    )
-    logger.info(f"[PEDIDO-LOG] paso 6/6: enviar_comando_al_pcbot devolvio resultado={json.dumps(resultado_orch, ensure_ascii=False)}")
-
-    if not resultado_orch.get("exito"):
-        logger.warning(
-            f"[PEDIDO-DIAG] pedido {pedido_id}: FALLO envio a pcbot via ws_manager. "
-            f"pcbot_id='{pcbot_id}' error={resultado_orch.get('error', 'sin error')}. "
-            f"intentando fallback via orchestrator..."
-        )
-
-        # FALLBACK: intentar via orchestrator.crear_comando directamente
-        try:
-            # buscar pcbot_id del usuario en la tabla usuarios
-            usuario = ejecutar_sql_unico(
-                "select pcbot_id from usuarios where id = ?",
-                (uid,)
-            )
-            if usuario and usuario["pcbot_id"]:
-                orc_pcbot_id = usuario["pcbot_id"]
-                logger.info(f"[PEDIDO-FALLBACK] intentando orc_crear_comando con pcbot_id='{orc_pcbot_id}' uid={uid}")
-                orc_result = await orc_crear_comando(
-                    tipo="asignar",
-                    parametros=parametros_pedido,
-                    pcbot_id=orc_pcbot_id,
-                    comando_id=comando_id,
-                )
-                if orc_result.get("exito"):
-                    logger.info(f"[PEDIDO-FALLBACK] orc_crear_comando EXITO: {json.dumps(orc_result)}")
-                    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-                    return {
-                        "exito": True,
-                        "pedido_id": pedido_id,
-                        "costo_tokens": costo_tokens,
-                        "comando_id": comando_id,
-                        "comando_enviado": True,
-                        "mensaje": "pedido creado y comando encolado en orchestrator",
-                    }
-                else:
-                    logger.warning(f"[PEDIDO-FALLBACK] orc_crear_comando fallo: {orc_result}")
-            else:
-                logger.warning(f"[PEDIDO-FALLBACK] usuario {uid} no tiene pcbot_id asignado")
-        except Exception as e:
-            logger.error(f"[PEDIDO-FALLBACK] excepcion en orchestrator fallback: {e}")
-
-        # si el fallback tambien fallo, responder con comando no enviado
-        return {
-            "exito": True,
-            "pedido_id": pedido_id,
-            "costo_tokens": costo_tokens,
-            "comando_id": comando_id,
-            "comando_enviado": False,
-            "mensaje": "pedido creado pero no se pudo encolar el comando. se reintentara.",
-        }
-
-    # actualizar estado a enviado
-    ejecutar_sql("update pedidos set estado = 'enviado' where id = ?", (pedido_id,))
-
-    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} pcbot_id='{pcbot_id}'")
+    logger.info(f"[PEDIDO-DIAG] pedido creado #{pedido_id} usuario={uid} costo={costo_tokens} — queda en pendiente para la cola fifo")
     return {
         "exito": True,
         "pedido_id": pedido_id,
         "costo_tokens": costo_tokens,
         "comando_id": comando_id,
-        "comando_enviado": True,
-        "mensaje": "pedido creado y comando enviado al pcbot",
+        "mensaje": "pedido creado y en cola para ser procesado",
     }
 
 
@@ -285,7 +194,7 @@ async def mis_pedidos(sesion: dict = Depends(verificar_token_opcional)):
             "url": p["url"],
             "seguidores": p["seguidores_streamer"],
             "perfiles": p["cantidad_perfiles"],
-            "duracion": duracion_horas,
+            "duracion": int(duracion_horas * 60),
             "duracion_horas": duracion_horas,
             "minutos": int(duracion_horas * 60),
             "nivel_comentarios": p["nivel_comentarios"],

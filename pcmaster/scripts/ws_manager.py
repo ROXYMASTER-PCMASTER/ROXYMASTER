@@ -204,11 +204,12 @@ async def enviar_a_pcbot(pcbot_id: str, mensaje: dict) -> bool:
         return False
 
 
-async def enviar_comando_al_pcbot(usuario_id: int, comando: dict) -> dict:
+async def enviar_comando_al_pcbot(usuario_id: int, comando: dict, pcbot_id: str = None) -> dict:
     """envia un comando al pcbot del usuario via websocket.
     wrapper de alto nivel usado por las apis. devuelve {"exito": bool, "error": str}.
-    v2: envia al primer pcbot disponible del usuario."""
-    pcbot_id = obtener_pcbot_de_usuario(usuario_id)
+    v2: soporta pcbot_id explicito (asignacion directa) o fallback al primer pcbot."""
+    if not pcbot_id:
+        pcbot_id = obtener_pcbot_de_usuario(usuario_id)
     if not pcbot_id:
         return {"exito": False, "error": "no hay pcbot conectado para este usuario"}
 
