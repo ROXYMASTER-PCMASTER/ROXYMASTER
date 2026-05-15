@@ -88,6 +88,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 select:disabled,input:disabled{opacity:0.45;background:rgba(13,13,34,0.4);cursor:not-allowed;border-color:rgba(42,42,74,0.3)}
 /* estado habilitado (resalta) */
 select:enabled,input:enabled{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.15)}
+/* colores especificos para campos de comentarios y fecha */
+#ped-comentarios:disabled,#ped-hora-inicio:disabled{border-color:#475569}
+#ped-comentarios:enabled,#ped-hora-inicio:enabled{border-color:#f0b90b;box-shadow:0 0 0 2px rgba(240,185,11,0.15)}
+#ped-comentarios:hover,#ped-hora-inicio:hover{border-color:#ff3366}
 /* wrap responsive */
 @media(max-width:700px){#card-formulario{flex-direction:column;align-items:stretch}.pedido-field{flex:1 1 100%;min-width:unset}}
 /* lista horizontal de pedidos */
@@ -440,7 +444,20 @@ window.toggleProgramacion = function() {
   if (!chk) return;
   window.programacion_activa = chk.checked;
   var horaInput = document.getElementById('ped-hora-inicio');
-  if (horaInput) horaInput.disabled = !window.programacion_activa;
+  if (horaInput) {
+    horaInput.disabled = !window.programacion_activa;
+    if (window.programacion_activa) {
+      // establecer min = ahora + 1 minuto (para pruebas)
+      var ahora = new Date();
+      ahora.setMinutes(ahora.getMinutes() + 1);
+      var y = ahora.getFullYear();
+      var m = String(ahora.getMonth() + 1).padStart(2, '0');
+      var d = String(ahora.getDate()).padStart(2, '0');
+      var h = String(ahora.getHours()).padStart(2, '0');
+      var min = String(ahora.getMinutes()).padStart(2, '0');
+      horaInput.setAttribute('min', y + '-' + m + '-' + d + 'T' + h + ':' + min);
+    }
+  }
   var minInput = document.getElementById('ped-minutos');
   if (minInput) minInput.disabled = window.programacion_activa;
   window.calcularCosto();

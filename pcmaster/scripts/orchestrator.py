@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 from datetime import datetime
 
 import heartbeat_cache
+from comentarios_analizador import procesar_chat
 from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion, get_db_context
 from shs import firmar_payload, verificar_payload, secreto_bytes as secreto_sistema, generar_secreto_pcbot
 
@@ -319,21 +320,29 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                     continue
 
                 if datos.get("tipo") == "chat_capturado":
-                    # tarea 3: recepcion de chat capturado desde el pcbot
+                    logger.info("[CHAT-DEBUG] ENTRO en el bloque chat_capturado. datos=%s", str(datos)[:300])
+                    # recepcion de chat capturado desde el pcbot
                     url = datos.get("url", "")
                     lineas = datos.get("lineas", [])
+                    num_lineas = len(lineas) if isinstance(lineas, list) else 0
                     logger.info(
-                        "[CHAT] chat_capturado recibido de pcbot %s para url %s (%d lineas)",
-                        pcbot_id, url, len(lineas) if isinstance(lineas, list) else 0,
+                        "[CHAT-DIAG] chat_capturado recibido de pcbot %s para url '%s' (%d lineas)",
+                        pcbot_id, url, num_lineas,
                     )
+                    logger.info("[CHAT-DIAG] primeras 3 lineas: %s", lineas[:3] if isinstance(lineas, list) else 'no es lista')
                     try:
-                        from comentarios_analizador import procesar_chat
-                        await procesar_chat(url, lineas)
+                        logger.info("[CHAT-DIAG] llamando a procesar_chat(url='%s', lineas=%d)", url, num_lineas)
+                        resultado = await procesar_chat(url, lineas)
+                        logger.info("[CHAT-DIAG] procesar_chat resultado: cambio=%s, frases=%d", 
+                                     resultado.get('cambio'), len(resultado.get('frases', [])))
                     except ImportError:
-                        logger.warning("[CHAT] modulo comentarios_analizador no disponible")
+                        logger.warning("[CHAT-DIAG] modulo comentarios_analizador no disponible")
                     except Exception as e:
-                        logger.error("[CHAT] error procesando chat_capturado: %s", str(e)[:200])
+                        logger.error("[CHAT-DIAG] error procesando chat_capturado: %s", str(e)[:500])
+                        import traceback
+                        logger.error("[CHAT-DIAG] traceback: %s", traceback.format_exc()[:2000])
                     await websocket.send_json({"tipo": "ack_chat"})
+                    logger.info("[CHAT-DIAG] ack_chat enviado a pcbot %s", pcbot_id)
                     continue
 
                 logger.debug(f"Mensaje no manejado de {pcbot_id}: {datos.get('tipo')}")

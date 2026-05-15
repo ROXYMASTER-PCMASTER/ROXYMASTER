@@ -47,6 +47,59 @@ def ultimo_evento(pcbot_id: str) -> list:
     return hb.get("eventos", [])
 
 
+def obtener_estado_perfil(pcbot_id: str, profile_id: str) -> str:
+    """consulta el estado de un perfil en perfiles_roxy.
+    retorna 'activo', 'inactivo' o 'caido'."""
+    from db import ejecutar_sql_unico
+    row = ejecutar_sql_unico(
+        "select activo from perfiles_roxy where hash = ? and pcbot_id = ?",
+        (profile_id, pcbot_id),
+    )
+    if row is None:
+        return "activo"
+    return "activo" if row.get("activo", 0) == 1 else "inactivo"
+
+
+def obtener_perfiles_activos(pcbot_id: str) -> list:
+    """devuelve lista de dicts con profile_id y url de perfiles activos en perfiles_roxy."""
+    from db import ejecutar_sql
+    rows = ejecutar_sql(
+        "select hash as profile_id, url_actual as url from perfiles_roxy "
+        "where pcbot_id = ? and activo = 1",
+        (pcbot_id,),
+    )
+    return rows if rows else []
+
+
+def obtener_url_perfil(pcbot_id: str, profile_id: str) -> str:
+    """devuelve la url actual de un perfil desde perfiles_roxy."""
+    from db import ejecutar_sql_unico
+    row = ejecutar_sql_unico(
+        "select url_actual from perfiles_roxy where hash = ? and pcbot_id = ?",
+        (profile_id, pcbot_id),
+    )
+    return row["url_actual"] if row and row.get("url_actual") else ""
+
+
+def obtener_perfiles_libres(pcbot_id: str) -> list:
+    """devuelve lista de dicts con profile_id de perfiles libres en perfiles_roxy.
+    un perfil esta libre si activo=1 y no tiene asignaciones activas."""
+    from db import ejecutar_sql
+    rows = ejecutar_sql(
+        """select pr.hash as profile_id, pr.pcbot_id
+           from perfiles_roxy pr
+           where pr.pcbot_id = ?
+             and pr.activo = 1
+             and not exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.perfil_id = pr.hash
+                   and pa.estado in ('planificado', 'ejecutando')
+             )""",
+        (pcbot_id,),
+    )
+    return rows if rows else []
+
+
 def limpiar_cache(pcbot_id: str = None) -> None:
     """elimina un pcbot del cache, o todo el cache si no se especifica."""
     if pcbot_id:

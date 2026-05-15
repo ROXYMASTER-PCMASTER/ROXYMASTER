@@ -227,21 +227,27 @@ async def procesar_chat(url: str, lineas_chat: list) -> dict:
 
     if datos_streamer:
         # actualizar registro existente
+        logger.info("[ANALIZADOR-DIAG] actualizando contextos_streamer EXISTENTE para url '%s'", url)
+        logger.info("[ANALIZADOR-DIAG] UPDATE: contexto_json(%d chars), frases_json(%d chars), hash=%s",
+                     len(contexto_json), len(frases_json), hash_lineas[:12])
         ejecutar_sql(
             "update contextos_streamer set contexto_actual = ?, frases_pool = ?, "
             "frases_usadas = 0, ultimo_analisis = ?, cache_hash = ? "
             "where url = ?",
             (contexto_json, frases_json, ahora, hash_lineas, url),
         )
+        logger.info("[ANALIZADOR-DIAG] UPDATE ejecutado correctamente para url '%s'", url)
     else:
         # crear nuevo registro
-        ejecutar_insercion(
+        logger.info("[ANALIZADOR-DIAG] insertando NUEVO registro en contextos_streamer para url '%s'", url)
+        nuevo_id = ejecutar_insercion(
             "insert into contextos_streamer "
             "(url, personalidad_base, contexto_actual, frases_pool, "
             "frases_usadas, ultimo_analisis, cache_hash, activo) "
             "values (?, ?, ?, ?, 0, ?, ?, 1)",
             (url, "{}", contexto_json, frases_json, ahora, hash_lineas),
         )
+        logger.info("[ANALIZADOR-DIAG] INSERT ejecutado, nuevo_id=%s para url '%s'", nuevo_id, url)
 
     logger.info(
         "[ANALIZADOR] contexto actualizado para %s: %s frases generadas, hash=%s",
