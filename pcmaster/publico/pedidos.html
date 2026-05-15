@@ -84,6 +84,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .btn-crear:active{transform:translateY(0)}
 .btn-crear .btn-tooltip{position:absolute;top:-2rem;background:#1e293b;color:#e2e8f0;font-size:.65rem;padding:.25rem .6rem;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;font-weight:500}
 .btn-crear:hover .btn-tooltip{opacity:1}
+/* estado deshabilitado (atenuado) */
+select:disabled,input:disabled{opacity:0.45;background:rgba(13,13,34,0.4);cursor:not-allowed;border-color:rgba(42,42,74,0.3)}
+/* estado habilitado (resalta) */
+select:enabled,input:enabled{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.15)}
 /* wrap responsive */
 @media(max-width:700px){#card-formulario{flex-direction:column;align-items:stretch}.pedido-field{flex:1 1 100%;min-width:unset}}
 /* lista horizontal de pedidos */
@@ -228,34 +232,32 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
         </div>
         <div class="form-column-right">
           <div class="card-titulo"><i class="fas fa-cog"></i> opciones</div>
+          <div class="checkbox-group">
+            <label class="chk-label">
+              <input type="checkbox" id="chk-comentarista-ia">
+              <span class="chk-custom"></span>
+              activar comentarista ia (+15%)
+            </label>
+          </div>
           <div class="pedido-field">
             <label for="ped-comentarios">nivel de comentarios</label>
             <select id="ped-comentarios" disabled>
               <option value="basico">basico</option>
-              <option value="normal">normal</option>
+              <option value="normal" selected>normal</option>
               <option value="intenso">intenso</option>
             </select>
           </div>
-          <div class="pedido-field">
-            <label>extras</label>
-            <div class="checkbox-group">
-              <label class="chk-label">
-                <input type="checkbox" id="chk-comentarista-ia">
-                <span class="chk-custom"></span>
-                activar comentarista ia (+15%)
-              </label>
-              <label class="chk-label">
-                <input type="checkbox" id="chk-programar">
-                <span class="chk-custom"></span>
-                programar para despues (+10%)
-              </label>
-            </div>
+          <div class="checkbox-group" style="margin-top:1rem">
+            <label class="chk-label">
+              <input type="checkbox" id="chk-programar">
+              <span class="chk-custom"></span>
+              programar para despues (+10%)
+            </label>
           </div>
-          <!-- hora de inicio (oculta hasta que se marque programar) -->
-          <div class="pedido-field" id="hora-inicio-wrapper" style="display:none">
+          <div class="pedido-field">
             <label for="ped-hora-inicio">inicio programado</label>
             <input type="datetime-local" id="ped-hora-inicio" disabled>
-            <div class="field-hint">marca "programar para despues" para habilitar</div>
+            <div class="field-hint">minimo 3 horas de anticipacion</div>
           </div>
         </div>
       </div>
@@ -437,9 +439,7 @@ window.toggleProgramacion = function() {
   var chk = document.getElementById('chk-programar');
   if (!chk) return;
   window.programacion_activa = chk.checked;
-  var wrapper = document.getElementById('hora-inicio-wrapper');
   var horaInput = document.getElementById('ped-hora-inicio');
-  if (wrapper) wrapper.style.display = window.programacion_activa ? 'block' : 'none';
   if (horaInput) horaInput.disabled = !window.programacion_activa;
   var minInput = document.getElementById('ped-minutos');
   if (minInput) minInput.disabled = window.programacion_activa;
@@ -450,6 +450,8 @@ window.toggleComentaristaIA = function() {
   var chk = document.getElementById('chk-comentarista-ia');
   if (!chk) return;
   window.comentarista_ia_activo = chk.checked;
+  var comentariosSelect = document.getElementById('ped-comentarios');
+  if (comentariosSelect) comentariosSelect.disabled = !window.comentarista_ia_activo;
   window.calcularCosto();
 };
 
