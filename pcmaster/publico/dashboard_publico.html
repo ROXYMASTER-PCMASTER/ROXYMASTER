@@ -267,6 +267,9 @@
         <span class="icon">●</span> perfiles
         <span class="badge-nav" id="badge-pf">0</span>
       </button>
+      <button class="sidebar-link" data-panel="admin" onclick="cargarPanel('admin',this)" style="display:none" id="btn-admin-nav">
+        <span class="icon">⚙</span> administracion
+      </button>
       <button class="sidebar-link" data-panel="ayuda" onclick="cargarPanel('ayuda',this)">
         <span class="icon">?</span> ayuda
       </button>
@@ -548,9 +551,10 @@
     dashboard: '/publico/panel_dashboard.html',
     wallet: '/publico/wallet.html',
     marketplace: '/publico/marketplace.html',
-    pedidos: '/publico/pedidos_core.html',
+    pedidos: '/publico/pedidos.html',
     referidos: '/publico/referidos.html',
     perfiles: '/publico/perfiles.html',
+    admin: '/publico/admin.html',
     ayuda: '/publico/ayuda.html',
   };
 
@@ -806,6 +810,18 @@
     // obtener panel desde query string
     var params = new URLSearchParams(window.location.search);
     var panelInicial = params.get('tab') || 'dashboard';
+
+    // mostrar boton admin si el rol lo permite
+    setTimeout(function() {
+      var rolBadge = document.getElementById('s-user-rol');
+      if (rolBadge) {
+        var rol = rolBadge.textContent.trim().toLowerCase();
+        if (rol === 'admin' || rol === 'superadmin') {
+          var btnAdmin = document.getElementById('btn-admin-nav');
+          if (btnAdmin) btnAdmin.style.display = 'flex';
+        }
+      }
+    }, 300);
 
     document.addEventListener('DOMContentLoaded', function() {
       var btn = document.querySelector('.sidebar-link[data-panel="' + panelInicial + '"]');

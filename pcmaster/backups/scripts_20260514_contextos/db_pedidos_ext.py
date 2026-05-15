@@ -92,50 +92,6 @@ def agregar_columna_timeout():
         return False
 
 
-def agregar_columna_rol():
-    """agrega la columna rol a la tabla pedido_asignaciones si no existe.
-    la columna rol almacena 'observador' para perfiles designados como
-    segundos observadores en pedidos sin contexto."""
-    try:
-        resultado = ejecutar_sql(
-            "select name from pragma_table_info('pedido_asignaciones') "
-            "where name = 'rol'"
-        )
-        if not resultado:
-            logger.info("[DB_EXT] agregando columna rol a pedido_asignaciones")
-            ejecutar_sql(
-                "alter table pedido_asignaciones add column rol text default null"
-            )
-        else:
-            logger.info("[DB_EXT] columna rol ya existe en pedido_asignaciones")
-        return True
-    except Exception as e:
-        logger.error("[DB_EXT] error al agregar columna rol: %s", str(e)[:200])
-        return False
-
-
-def agregar_columna_cache_hash():
-    """agrega la columna cache_hash a la tabla contextos_streamer si no existe.
-    almacena el hash md5 del ultimo lote de chat procesado para evitar
-    llamadas innecesarias a ollama."""
-    try:
-        resultado = ejecutar_sql(
-            "select name from pragma_table_info('contextos_streamer') "
-            "where name = 'cache_hash'"
-        )
-        if not resultado:
-            logger.info("[DB_EXT] agregando columna cache_hash a contextos_streamer")
-            ejecutar_sql(
-                "alter table contextos_streamer add column cache_hash text default ''"
-            )
-        else:
-            logger.info("[DB_EXT] columna cache_hash ya existe en contextos_streamer")
-        return True
-    except Exception as e:
-        logger.error("[DB_EXT] error al agregar columna cache_hash: %s", str(e)[:200])
-        return False
-
-
 def crear_tabla_contextos_streamer():
     """crea la tabla contextos_streamer si no existe.
     almacena el contexto de personalidad y frases de cada streamer."""
@@ -149,7 +105,6 @@ def crear_tabla_contextos_streamer():
             "frases_pool text default '[]', "
             "frases_usadas integer default 0, "
             "ultimo_analisis text, "
-            "cache_hash text default '', "
             "activo integer default 1"
             ")"
         )
@@ -157,25 +112,4 @@ def crear_tabla_contextos_streamer():
         return True
     except Exception as e:
         logger.error("[DB_EXT] error al crear tabla contextos_streamer: %s", str(e)[:200])
-        return False
-
-
-def agregar_columna_comentarios_ia():
-    """agrega la columna comentarios_ia a la tabla pedidos si no existe.
-    almacena 1 si el pedido tiene comentarista ia activado, 0 si no."""
-    try:
-        resultado = ejecutar_sql(
-            "select name from pragma_table_info('pedidos') "
-            "where name = 'comentarios_ia'"
-        )
-        if not resultado:
-            logger.info("[DB_EXT] agregando columna comentarios_ia a pedidos")
-            ejecutar_sql(
-                "alter table pedidos add column comentarios_ia integer default 0"
-            )
-        else:
-            logger.info("[DB_EXT] columna comentarios_ia ya existe")
-        return True
-    except Exception as e:
-        logger.error("[DB_EXT] error al agregar columna comentarios_ia: %s", str(e)[:200])
         return False

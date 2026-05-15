@@ -142,27 +142,6 @@ async def lifespan(app: FastAPI):
         logger.info("tabla contextos_streamer verificada/creada")
     except Exception as e:
         logger.warning(f"no se pudo crear tabla contextos_streamer: {e}")
-    # agregar columna rol a pedido_asignaciones
-    try:
-        from db_pedidos_ext import agregar_columna_rol
-        agregar_columna_rol()
-        logger.info("columna rol agregada/verificada en pedido_asignaciones")
-    except Exception as e:
-        logger.warning(f"no se pudo agregar columna rol: {e}")
-    # agregar columna cache_hash a contextos_streamer
-    try:
-        from db_pedidos_ext import agregar_columna_cache_hash
-        agregar_columna_cache_hash()
-        logger.info("columna cache_hash agregada/verificada en contextos_streamer")
-    except Exception as e:
-        logger.warning(f"no se pudo agregar columna cache_hash: {e}")
-    # agregar columna comentarios_ia a pedidos
-    try:
-        from db_pedidos_ext import agregar_columna_comentarios_ia
-        agregar_columna_comentarios_ia()
-        logger.info("columna comentarios_ia agregada/verificada en pedidos")
-    except Exception as e:
-        logger.warning(f"no se pudo agregar columna comentarios_ia: {e}")
     # crear tablas del vigilante de pedidos
     try:
         await crear_tablas_vigilante()

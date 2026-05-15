@@ -46,6 +46,12 @@ ECONOMY_PARAMS = {
 }
 
 # ---------------------------------------------------------------------------
+# recargos configurables para pedidos
+# ---------------------------------------------------------------------------
+RECARGO_COMENTARISTA_IA = 1.15  # 15% extra por comentarista ia
+RECARGO_PROGRAMACION = 1.10     # 10% extra por programacion horaria
+
+# ---------------------------------------------------------------------------
 # cache en memoria para evitar consultas repetitivas a db
 # ---------------------------------------------------------------------------
 _params_cache = None

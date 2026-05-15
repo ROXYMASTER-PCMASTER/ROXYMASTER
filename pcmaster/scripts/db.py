@@ -334,6 +334,26 @@ create table if not exists pcbots_registrados (
     secreto_shs text default ''
 );
 
+-- tabla: config (variables de configuracion del sistema editables desde admin)
+create table if not exists config (
+    clave text primary key,
+    valor text not null,
+    descripcion text default '',
+    modificado_por text default '',
+    fecha_modificacion text default (datetime('now','localtime'))
+);
+
+-- valores por defecto de config
+insert or ignore into config (clave, valor, descripcion) values
+('intervalo_match', '35', 'segundos entre ciclos de match'),
+('margen_anticipacion', '5', 'segundos de ventana para perfiles proximos a liberarse'),
+('perfiles_por_lote_normal', '10', 'maximo de perfiles asignados por ciclo a pedido normal'),
+('perfiles_por_lote_vip', '20', 'maximo de perfiles asignados por ciclo a pedido vip'),
+('timeout_reserva', '15', 'segundos antes de marcar una reserva como fallida'),
+('max_pedidos_por_usuario', '100', 'limite de pedidos activos por usuario'),
+('version_sistema', '8.3', 'version actual del sistema'),
+('tiempo_espera_confirmacion', '30', 'segundos de espera para confirmacion de perfil');
+
 -- tabla: pedidos (ordenes de servicio de streamers)
 create table if not exists pedidos (
     id integer primary key autoincrement,

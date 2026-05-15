@@ -156,13 +156,6 @@ async def lifespan(app: FastAPI):
         logger.info("columna cache_hash agregada/verificada en contextos_streamer")
     except Exception as e:
         logger.warning(f"no se pudo agregar columna cache_hash: {e}")
-    # agregar columna comentarios_ia a pedidos
-    try:
-        from db_pedidos_ext import agregar_columna_comentarios_ia
-        agregar_columna_comentarios_ia()
-        logger.info("columna comentarios_ia agregada/verificada en pedidos")
-    except Exception as e:
-        logger.warning(f"no se pudo agregar columna comentarios_ia: {e}")
     # crear tablas del vigilante de pedidos
     try:
         await crear_tablas_vigilante()

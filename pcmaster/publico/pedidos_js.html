@@ -1,16 +1,23 @@
 <script>
 /* ============================================================================
    panel pedidos - logica principal
+   version con checkboxes de programacion y comentarista ia
    ============================================================================ */
 
 (function() {
   "use strict";
 
+  // --- constantes ---
+  var RECARGO_COMENTARISTA_IA = 1.15;    // 15% extra
+  var RECARGO_PROGRAMACION = 1.10;       // 10% extra
+  var MARGEN_HORAS_PROGRAMACION = 3;     // minimo 3h de anticipacion
+
   // --- estado interno ---
   var estado = {
     tipo: 'normal',
     intervalId: null,
-    programado: false,
+    programacion_activa: false,
+    comentarista_ia_activo: false,
   };
 
   // --- helpers ---
@@ -54,16 +61,6 @@
     return h;
   };
 
-  // --- set tiempo ---
-  window.setTiempo = function(minutos) {
-    var input = $('ped-minutos');
-    if (input) input.value = minutos;
-    document.querySelectorAll('.btn-opt-tiempo').forEach(function(b) {
-      b.classList.toggle('active', parseInt(b.getAttribute('data-minutos')) === minutos);
-    });
-    window.calcularCosto();
-  };
-
   // --- set tipo ---
   window.setTipo = function(tipo) {
     estado.tipo = tipo;
@@ -76,16 +73,50 @@
     window.calcularCosto();
   };
 
-  // --- toggle programacion ---
-  window.toggleProgramacion = function(modo) {
-    estado.programado = (modo === 'programar');
-    document.querySelectorAll('.prog-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-prog') === modo);
-    });
-    var fields = $('prog-fields');
-    if (fields) {
-      fields.classList.toggle('visible', estado.programado);
+  // --- toggle comentarista ia ---
+  window.toggleComentaristaIA = function() {
+    estado.comentarista_ia_activo = !!$('chk-comentarista-ia').checked;
+    var selectNivel = $('ped-comentarios');
+    if (selectNivel) {
+      selectNivel.disabled = !estado.comentarista_ia_activo;
+      if (!estado.comentarista_ia_activo) {
+        selectNivel.value = 'normal';
+      }
     }
+    window.calcularCosto();
+  };
+
+  // --- toggle programacion ---
+  window.toggleProgramacion = function() {
+    var chk = $('chk-programar');
+    estado.programacion_activa = !!chk.checked;
+    var horaInicio = $('ped-hora-inicio');
+    var minutosInput = $('ped-minutos');
+
+    if (estado.programacion_activa) {
+      // habilitar campo de hora y deshabilitar minutos
+      horaInicio.disabled = false;
+      minutosInput.disabled = true;
+      minutosInput.value = '';
+
+      // establecer valor minimo = ahora + 3h
+      var ahora = new Date();
+      var minFecha = new Date(ahora.getTime() + MARGEN_HORAS_PROGRAMACION * 60 * 60 * 1000);
+      // formato datetime-local: YYYY-MM-DDTHH:MM
+      var y = minFecha.getFullYear();
+      var m = String(minFecha.getMonth() + 1).padStart(2, '0');
+      var d = String(minFecha.getDate()).padStart(2, '0');
+      var h = String(minFecha.getHours()).padStart(2, '0');
+      var min = String(minFecha.getMinutes()).padStart(2, '0');
+      horaInicio.min = y + '-' + m + '-' + d + 'T' + h + ':' + min;
+    } else {
+      // deshabilitar campo de hora y habilitar minutos
+      horaInicio.disabled = true;
+      horaInicio.value = '';
+      horaInicio.min = '';
+      minutosInput.disabled = false;
+    }
+
     window.calcularCosto();
   };
 
@@ -99,6 +130,19 @@
     var detalleEl = $('costo-detalle-linea');
     if (!costoEl || !detalleEl) return;
 
+    // si programacion activa y hay hora, usar tiempo desde ahora hasta hora_inicio
+    if (estado.programacion_activa) {
+      var horaVal = valor('ped-hora-inicio');
+      if (horaVal) {
+        var fechaInicio = new Date(horaVal);
+        var ahora = new Date();
+        var diffMs = fechaInicio.getTime() - ahora.getTime();
+        if (diffMs > 0) {
+          horas = diffMs / (1000 * 60 * 60); // convertir a horas
+        }
+      }
+    }
+
     if (seguidores <= 0 || perfiles <= 0 || horas <= 0) {
       costoEl.innerHTML = '0.00 <span class="small">kbt</span>';
       detalleEl.textContent = 'ingresa datos para calcular costo';
@@ -110,16 +154,28 @@
     var multVip = estado.tipo === 'vip' ? 2.0 : 1.0;
     var costo = seguidores * perfiles * horas * tasaBase * (multNivel[nivel] || 1) * multVip;
 
-    // recargo del 10% por programacion
-    var recargoProg = estado.programado ? 1.10 : 1.0;
-    costo = costo * recargoProg;
+    // recargos acumulativos
+    var partesRecargo = [];
+
+    if (estado.comentarista_ia_activo) {
+      costo = costo * RECARGO_COMENTARISTA_IA;
+      partesRecargo.push('+15% comentarista ia');
+    }
+
+    if (estado.programacion_activa) {
+      costo = costo * RECARGO_PROGRAMACION;
+      partesRecargo.push('+10% programacion');
+    }
 
     var costoStr = costo.toFixed(4);
 
     costoEl.innerHTML = (estado.tipo === 'vip' ? 'vip ' : '') + costoStr + ' <span class="small">kbt</span>';
     costoEl.className = 'valor' + (estado.tipo === 'vip' ? ' vip' : '');
+
     var detalle = seguidores + ' seguidores x ' + perfiles + ' perfiles x ' + horas.toFixed(1) + 'h';
-    if (estado.programado) detalle += ' (+10% programacion)';
+    if (partesRecargo.length > 0) {
+      detalle += ' (' + partesRecargo.join(', ') + ')';
+    }
     detalleEl.textContent = detalle;
     if (estado.tipo === 'vip') detalleEl.className = 'detalle-linea vip';
     else detalleEl.className = 'detalle-linea';
@@ -134,6 +190,20 @@
     return fechaLocal.toISOString().replace('Z', '+00:00');
   }
 
+  // --- validar hora programada (minimo 3h desde ahora) ---
+  function validarHoraProgramada(horaValor) {
+    if (!horaValor) return { valido: false, razon: 'no se especifico hora de inicio' };
+    var fechaInicio = new Date(horaValor);
+    if (isNaN(fechaInicio.getTime())) return { valido: false, razon: 'hora de inicio invalida' };
+    var ahora = new Date();
+    var diffMs = fechaInicio.getTime() - ahora.getTime();
+    var diffHoras = diffMs / (1000 * 60 * 60);
+    if (diffHoras < MARGEN_HORAS_PROGRAMACION) {
+      return { valido: false, razon: 'la hora de inicio debe ser al menos ' + MARGEN_HORAS_PROGRAMACION + 'h despues del momento actual' };
+    }
+    return { valido: true, razon: '' };
+  }
+
   // --- crear pedido ---
   window.crearPedido = function() {
     var url = valor('ped-url');
@@ -142,15 +212,33 @@
     if (seguidores <= 0) { window.mostrarMensaje('ingresa una cantidad valida de seguidores', 'error'); return; }
     var perfiles = parseInt(valor('ped-perfiles')) || 0;
     if (perfiles <= 0) { window.mostrarMensaje('ingresa una cantidad valida de perfiles', 'error'); return; }
-    var minutos = parseInt(valor('ped-minutos')) || 0;
-    if (minutos <= 0) { window.mostrarMensaje('ingresa un tiempo valido', 'error'); return; }
     var nivel = valor('ped-comentarios') || 'basico';
     var btn = $('btn-crear-pedido');
     if (btn) btn.disabled = true;
 
-    // leer campos de agendamiento (opcionales)
-    var horaInicio = convertirAHoraUTC('ped-hora-inicio');
-    var horaFin = convertirAHoraUTC('ped-hora-fin');
+    var minutos = parseInt(valor('ped-minutos')) || 0;
+    var horaInicio = '';
+
+    // validar programacion
+    if (estado.programacion_activa) {
+      horaInicio = convertirAHoraUTC('ped-hora-inicio');
+      var validacion = validarHoraProgramada(horaInicio);
+      if (!validacion.valido) {
+        window.mostrarMensaje(validacion.razon, 'error');
+        if (btn) btn.disabled = false;
+        return;
+      }
+      // calcular duracion como diferencia entre hora_inicio y ahora
+      var fechaInicio = new Date(horaInicio);
+      var ahora = new Date();
+      var diffMs = fechaInicio.getTime() - ahora.getTime();
+      if (diffMs > 0) {
+        minutos = Math.round(diffMs / (1000 * 60)); // en minutos
+      }
+    } else {
+      // sin programacion: validar minutos
+      if (minutos <= 0) { window.mostrarMensaje('ingresa un tiempo valido', 'error'); if (btn) btn.disabled = false; return; }
+    }
 
     var data = {
       url: url,
@@ -159,16 +247,17 @@
       minutos: minutos,
       nivel_comentarios: nivel,
       tipo: estado.tipo,
-      programado: estado.programado,
+      programado: estado.programacion_activa,
+      comentarios_ia: estado.comentarista_ia_activo,
     };
 
-    // agregar campos de agendamiento solo si estan presentes
-    if (horaInicio) data.hora_inicio = horaInicio;
-    if (horaFin) data.hora_fin = horaFin;
+    // agregar hora_inicio solo si programacion activa
+    if (estado.programacion_activa && horaInicio) {
+      data.hora_inicio = horaInicio;
+    }
 
-    // decidir endpoint segun si hay agendamiento
-    var esProgramado = estado.programado || horaInicio !== '';
-    var endpoint = esProgramado ? '/api/pedidos/crear_con_agenda' : '/api/pedidos/crear';
+    // endpoint unificado
+    var endpoint = '/api/pedidos/crear';
 
     fetch(endpoint, {
       method: 'POST',
@@ -329,13 +418,25 @@
 
   // --- configurar eventos del formulario ---
   function configurarEventos() {
-    ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios','ped-hora-inicio','ped-hora-fin'].forEach(function(id) {
+    ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-hora-inicio'].forEach(function(id) {
       var el = $(id);
       if (el) {
         el.addEventListener('input', window.calcularCosto);
         el.addEventListener('change', window.calcularCosto);
       }
     });
+
+    // checkbox comentarista ia
+    var chkIa = $('chk-comentarista-ia');
+    if (chkIa) {
+      chkIa.addEventListener('change', window.toggleComentaristaIA);
+    }
+
+    // checkbox programar
+    var chkProg = $('chk-programar');
+    if (chkProg) {
+      chkProg.addEventListener('change', window.toggleProgramacion);
+    }
   }
 
   // --- iniciar auto-recarga ---
@@ -392,7 +493,8 @@
 
   // --- inicializacion principal ---
   window.inicializarPanelPedidos = function() {
-    estado.programado = false;
+    estado.programacion_activa = false;
+    estado.comentarista_ia_activo = false;
     configurarEventos();
     window.calcularCosto();
     window.cargarPedidos();

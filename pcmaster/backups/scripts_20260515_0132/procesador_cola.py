@@ -3,7 +3,6 @@
 # modulo independiente que procesa pedidos agendados y los asigna
 # segun el nuevo modelo de planificacion centralizada en bd.
 # parte principal del modulo; funciones auxiliares en procesador_cola_ext.py
-# modulo dividido: principal aqui, auxiliares y logica extendida en _ext
 
 import asyncio
 import json
@@ -24,16 +23,6 @@ from procesador_cola_ext import (
     _ahora_dt,
     _enviar_comando_seguro,
     _obtener_pcbots_usuario,
-    _contar_asignaciones_activas,
-    _contar_observadores_por_pcbot,
-    _obtener_contexto_streamer,
-    _obtener_pedidos_planificables,
-    _obtener_perfiles_libres,
-    _limpiar_asignaciones_huerfanas,
-    _tiene_observador_activo,
-    _buscar_perfil_relevo_observador,
-    _enviar_cambio_rol_observador,
-    _iniciar_distribucion_comentarios,
 )
 
 logger = logging.getLogger("procesador_cola")
@@ -132,6 +121,27 @@ async def _ciclo_match():
                 break
 
 
+def _obtener_pedidos_planificables() -> list:
+    """obtiene pedidos agendados y programados listos para planificar.
+
+    returns:
+        list[dict]: pedidos ordenados por fecha_creacion asc (fifo)
+    """
+    ahora = _ahora_dt()
+    return ejecutar_sql(
+        """select id, usuario_id, url, cantidad_perfiles, duracion_horas,
+                  nivel_comentarios, tipo_pedido, comando_id, fecha_creacion,
+                  estado, hora_inicio_programada, hora_fin_programada
+           from pedidos
+           where estado = 'agendado'
+              or (estado = 'programado'
+                  and hora_inicio_programada is not null
+                  and hora_inicio_programada <= ?)
+           order by fecha_creacion asc""",
+        (_ahora_str(),),
+    )
+
+
 async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
                               perfiles_pool: list = None):
     """planifica un pedido usando perfiles de un pool compartido por usuario.
@@ -139,10 +149,7 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
     los perfiles asignados se eliminan de perfiles_pool para que
     ningun perfil se reasigne a multiples pedidos en el mismo ciclo.
 
-    si perfiles_pool es none (llamada legacy), obtiene perfiles por su cuenta.
-
-    NOTA (tarea 4): despues de asignar exitosamente un perfil,
-    programa la distribucion de comentarios via _iniciar_distribucion_comentarios."""
+    si perfiles_pool es none (llamada legacy), obtiene perfiles por su cuenta."""
     pedido_id = pedido["id"]
     usuario_id = pedido.get("usuario_id")
     cantidad_total = pedido.get("cantidad_perfiles", 1)
@@ -213,16 +220,6 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
         )
         if exito:
             asignadas += 1
-            # tarea 4: distribucion de comentarios
-            # programar tarea asincrona que distribuya comentarios
-            # desde el pool de frases de la url del pedido
-            asyncio.create_task(
-                _iniciar_distribucion_comentarios(
-                    pedido_id, usuario_id,
-                    perfil["pcbot_id"], perfil["perfil_id"],
-                    url,
-                )
-            )
 
     # verificar si el pedido ya se completo
     if asignadas >= cantidad_total:
@@ -235,6 +232,106 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
     else:
         logger.info("[MATCH] pedido %s: planificados %d/%d, continuara en siguiente ciclo",
                     pedido_id, asignadas, cantidad_total)
+
+
+def _contar_asignaciones_activas(pedido_id: int) -> int:
+    """cuenta asignaciones activas no vencidas para un pedido."""
+    result = ejecutar_sql_unico(
+        "select count(*) as total from pedido_asignaciones "
+        "where pedido_id = ? and estado in ('planificado', 'ejecutando')",
+        (pedido_id,),
+    )
+    return result["total"] if result else 0
+
+
+def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:
+    """obtiene perfiles libres de los pcbots especificados.
+
+    EN EL NUEVO MODELO CENTRALIZADO:
+    un perfil se considera libre si:
+    - activo = 1 (conectado al pcbot)
+    - no tiene asignaciones activas en pedido_asignaciones (planificado o ejecutando)
+    - o liberacion_estimada <= ahora (perfil que termino y debe liberarse)
+
+    NOTA: en el modelo anterior se usaba activo=0 para perfiles libres.
+    ahora activo=1 significa "conectado", activo=0 significa "desconectado/caido".
+    la ocupacion se determina por pedido_asignaciones, no por activo.
+
+    returns:
+        list[dict]: perfiles disponibles con keys: perfil_id, pcbot_id, hash
+    """
+    ahora_str = _ahora_str()
+    cinco_seg = (_ahora_dt() + timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
+    libres = []
+
+    seen = set()
+    for pcbot_id in pcbots:
+        # union de perfiles sin asignaciones activas + perfiles por liberarse
+        resultados = ejecutar_sql(
+            """
+            -- perfiles sin asignaciones activas (libres ahora)
+            select pr.hash as perfil_id, pr.pcbot_id, pr.liberacion_estimada
+            from perfiles_roxy pr
+            where pr.pcbot_id = ?
+              and pr.activo = 1
+              and not exists (
+                  select 1 from pedido_asignaciones pa
+                  where pa.perfil_id = pr.hash
+                    and pa.estado in ('planificado', 'ejecutando')
+              )
+            union
+            -- perfiles proximos a liberarse (liberacion_estimada <= ahora + 5s)
+            -- NOTA: no se filtra por pedido_asignaciones porque estos perfiles
+            -- estan activos y su liberacion esta por vencer en menos de 5s.
+            -- si aun estan en estado 'ejecutando', el cleanup los marcara
+            -- como 'completado' en el mismo ciclo (ejecutado antes),
+            -- o seran liberados en el proximo heartbeat.
+            select pr.hash as perfil_id, pr.pcbot_id, pr.liberacion_estimada
+            from perfiles_roxy pr
+            where pr.pcbot_id = ?
+              and pr.activo = 1
+              and pr.liberacion_estimada is not null
+              and pr.liberacion_estimada <= ?
+            order by liberacion_estimada asc nulls last""",
+            (pcbot_id, pcbot_id, cinco_seg),
+        )
+        for r in (resultados or []):
+            pid = r["perfil_id"]
+            if pid in seen:
+                continue
+            seen.add(pid)
+            libres.append({
+                "perfil_id": pid,
+                "pcbot_id": pcbot_id,
+                "hash": pid,
+            })
+
+    return libres[:maximo]
+
+
+def _contar_observadores_por_pcbot(pcbot_id: str) -> int:
+    """cuenta cuantas asignaciones en estado ejecutando/planificado
+    tiene un pcbot con rol='observador'."""
+    result = ejecutar_sql_unico(
+        "select count(*) as total from pedido_asignaciones "
+        "where pcbot_id = ? and estado in ('planificado', 'ejecutando') "
+        "and rol = 'observador'",
+        (pcbot_id,),
+    )
+    return result["total"] if result else 0
+
+
+def _obtener_contexto_streamer(url: str):
+    """obtiene el contexto de un streamer por url desde contextos_streamer.
+    devuelve dict con ultimo_analisis o none si no existe."""
+    if not url:
+        return None
+    cinco_min_atras = (_ahora_dt() - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+    return ejecutar_sql_unico(
+        "select id, url, ultimo_analisis, activo from contextos_streamer "
+        "where url = ? and activo = 1",
+        (url,),
+    )
 
 
 async def _asignar_perfil_planificado(
@@ -251,10 +348,8 @@ async def _asignar_perfil_planificado(
     paso 2: enviar comando 'asignar' al pcbot.
     paso 3: si exito -> 'ejecutando'; si fallo -> 'fallido'.
 
-    designacion de observador (tarea 1):
-    despues de construir el comando 'asignar', verifica si el pcbot destino
-    ya tiene un observador activo. si no tiene, añade "rol":"observador"
-    a los parametros y registra el log correspondiente."""
+    punto 6: si todos los pcbots disponibles ya tienen observador
+    y la url no tiene contexto reciente, permite segundo observador."""
     pcbot_id = perfil["pcbot_id"]
     perfil_id = perfil["perfil_id"]
     comando_id = str(uuid4())
@@ -270,14 +365,38 @@ async def _asignar_perfil_planificado(
     liberacion_dt = _ahora_dt() + timedelta(seconds=duracion_seg)
     liberacion_str = liberacion_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    # tarea 1: designacion de observador
-    # verificar si el pcbot destino ya tiene un observador activo
-    if not _tiene_observador_activo(pcbot_id):
-        rol = "observador"
-        logger.info(
-            "[MATCH] perfil %s designado observador en pcbot %s (pedido %s)",
-            perfil_id, pcbot_id, pedido_id,
+    # punto 6: detectar si este perfil se asigna como segundo observador
+    # (solo aplica cuando no quedan pcbots libres en el pool)
+    contexto = _obtener_contexto_streamer(url)
+    necesita_segundo_observador = False
+    if contexto is None or contexto.get("ultimo_analisis") is None:
+        necesita_segundo_observador = True
+    elif contexto.get("ultimo_analisis"):
+        # verificar si ultimo_analisis tiene mas de 5 min
+        cinco_min_atras = (_ahora_dt() - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+        if contexto["ultimo_analisis"] < cinco_min_atras:
+            necesita_segundo_observador = True
+
+    if necesita_segundo_observador:
+        # contar observadores totales activos en todos los pcbots
+        total_obs = ejecutar_sql_unico(
+            "select count(*) as total from pedido_asignaciones "
+            "where estado in ('planificado', 'ejecutando') "
+            "and rol = 'observador'",
         )
+        total_obs_count = total_obs["total"] if total_obs else 0
+        # contar pcbots totales disponibles
+        pcbots_disponibles = _obtener_pcbots_usuario(usuario_id)
+        total_pcbots = len(pcbots_disponibles) if pcbots_disponibles else 1
+
+        # si todos los pcbots ya tienen al menos 1 observador, forzar segundo observador
+        if total_pcbots > 0 and total_obs_count >= total_pcbots:
+            rol = "observador"
+            logger.info(
+                "[MATCH] segundo observador forzado en pcbot %s "
+                "por falta de pcbots libres para url %s",
+                pcbot_id, url,
+            )
 
     # paso 1: insertar planificado
     try:
@@ -353,10 +472,7 @@ async def _liberar_asignaciones_vencidas():
 
     busca asignaciones en estado 'ejecutando' cuya liberacion_estimada ya paso,
     las marca como 'completado' y libera el perfil asociado.
-
-    tarea 2: rotacion de observador
-    cuando una asignacion con rol='observador' se completa,
-    busca otro perfil activo en el mismo pcbot para transferirle el rol."""
+    """
     ahora_str = _ahora_str()
     vencidas = ejecutar_sql(
         """select id, perfil_id, pcbot_id, pedido_id
@@ -379,85 +495,150 @@ async def _liberar_asignaciones_vencidas():
                 (ahora_str, asig["id"]),
             )
             # liberar perfil: mantener activo=1 (sigue conectado) pero quitar liberacion_estimada
-            perfil_id = asig.get("perfil_id")
-            pcbot_id = asig.get("pcbot_id")
-            if perfil_id and pcbot_id:
+            if asig.get("perfil_id") and asig.get("pcbot_id"):
                 ejecutar_sql(
                     "update perfiles_roxy set liberacion_estimada = null "
                     "where hash = ? and pcbot_id = ?",
-                    (perfil_id, pcbot_id),
+                    (asig["perfil_id"], asig["pcbot_id"]),
                 )
             logger.info("[MATCH] asignacion %s completada (vencio duracion), perfil %s liberado",
-                        asig["id"], perfil_id)
-
-            # tarea 2: rotacion de observador
-            # si esta asignacion tenia rol='observador', transferir a otro perfil
-            if asig.get("perfil_id") and asig.get("pcbot_id"):
-                _rotar_observador_al_completar(asig)
-
+                        asig["id"], asig.get("perfil_id"))
         except Exception as e:
             logger.error("[MATCH] error liberando asignacion %s: %s",
                          asig["id"], str(e)[:200])
 
 
-def _rotar_observador_al_completar(asig: dict):
-    """tarea 2: cuando una asignacion con rol observador se completa,
-    busca otro perfil activo en el mismo pcbot y le transfiere el rol."""
-    pcbot_id = asig.get("pcbot_id")
-    asig_id = asig["id"]
-    perfil_saliente = asig.get("perfil_id")
+async def _limpiar_asignaciones_huerfanas():
+    """limpia asignaciones huerfanas que bloquean perfiles.
 
-    # verificar si la asignacion saliente tenia rol='observador'
-    check_rol = ejecutar_sql_unico(
-        "select rol from pedido_asignaciones where id = ?",
-        (asig_id,),
-    )
-    if not check_rol or check_rol.get("rol") != "observador":
-        return
+    reglas:
+    1. si un perfil tiene mas de una asignacion activa (planificado/ejecutando),
+       marca todas menos la mas reciente como 'fallido'.
+    2. si una asignacion activa pertenece a un pedido ya completado o cancelado,
+       marca esa asignacion como 'fallido'.
 
-    # buscar otro perfil activo en el mismo pcbot
-    perfil_entrante = _buscar_perfil_relevo_observador(pcbot_id, asig_id)
-    if not perfil_entrante:
-        logger.info(
-            "[MATCH] no hay perfil de relevo para observador en pcbot %s "
-            "(asignacion %s completada)", pcbot_id, asig_id,
-        )
-        return
+    registra cuantas asignaciones fueron limpiadas en total.
+    """
+    ahora_str = _ahora_str()
+    total_limpiadas = 0
 
-    # enviar comando cambiar_rol al pcbot (se necesita usuario_id)
-    # obtenemos usuario_id de la asignacion o del pedido
-    pedido_info = ejecutar_sql_unico(
-        "select p.usuario_id from pedido_asignaciones pa "
-        "join pedidos p on p.id = pa.pedido_id "
-        "where pa.id = ?",
-        (asig_id,),
-    )
-    usuario_id = pedido_info.get("usuario_id") if pedido_info else None
-    if not usuario_id:
-        logger.warning("[MATCH] no se pudo obtener usuario_id para rotar observador en asig %s",
-                       asig_id)
-        return
-
-    # enviar el cambio de rol (tarea asincrona lanzada como fire-and-forget para no bloquear)
-    asyncio.create_task(
-        _ejecutar_rotacion_observador(
-            usuario_id, pcbot_id, perfil_saliente, perfil_entrante, asig_id,
-        )
+    # regla 1: perfiles con multiples asignaciones activas
+    perfiles_duplicados = ejecutar_sql(
+        """select perfil_id, pcbot_id, count(*) as total
+           from pedido_asignaciones
+           where estado in ('planificado', 'ejecutando')
+           group by perfil_id, pcbot_id
+           having count(*) > 1"""
     )
 
+    for fila in (perfiles_duplicados or []):
+        perfil_id = fila["perfil_id"]
+        pcbot_id = fila["pcbot_id"]
+        # obtener todas las asignaciones activas de este perfil, ordenadas por inicio desc
+        asignaciones = ejecutar_sql(
+            """select id, inicio
+               from pedido_asignaciones
+               where perfil_id = ?
+                 and pcbot_id = ?
+                 and estado in ('planificado', 'ejecutando')
+               order by inicio desc""",
+            (perfil_id, pcbot_id),
+        )
+        if not asignaciones or len(asignaciones) <= 1:
+            continue
+        # mantener la mas reciente (indice 0), marcar el resto como fallido
+        for asig in asignaciones[1:]:
+            try:
+                ejecutar_sql(
+                    "update pedido_asignaciones set estado = 'fallido', fin = ? "
+                    "where id = ? and estado in ('planificado', 'ejecutando')",
+                    (ahora_str, asig["id"]),
+                )
+                total_limpiadas += 1
+                logger.warning(
+                    "[MATCH] huerfana: perfil %s tenia %d asignaciones activas, "
+                    "se marco #%s como fallido (se conserva #%s)",
+                    perfil_id, len(asignaciones), asig["id"], asignaciones[0]["id"],
+                )
+            except Exception as e:
+                logger.error("[MATCH] error limpiando duplicado perfil %s asig %s: %s",
+                             perfil_id, asig["id"], str(e)[:200])
 
-async def _ejecutar_rotacion_observador(usuario_id: int, pcbot_id: str,
-                                         perfil_saliente: str,
-                                         perfil_entrante: str, asig_id: int):
-    """ejecuta el envio del comando cambiar_rol de forma asincrona."""
-    exito = await _enviar_cambio_rol_observador(usuario_id, pcbot_id, perfil_entrante)
-    if exito:
-        logger.info(
-            "[MATCH] rol observador transferido de %s a %s en pcbot %s",
-            perfil_saliente, perfil_entrante, pcbot_id,
-        )
-    else:
-        logger.warning(
-            "[MATCH] fallo transferencia de rol observador de %s a %s en pcbot %s",
-            perfil_saliente, perfil_entrante, pcbot_id,
-        )
+    # regla 2: asignaciones activas para pedidos ya completados o cancelados
+    asignaciones_huerfanas = ejecutar_sql(
+        """select pa.id, pa.perfil_id, pa.pcbot_id, pa.pedido_id
+           from pedido_asignaciones pa
+           join pedidos p on p.id = pa.pedido_id
+           where pa.estado in ('planificado', 'ejecutando')
+             and p.estado in ('completado', 'cancelado')"""
+    )
+
+    for asig in (asignaciones_huerfanas or []):
+        try:
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido', fin = ? "
+                "where id = ? and estado in ('planificado', 'ejecutando')",
+                (ahora_str, asig["id"]),
+            )
+            total_limpiadas += 1
+            logger.warning(
+                "[MATCH] huerfana: asignacion %s (perfil %s) para pedido %s ya en estado "
+                "completado/cancelado -> fallido",
+                asig["id"], asig.get("perfil_id"), asig.get("pedido_id"),
+            )
+        except Exception as e:
+            logger.error("[MATCH] error limpiando huerfana asig %s: %s",
+                         asig["id"], str(e)[:200])
+
+    if total_limpiadas > 0:
+        logger.info("[MATCH] limpieza completada: %s asignaciones huerfanas marcadas como fallido",
+                    total_limpiadas)
+
+    # verificar si hay pedidos completados (todas sus asignaciones estan completadas/fallidas)
+    pedidos_a_cerrar = ejecutar_sql(
+        """select p.id from pedidos p
+           where p.estado = 'en_progreso'
+             and not exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.pedido_id = p.id
+                   and pa.estado in ('planificado', 'ejecutando')
+             )
+             and exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.pedido_id = p.id
+                   and pa.estado in ('completado', 'fallido')
+             )"""
+    )
+    for pedido in (pedidos_a_cerrar or []):
+        try:
+            ejecutar_sql(
+                "update pedidos set estado = 'completado', fecha_fin = ? where id = ?",
+                (ahora_str, pedido["id"]),
+            )
+            logger.info("[MATCH] pedido %s completado (todas las asignaciones finalizadas)",
+                        pedido["id"])
+        except Exception as e:
+            logger.error("[MATCH] error cerrando pedido %s: %s",
+                         pedido["id"], str(e)[:200])
+
+    # eliminar asignaciones huérfanas (planificado sin respuesta por >35s)
+    timeout_dt = _ahora_dt() - timedelta(seconds=TIEMPO_ESPERA_CONFIRMACION)
+    timeout_str = timeout_dt.strftime("%Y-%m-%d %H:%M:%S")
+    colgadas = ejecutar_sql(
+        """select id, perfil_id, pcbot_id, pedido_id from pedido_asignaciones
+           where estado = 'planificado'
+             and inicio is not null
+             and inicio <= ?""",
+        (timeout_str,),
+    )
+    for asig in (colgadas or []):
+        try:
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
+            )
+            logger.warning("[MATCH] asignacion planificada %s marcada fallida por timeout (>%ss)",
+                          asig["id"], TIEMPO_ESPERA_CONFIRMACION)
+        except Exception as e:
+            logger.error("[MATCH] error marcando timeout asignacion %s: %s",
+                         asig["id"], str(e)[:200])

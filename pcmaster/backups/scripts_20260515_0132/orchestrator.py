@@ -318,24 +318,6 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                     await websocket.send_json({"tipo": "ack"})
                     continue
 
-                if datos.get("tipo") == "chat_capturado":
-                    # tarea 3: recepcion de chat capturado desde el pcbot
-                    url = datos.get("url", "")
-                    lineas = datos.get("lineas", [])
-                    logger.info(
-                        "[CHAT] chat_capturado recibido de pcbot %s para url %s (%d lineas)",
-                        pcbot_id, url, len(lineas) if isinstance(lineas, list) else 0,
-                    )
-                    try:
-                        from comentarios_analizador import procesar_chat
-                        await procesar_chat(url, lineas)
-                    except ImportError:
-                        logger.warning("[CHAT] modulo comentarios_analizador no disponible")
-                    except Exception as e:
-                        logger.error("[CHAT] error procesando chat_capturado: %s", str(e)[:200])
-                    await websocket.send_json({"tipo": "ack_chat"})
-                    continue
-
                 logger.debug(f"Mensaje no manejado de {pcbot_id}: {datos.get('tipo')}")
 
             except asyncio.TimeoutError:

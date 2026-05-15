@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>panel admin - roxymaster</title>
+<style>
+/* panel admin - roxymaster v8.3 */
+:root {
+  --admin-bg: #0a0a1a;
+  --admin-card: linear-gradient(135deg, #1a1a3e, #0d0d24);
+  --admin-border: rgba(124, 58, 237, 0.2);
+  --admin-text: #e2e8f0;
+  --admin-muted: #94a3b8;
+  --admin-accent: #00ff88;
+  --admin-purple: #7c3aed;
+  --admin-danger: #ff3366;
+  --admin-warning: #f59e0b;
+}
+.admin-container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.admin-header {
+  margin-bottom: 1.5rem;
+}
+.admin-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00ff88, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.25rem 0;
+}
+.admin-header p {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+/* tabs de navegacion admin */
+.admin-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 0.35rem;
+  border: 1px solid var(--admin-border);
+}
+.admin-tab {
+  padding: 0.55rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--admin-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.admin-tab:hover {
+  color: var(--admin-text);
+  background: rgba(124,58,237,0.1);
+}
+.admin-tab.active {
+  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(124,58,237,0.15));
+  color: var(--admin-accent);
+  box-shadow: 0 0 15px rgba(0,255,136,0.1);
+}
+.admin-panel {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.admin-panel.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* cards de secciones */
+.admin-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.admin-card h3 {
+  color: var(--admin-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+/* tables */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.admin-table th {
+  text-align: left;
+  padding: 0.6rem 0.5rem;
+  color: var(--admin-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--admin-border);
+}
+.admin-table td {
+  padding: 0.55rem 0.5rem;
+  color: var(--admin-text);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 0.8rem;
+}
+.admin-table tr:hover td {
+  background: rgba(124,58,237,0.05);
+}
+.admin-table .acciones {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+/* badges de estado */
+.badge-estado {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-ok, .badge-activo, .badge-completado, .badge-exitoso {
+  background: rgba(0,255,136,0.15);
+  color: #00ff88;
+}
+.badge-warn, .badge-pendiente, .badge-agendado, .badge-programado {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+}
+.badge-danger, .badge-error, .badge-caido, .badge-cancelado {
+  background: rgba(255,51,102,0.15);
+  color: #ff3366;
+}
+.badge-info, .badge-conectado {
+  background: rgba(124,58,237,0.15);
+  color: #a78bfa;
+}
+.badge-inactivo, .badge-suspendido {
+  background: rgba(148,163,184,0.15);
+  color: #94a3b8;
+}
+/* botones admin */
+.btn-action {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.btn-xs {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.65rem;
+}
+.btn-action:hover {
+  transform: translateY(-1px);
+}
+.btn-accent {
+  background: linear-gradient(135deg, #00ff88, #7c3aed);
+  color: #0a0a1a;
+}
+.btn-purple {
+  background: rgba(124,58,237,0.2);
+  color: #a78bfa;
+  border: 1px solid rgba(124,58,237,0.3);
+}
+.btn-purple:hover {
+  background: rgba(124,58,237,0.3);
+}
+.btn-danger {
+  background: rgba(255,51,102,0.2);
+  color: #ff3366;
+  border: 1px solid rgba(255,51,102,0.3);
+}
+.btn-danger:hover {
+  background: rgba(255,51,102,0.3);
+}
+.btn-warning {
+  background: rgba(245,158,11,0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+.btn-warning:hover {
+  background: rgba(245,158,11,0.3);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--admin-muted);
+  border: 1px solid var(--admin-border);
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--admin-text);
+}
+/* formularios admin */
+.admin-form-group {
+  margin-bottom: 0.8rem;
+}
+.admin-form-group label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--admin-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+.admin-form-group input,
+.admin-form-group select,
+.admin-form-group textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: rgba(0,0,0,0.3);
+  color: var(--admin-text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+.admin-form-group input:focus,
+.admin-form-group select:focus,
+.admin-form-group textarea:focus {
+  border-color: var(--admin-accent);
+}
+.admin-form-group textarea {
+  min-height: 80px;
+  font-family: monospace;
+}
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 768px) {
+  .admin-form-row { grid-template-columns: 1fr; }
+}
+/* search / filter */
+.admin-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.admin-search input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: rgba(0,0,0,0.3);
+  color: var(--admin-text);
+  font-size: 0.82rem;
+  outline: none;
+  flex: 1;
+  min-width: 200px;
+}
+.admin-search input:focus {
+  border-color: var(--admin-accent);
+}
+.admin-search select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: rgba(0,0,0,0.3);
+  color: var(--admin-text);
+  font-size: 0.82rem;
+  outline: none;
+}
+/* stats cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+.stat-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00ff88, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-card .stat-label {
+  font-size: 0.7rem;
+  color: var(--admin-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+}
+/* log viewer */
+.log-viewer {
+  background: #000;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--admin-accent);
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.log-viewer .log-error { color: #ff3366; }
+.log-viewer .log-warn { color: #f59e0b; }
+.log-viewer .log-info { color: #a78bfa; }
+.log-viewer .log-debug { color: #94a3b8; }
+/* config editor */
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+@media (max-width: 768px) {
+  .config-grid { grid-template-columns: 1fr; }
+}
+.config-item {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.config-item label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--admin-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+.config-item .config-key {
+  font-size: 0.75rem;
+  color: #a78bfa;
+  font-family: monospace;
+  margin-bottom: 0.3rem;
+}
+.config-item input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  background: rgba(0,0,0,0.3);
+  color: var(--admin-text);
+  font-size: 0.82rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.config-item input:focus {
+  border-color: var(--admin-accent);
+}
+/* actions bar */
+.actions-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+/* modal */
+.modal-overlay { display: none; }
+.modal-overlay.show { 
+  display: flex; 
+  position: fixed; 
+  inset: 0; 
+  background: rgba(0,0,0,0.7); 
+  z-index: 1000; 
+  align-items: center; 
+  justify-content: center;
+}
+.modal-content-admin {
+  background: linear-gradient(135deg, #1a1a3e, #0a0a1a);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease;
+}
+.modal-content-admin h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--admin-text);
+  margin-bottom: 1rem;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.modal-actions button { flex: 1; }
+/* responsive table scroll */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* spinner */
+.spinner-mini {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--admin-accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+/* toast */
+.admin-toast {
+  position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-accent);
+  color: var(--admin-text);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  animation: slideIn 0.3s ease;
+  max-width: 350px;
+}
+.admin-toast.error { border-color: var(--admin-danger); }
+.admin-toast.warning { border-color: var(--admin-warning); }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<div class="admin-container">
+  <div class="admin-header">
+    <h1>panel de superadmin</h1>
+    <p id="admin-subtitle">gestion centralizada del sistema roxymaster</p>
+  </div>
+
+  <!-- tabs de navegacion admin -->
+  <div class="admin-tabs" id="admin-tabs">
+    <button class="admin-tab active" data-tab="admin-stats" onclick="adminCambiarTab('admin-stats')">estadisticas</button>
+    <button class="admin-tab" data-tab="admin-usuarios" onclick="adminCambiarTab('admin-usuarios')">usuarios</button>
+    <button class="admin-tab" data-tab="admin-pedidos" onclick="adminCambiarTab('admin-pedidos')">pedidos</button>
+    <button class="admin-tab" data-tab="admin-perfiles" onclick="adminCambiarTab('admin-perfiles')">perfiles</button>
+    <button class="admin-tab" data-tab="admin-pcbots" onclick="adminCambiarTab('admin-pcbots')">pcbots</button>
+    <button class="admin-tab" data-tab="admin-config" onclick="adminCambiarTab('admin-config')">config</button>
+    <button class="admin-tab" data-tab="admin-logs" onclick="adminCambiarTab('admin-logs')">logs</button>
+    <button class="admin-tab" data-tab="admin-acciones" onclick="adminCambiarTab('admin-acciones')">acciones</button>
+  </div>
+
+  <!-- panel: estadisticas -->
+  <div class="admin-panel active" id="admin-stats">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="stat-pedidos-total">-</div><div class="stat-label">pedidos totales</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-pedidos-activos">-</div><div class="stat-label">pedidos activos</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-perfiles-libres">-</div><div class="stat-label">perfiles libres</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-perfiles-ocupados">-</div><div class="stat-label">perfiles ocupados</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-perfiles-caidos">-</div><div class="stat-label">perfiles caidos</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-pcbots">-</div><div class="stat-label">pcbots conectados</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-usuarios">-</div><div class="stat-label">usuarios totales</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-version">-</div><div class="stat-label">version sistema</div></div>
+    </div>
+    <button class="btn-action btn-accent" onclick="adminCargarStats()">actualizar estadisticas</button>
+  </div>
+
+  <!-- panel: usuarios -->
+  <div class="admin-panel" id="admin-usuarios">
+    <div class="admin-search">
+      <input type="text" id="admin-search-usuarios" placeholder="buscar por email, username o id..." oninput="adminFiltrarUsuarios()">
+      <button class="btn-action btn-accent" onclick="adminCargarUsuarios()">↻ recargar</button>
+      <button class="btn-action btn-purple" onclick="adminMostrarCrearUsuario()">+ nuevo usuario</button>
+    </div>
+    <div class="admin-card">
+      <div class="table-responsive">
+        <table class="admin-table" id="tabla-usuarios">
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>email</th>
+              <th>username</th>
+              <th>rol</th>
+              <th>estado</th>
+              <th>wallet kbt</th>
+              <th>wallet pen</th>
+              <th>fecha creacion</th>
+              <th>acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-usuarios">
+            <tr><td colspan="9" class="empty-state">cargando usuarios...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- panel: pedidos -->
+  <div class="admin-panel" id="admin-pedidos">
+    <div class="admin-search">
+      <input type="text" id="admin-search-pedidos" placeholder="buscar por id, usuario o url..." oninput="adminFiltrarPedidos()">
+      <select id="admin-filtro-estado-pedidos" onchange="adminFiltrarPedidos()">
+        <option value="">todos los estados</option>
+        <option value="agendado">agendado</option>
+        <option value="programado">programado</option>
+        <option value="en_progreso">en progreso</option>
+        <option value="completado">completado</option>
+        <option value="cancelado">cancelado</option>
+        <option value="error">error</option>
+      </select>
+      <button class="btn-action btn-accent" onclick="adminCargarPedidos()">↻ recargar</button>
+    </div>
+    <div class="admin-card">
+      <div class="table-responsive">
+        <table class="admin-table" id="tabla-pedidos">
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>usuario id</th>
+              <th>url</th>
+              <th>estado</th>
+              <th>perfiles solicitados</th>
+              <th>duracion (h)</th>
+              <th>fecha creacion</th>
+              <th>acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pedidos">
+            <tr><td colspan="8" class="empty-state">cargando pedidos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- panel: perfiles -->
+  <div class="admin-panel" id="admin-perfiles">
+    <div class="admin-search">
+      <input type="text" id="admin-search-perfiles" placeholder="buscar por hash, pcbot o usuario..." oninput="adminFiltrarPerfiles()">
+      <select id="admin-filtro-estado-perfiles" onchange="adminFiltrarPerfiles()">
+        <option value="">todos los estados</option>
+        <option value="libre">libre</option>
+        <option value="ocupado">ocupado</option>
+        <option value="caido">caido</option>
+        <option value="suspendido">suspendido</option>
+      </select>
+      <button class="btn-action btn-accent" onclick="adminCargarPerfiles()">↻ recargar</button>
+    </div>
+    <div class="admin-card">
+      <div class="table-responsive">
+        <table class="admin-table" id="tabla-perfiles">
+          <thead>
+            <tr>
+              <th>hash</th>
+              <th>pcbot_id</th>
+              <th>estado</th>
+              <th>usuario asignado</th>
+              <th>pedido activo</th>
+              <th>vip</th>
+              <th>ultimo heartbeat</th>
+              <th>acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-perfiles">
+            <tr><td colspan="8" class="empty-state">cargando perfiles...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- panel: pcbots -->
+  <div class="admin-panel" id="admin-pcbots">
+    <div class="admin-search">
+      <input type="text" id="admin-search-pcbots" placeholder="buscar por id..." oninput="adminFiltrarPcbots()">
+      <button class="btn-action btn-accent" onclick="adminCargarPcbots()">↻ recargar</button>
+    </div>
+    <div class="admin-card">
+      <div class="table-responsive">
+        <table class="admin-table" id="tabla-pcbots">
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>usuario id</th>
+              <th>estado conexion</th>
+              <th>ip</th>
+              <th>version</th>
+              <th>ultimo heartbeat</th>
+              <th>perfiles activos</th>
+              <th>acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pcbots">
+            <tr><td colspan="8" class="empty-state">cargando pcbots...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- panel: configuracion -->
+  <div class="admin-panel" id="admin-config">
+    <div class="admin-card">
+      <h3>configuracion del sistema</h3>
+      <p style="color:var(--admin-muted);font-size:0.8rem;margin-bottom:1rem;">
+        modifica las variables del sistema. los cambios se persisten en la base de datos y se aplican en el proximo ciclo.
+      </p>
+      <div class="config-grid" id="config-grid">
+        <div class="empty-state" style="grid-column:1/-1;">cargando configuracion...</div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+        <button class="btn-action btn-accent" onclick="adminGuardarConfig()">guardar configuracion</button>
+        <button class="btn-action btn-ghost" onclick="adminCargarConfig()">↻ recargar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- panel: logs -->
+  <div class="admin-panel" id="admin-logs">
+    <div class="admin-card">
+      <h3>logs del servidor</h3>
+      <div style="margin-bottom:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+        <button class="btn-action btn-accent" onclick="adminCargarLogs()">↻ recargar logs</button>
+        <label style="color:var(--admin-muted);font-size:0.75rem;display:flex;align-items:center;gap:0.3rem;">
+          <input type="checkbox" id="admin-auto-logs" checked onchange="adminToggleAutoLogs()">
+          auto-actualizar (10s)
+        </label>
+      </div>
+      <div class="log-viewer" id="log-viewer">cargando logs...</div>
+    </div>
+  </div>
+
+  <!-- panel: acciones -->
+  <div class="admin-panel" id="admin-acciones">
+    <div class="admin-card">
+      <h3>acciones administrativas</h3>
+      <div class="actions-bar">
+        <button class="btn-action btn-accent" onclick="adminForzarMatch()">forzar ciclo match</button>
+        <button class="btn-action btn-warning" onclick="adminLimpiarHuerfanas()">limpiar asignaciones huerfanas</button>
+        <button class="btn-action btn-purple" onclick="adminBackupDB()">backup manual bd</button>
+        <button class="btn-action btn-danger" onclick="adminReiniciarProcesador()">reiniciar procesador cola</button>
+      </div>
+      <div id="admin-acciones-result" style="margin-top:1rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- modal crear/editar usuario -->
+<div class="modal-overlay" id="modal-admin-usuario">
+  <div class="modal-content-admin">
+    <span style="position:absolute;top:0.5rem;right:1rem;font-size:1.5rem;cursor:pointer;color:var(--admin-muted);" onclick="adminCerrarModal('modal-admin-usuario')">&times;</span>
+    <h2 id="modal-usuario-titulo">crear usuario</h2>
+    <input type="hidden" id="modal-usuario-id">
+    <div class="admin-form-group">
+      <label>email</label>
+      <input type="email" id="modal-usuario-email" placeholder="email del usuario">
+    </div>
+    <div class="admin-form-group" id="modal-usuario-password-group">
+      <label>password</label>
+      <input type="password" id="modal-usuario-password" placeholder="dejar vacio para no cambiar">
+    </div>
+    <div class="admin-form-group">
+      <label>username</label>
+      <input type="text" id="modal-usuario-username" placeholder="nombre de usuario">
+    </div>
+    <div class="admin-form-group">
+      <label>rol</label>
+      <select id="modal-usuario-rol">
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+        <option value="superadmin">superadmin</option>
+      </select>
+    </div>
+    <div class="admin-form-group">
+      <label>estado</label>
+      <select id="modal-usuario-estado">
+        <option value="activo">activo</option>
+        <option value="suspendido">suspendido</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-action btn-ghost" onclick="adminCerrarModal('modal-admin-usuario')">cancelar</button>
+      <button class="btn-action btn-accent" id="modal-usuario-btn" onclick="adminGuardarUsuario()">crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal confirmacion -->
+<div class="modal-overlay" id="modal-admin-confirm">
+  <div class="modal-content-admin">
+    <h2 id="modal-confirm-titulo">confirmar accion</h2>
+    <p id="modal-confirm-texto" style="color:var(--admin-muted);margin-bottom:1rem;"></p>
+    <div class="modal-actions">
+      <button class="btn-action btn-ghost" onclick="adminCerrarModal('modal-admin-confirm')">cancelar</button>
+      <button class="btn-action btn-danger" id="modal-confirm-btn" onclick="adminEjecutarConfirmacion()">confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// panel admin - roxymaster v8.3
+// ============================================================
+var admin = {
+  api: null,
+  token: '',
+  usuarios: [],
+  pedidos: [],
+  perfiles: [],
+  pcbots: [],
+  config: {},
+  logInterval: null,
+  confirmAction: null,
+};
+
+function adminInit() {
+  var t = null;
+  try { t = localStorage.getItem('token'); } catch(e) {}
+  if (!t) { try { t = sessionStorage.getItem('token'); } catch(e) {} }
+  admin.token = t || '';
+  admin.api = new Api();
+  // cargar stats iniciales
+  adminCargarStats();
+  // verificar si hay auto-logs
+  if (document.getElementById('admin-auto-logs').checked) {
+    adminIniciarAutoLogs();
+  }
+}
+
+function adminCambiarTab(tabId) {
+  // ocultar todos los paneles
+  document.querySelectorAll('.admin-panel').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  document.querySelectorAll('.admin-tab').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  // mostrar el panel seleccionado
+  var panel = document.getElementById(tabId);
+  if (panel) panel.classList.add('active');
+  var tabBtn = document.querySelector('.admin-tab[data-tab="' + tabId + '"]');
+  if (tabBtn) tabBtn.classList.add('active');
+
+  // cargar datos segun el tab
+  switch (tabId) {
+    case 'admin-usuarios': adminCargarUsuarios(); break;
+    case 'admin-pedidos': adminCargarPedidos(); break;
+    case 'admin-perfiles': adminCargarPerfiles(); break;
+    case 'admin-pcbots': adminCargarPcbots(); break;
+    case 'admin-config': adminCargarConfig(); break;
+    case 'admin-logs': adminCargarLogs(); break;
+    case 'admin-stats': adminCargarStats(); break;
+  }
+}
+
+// ============================================================
+// toast helper
+// ============================================================
+function adminToast(msg, tipo) {
+  tipo = tipo || 'success';
+  var el = document.createElement('div');
+  el.className = 'admin-toast ' + tipo;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(100%)'; el.style.transition = 'all 0.3s'; }, 2500);
+  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+}
+
+// ============================================================
+// modal helper
+// ============================================================
+function adminAbrirModal(id) {
+  var m = document.getElementById(id);
+  if (m) m.classList.add('show');
+}
+function adminCerrarModal(id) {
+  var m = document.getElementById(id);
+  if (m) m.classList.remove('show');
+}
+// cerrar modal click overlay
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay') && e.target.id) {
+    adminCerrarModal(e.target.id);
+  }
+});
+
+// ============================================================
+// stats
+// ============================================================
+async function adminCargarStats() {
+  try {
+    var d = await admin.api.get('/superadmin/kpi');
+    if (d && d.exito) {
+      var s = d.kpi || d.datos || d;
+      document.getElementById('stat-pedidos-total').textContent = s.pedidos_total || s.pedidos_totales || 0;
+      document.getElementById('stat-pedidos-activos').textContent = s.pedidos_activos || 0;
+      document.getElementById('stat-perfiles-libres').textContent = s.perfiles_libres || 0;
+      document.getElementById('stat-perfiles-ocupados').textContent = s.perfiles_ocupados || 0;
+      document.getElementById('stat-perfiles-caidos').textContent = s.perfiles_caidos || 0;
+      document.getElementById('stat-pcbots').textContent = s.pcbots_conectados || s.pcbots || 0;
+      document.getElementById('stat-usuarios').textContent = s.usuarios_totales || s.usuarios || 0;
+      document.getElementById('stat-version').textContent = s.version || s.version_sistema || '8.3';
+    } else {
+      adminToast('error al cargar estadisticas', 'error');
+    }
+  } catch (e) {
+    console.error('error stats:', e);
+    adminToast('error de conexion al cargar estadisticas', 'error');
+  }
+}
+
+// ============================================================
+// usuarios
+// ============================================================
+async function adminCargarUsuarios() {
+  document.getElementById('tbody-usuarios').innerHTML = '<tr><td colspan="9"><div class="spinner-mini"></div> cargando usuarios...</td></tr>';
+  try {
+    var d = await admin.api.get('/admin/usuarios');
+    if (d && d.exito) {
+      admin.usuarios = d.usuarios || [];
+      adminRenderUsuarios(admin.usuarios);
+    } else {
+      document.getElementById('tbody-usuarios').innerHTML = '<tr><td colspan="9" class="empty-state">error al cargar usuarios</td></tr>';
+    }
+  } catch (e) {
+    console.error('error usuarios:', e);
+    document.getElementById('tbody-usuarios').innerHTML = '<tr><td colspan="9" class="empty-state">error de conexion</td></tr>';
+  }
+}
+
+function adminRenderUsuarios(lista) {
+  var tbody = document.getElementById('tbody-usuarios');
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">no se encontraron usuarios</td></tr>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function(u) {
+    var estadoClass = 'badge-ok';
+    if (u.estado === 'suspendido' || u.estado === 'suspendido') estadoClass = 'badge-inactivo';
+    var rolClass = u.rol === 'superadmin' ? 'badge-info' : (u.rol === 'admin' ? 'badge-ok' : '');
+    html += '<tr>'
+      + '<td>' + u.id + '</td>'
+      + '<td>' + (u.email || '-') + '</td>'
+      + '<td>' + (u.username || '-') + '</td>'
+      + '<td><span class="badge-estado ' + rolClass + '">' + (u.rol || 'user') + '</span></td>'
+      + '<td><span class="badge-estado ' + estadoClass + '">' + (u.estado || 'activo') + '</span></td>'
+      + '<td>' + (parseFloat(u.wallet_kbt || 0).toFixed(2)) + '</td>'
+      + '<td>' + (parseFloat(u.wallet_pen || 0).toFixed(2)) + '</td>'
+      + '<td>' + (u.fecha_creacion || '-') + '</td>'
+      + '<td class="acciones">'
+      + '<button class="btn-action btn-xs btn-purple" onclick="adminEditarUsuario(' + u.id + ')">editar</button>'
+      + '<button class="btn-action btn-xs btn-danger" onclick="adminConfirmEliminarUsuario(' + u.id + ')">eliminar</button>'
+      + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function adminFiltrarUsuarios() {
+  var q = (document.getElementById('admin-search-usuarios').value || '').toLowerCase().trim();
+  if (!q) {
+    adminRenderUsuarios(admin.usuarios);
+    return;
+  }
+  var filtrados = admin.usuarios.filter(function(u) {
+    return (u.email && u.email.toLowerCase().includes(q))
+        || (u.username && u.username.toLowerCase().includes(q))
+        || (u.id && u.id.toString().includes(q));
+  });
+  adminRenderUsuarios(filtrados);
+}
+
+function adminMostrarCrearUsuario() {
+  document.getElementById('modal-usuario-titulo').textContent = 'crear usuario';
+  document.getElementById('modal-usuario-btn').textContent = 'crear usuario';
+  document.getElementById('modal-usuario-id').value = '';
+  document.getElementById('modal-usuario-email').value = '';
+  document.getElementById('modal-usuario-password').value = '';
+  document.getElementById('modal-usuario-password-group').style.display = 'block';
+  document.getElementById('modal-usuario-username').value = '';
+  document.getElementById('modal-usuario-rol').value = 'user';
+  document.getElementById('modal-usuario-estado').value = 'activo';
+  adminAbrirModal('modal-admin-usuario');
+}
+
+function adminEditarUsuario(id) {
+  var u = admin.usuarios.find(function(x) { return x.id === id; });
+  if (!u) return;
+  document.getElementById('modal-usuario-titulo').textContent = 'editar usuario #' + id;
+  document.getElementById('modal-usuario-btn').textContent = 'guardar cambios';
+  document.getElementById('modal-usuario-id').value = id;
+  document.getElementById('modal-usuario-email').value = u.email || '';
+  document.getElementById('modal-usuario-password').value = '';
+  document.getElementById('modal-usuario-password-group').style.display = 'none';
+  document.getElementById('modal-usuario-username').value = u.username || '';
+  document.getElementById('modal-usuario-rol').value = u.rol || 'user';
+  document.getElementById('modal-usuario-estado').value = u.estado || 'activo';
+  adminAbrirModal('modal-admin-usuario');
+}
+
+async function adminGuardarUsuario() {
+  var id = document.getElementById('modal-usuario-id').value;
+  var email = document.getElementById('modal-usuario-email').value.trim();
+  var password = document.getElementById('modal-usuario-password').value;
+  var username = document.getElementById('modal-usuario-username').value.trim();
+  var rol = document.getElementById('modal-usuario-rol').value;
+  var estado = document.getElementById('modal-usuario-estado').value;
+
+  if (!email && !id) { adminToast('email es requerido', 'error'); return; }
+
+  var body = {};
+  if (email) body.email = email;
+  if (password) body.password = password;
+  if (username) body.username = username;
+  body.rol = rol;
+  body.estado = estado;
+
+  try {
+    var d;
+    if (id) {
+      d = await admin.api.put('/admin/usuarios/' + id, body);
+    } else {
+      d = await admin.api.post('/admin/usuarios', body);
+    }
+    if (d && d.exito) {
+      adminToast(id ? 'usuario actualizado' : 'usuario creado', 'success');
+      adminCerrarModal('modal-admin-usuario');
+      adminCargarUsuarios();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al guardar usuario', 'error');
+    }
+  } catch (e) {
+    console.error('error guardar usuario:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+function adminConfirmEliminarUsuario(id) {
+  var u = admin.usuarios.find(function(x) { return x.id === id; });
+  document.getElementById('modal-confirm-titulo').textContent = 'eliminar usuario';
+  document.getElementById('modal-confirm-texto').textContent = '¿estas seguro de eliminar al usuario ' + (u ? u.email : '#' + id) + '? esta accion no se puede deshacer.';
+  admin.confirmAction = function() { adminEliminarUsuario(id); };
+  document.getElementById('modal-confirm-btn').textContent = 'eliminar';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEliminarUsuario(id) {
+  try {
+    var d = await admin.api.delete('/admin/usuarios/' + id);
+    if (d && d.exito) {
+      adminToast('usuario eliminado', 'success');
+      adminCerrarModal('modal-admin-confirm');
+      adminCargarUsuarios();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al eliminar usuario', 'error');
+    }
+  } catch (e) {
+    console.error('error eliminar usuario:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// pedidos
+// ============================================================
+async function adminCargarPedidos() {
+  document.getElementById('tbody-pedidos').innerHTML = '<tr><td colspan="8"><div class="spinner-mini"></div> cargando pedidos...</td></tr>';
+  try {
+    var d = await admin.api.get('/admin/pedidos');
+    if (d && d.exito) {
+      admin.pedidos = d.pedidos || [];
+      adminRenderPedidos(admin.pedidos);
+    } else {
+      document.getElementById('tbody-pedidos').innerHTML = '<tr><td colspan="8" class="empty-state">error al cargar pedidos</td></tr>';
+    }
+  } catch (e) {
+    console.error('error pedidos:', e);
+    document.getElementById('tbody-pedidos').innerHTML = '<tr><td colspan="8" class="empty-state">error de conexion</td></tr>';
+  }
+}
+
+function adminRenderPedidos(lista) {
+  var tbody = document.getElementById('tbody-pedidos');
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">no se encontraron pedidos</td></tr>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function(p) {
+    var estadoClass = 'badge-pendiente';
+    if (p.estado === 'completado' || p.estado === 'completado') estadoClass = 'badge-ok';
+    else if (p.estado === 'cancelado' || p.estado === 'cancelado') estadoClass = 'badge-danger';
+    else if (p.estado === 'error' || p.estado === 'error') estadoClass = 'badge-danger';
+    else if (p.estado === 'en_progreso' || p.estado === 'en_progreso') estadoClass = 'badge-info';
+    var urlTxt = p.url || '';
+    if (urlTxt.length > 40) urlTxt = urlTxt.substring(0, 40) + '...';
+    html += '<tr>'
+      + '<td>' + p.id + '</td>'
+      + '<td>' + p.usuario_id + '</td>'
+      + '<td title="' + (p.url || '') + '">' + urlTxt + '</td>'
+      + '<td><span class="badge-estado ' + estadoClass + '">' + (p.estado || '-') + '</span></td>'
+      + '<td>' + (p.cantidad_perfiles || 0) + '</td>'
+      + '<td>' + (p.duracion_horas || 0) + '</td>'
+      + '<td>' + (p.fecha_creacion || '-') + '</td>'
+      + '<td class="acciones">'
+      + '<button class="btn-action btn-xs btn-warning" onclick="adminCancelarPedido(' + p.id + ')">cancelar</button>'
+      + '<button class="btn-action btn-xs btn-purple" onclick="adminReasignarPedido(' + p.id + ')">reasignar</button>'
+      + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function adminFiltrarPedidos() {
+  var q = (document.getElementById('admin-search-pedidos').value || '').toLowerCase().trim();
+  var estadoFiltro = document.getElementById('admin-filtro-estado-pedidos').value;
+  var filtrados = admin.pedidos.filter(function(p) {
+    if (estadoFiltro && p.estado !== estadoFiltro) return false;
+    if (q) {
+      return (p.id && p.id.toString().includes(q))
+          || (p.usuario_id && p.usuario_id.toString().includes(q))
+          || (p.url && p.url.toLowerCase().includes(q));
+    }
+    return true;
+  });
+  adminRenderPedidos(filtrados);
+}
+
+async function adminCancelarPedido(id) {
+  document.getElementById('modal-confirm-titulo').textContent = 'cancelar pedido #' + id;
+  document.getElementById('modal-confirm-texto').textContent = '¿estas seguro de cancelar este pedido? los perfiles asignados seran liberados.';
+  admin.confirmAction = function() { adminEjecutarCancelarPedido(id); };
+  document.getElementById('modal-confirm-btn').textContent = 'cancelar pedido';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEjecutarCancelarPedido(id) {
+  try {
+    var d = await admin.api.post('/admin/pedidos/' + id + '/cancelar', {});
+    if (d && d.exito) {
+      adminToast('pedido cancelado', 'success');
+      adminCerrarModal('modal-admin-confirm');
+      adminCargarPedidos();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al cancelar pedido', 'error');
+    }
+  } catch (e) {
+    console.error('error cancelar pedido:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+async function adminReasignarPedido(id) {
+  document.getElementById('modal-confirm-titulo').textContent = 'reasignar pedido #' + id;
+  document.getElementById('modal-confirm-texto').textContent = '¿forzar reasignacion manual de este pedido? se ejecutara un ciclo de match inmediato.';
+  admin.confirmAction = function() { adminEjecutarReasignarPedido(id); };
+  document.getElementById('modal-confirm-btn').textContent = 'reasignar';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEjecutarReasignarPedido(id) {
+  try {
+    var d = await admin.api.post('/admin/pedidos/' + id + '/reasignar', {});
+    if (d && d.exito) {
+      adminToast('reasignacion forzada', 'success');
+      adminCerrarModal('modal-admin-confirm');
+      adminCargarPedidos();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al reasignar', 'error');
+    }
+  } catch (e) {
+    console.error('error reasignar:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// perfiles
+// ============================================================
+async function adminCargarPerfiles() {
+  document.getElementById('tbody-perfiles').innerHTML = '<tr><td colspan="8"><div class="spinner-mini"></div> cargando perfiles...</td></tr>';
+  try {
+    var d = await admin.api.get('/admin/perfiles');
+    if (d && d.exito) {
+      admin.perfiles = d.perfiles || [];
+      adminRenderPerfiles(admin.perfiles);
+    } else {
+      document.getElementById('tbody-perfiles').innerHTML = '<tr><td colspan="8" class="empty-state">error al cargar perfiles</td></tr>';
+    }
+  } catch (e) {
+    console.error('error perfiles:', e);
+    document.getElementById('tbody-perfiles').innerHTML = '<tr><td colspan="8" class="empty-state">error de conexion</td></tr>';
+  }
+}
+
+function adminRenderPerfiles(lista) {
+  var tbody = document.getElementById('tbody-perfiles');
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">no se encontraron perfiles</td></tr>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function(p) {
+    var estadoClass = 'badge-info';
+    if (p.estado === 'libre') estadoClass = 'badge-ok';
+    else if (p.estado === 'ocupado') estadoClass = 'badge-warn';
+    else if (p.estado === 'caido') estadoClass = 'badge-danger';
+    else if (p.estado === 'suspendido') estadoClass = 'badge-inactivo';
+    var hashTxt = p.hash || '';
+    if (hashTxt.length > 16) hashTxt = hashTxt.substring(0, 16) + '...';
+    html += '<tr>'
+      + '<td title="' + (p.hash || '') + '">' + hashTxt + '</td>'
+      + '<td>' + (p.pcbot_id || '-') + '</td>'
+      + '<td><span class="badge-estado ' + estadoClass + '">' + (p.estado || '-') + '</span></td>'
+      + '<td>' + (p.usuario_asignado || '-') + '</td>'
+      + '<td>' + (p.pedido_activo || '-') + '</td>'
+      + '<td>' + (p.vip ? 'vip' : 'normal') + '</td>'
+      + '<td>' + (p.ultimo_heartbeat || '-') + '</td>'
+      + '<td class="acciones">'
+      + '<button class="btn-action btn-xs btn-purple" onclick="adminTogglePerfil(\'' + (p.hash || '') + '\')">toggle</button>'
+      + '<button class="btn-action btn-xs btn-danger" onclick="adminEliminarPerfil(\'' + (p.hash || '') + '\')">eliminar</button>'
+      + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function adminFiltrarPerfiles() {
+  var q = (document.getElementById('admin-search-perfiles').value || '').toLowerCase().trim();
+  var estadoFiltro = document.getElementById('admin-filtro-estado-perfiles').value;
+  var filtrados = admin.perfiles.filter(function(p) {
+    if (estadoFiltro && p.estado !== estadoFiltro) return false;
+    if (q) {
+      return (p.hash && p.hash.toLowerCase().includes(q))
+          || (p.pcbot_id && p.pcbot_id.toLowerCase().includes(q))
+          || (p.usuario_asignado && p.usuario_asignado.toString().includes(q));
+    }
+    return true;
+  });
+  adminRenderPerfiles(filtrados);
+}
+
+async function adminTogglePerfil(hash) {
+  if (!hash) return;
+  try {
+    var d = await admin.api.post('/admin/perfiles/' + hash + '/toggle', {});
+    if (d && d.exito) {
+      adminToast('perfil actualizado: ' + (d.nuevo_estado || 'ok'), 'success');
+      adminCargarPerfiles();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al cambiar estado del perfil', 'error');
+    }
+  } catch (e) {
+    console.error('error toggle perfil:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+function adminEliminarPerfil(hash) {
+  if (!hash) return;
+  document.getElementById('modal-confirm-titulo').textContent = 'eliminar perfil';
+  document.getElementById('modal-confirm-texto').textContent = '¿estas seguro de eliminar el perfil ' + hash.substring(0, 16) + '...?';
+  admin.confirmAction = function() { adminEjecutarEliminarPerfil(hash); };
+  document.getElementById('modal-confirm-btn').textContent = 'eliminar';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEjecutarEliminarPerfil(hash) {
+  try {
+    var d = await admin.api.delete('/admin/perfiles/' + hash);
+    if (d && d.exito) {
+      adminToast('perfil eliminado', 'success');
+      adminCerrarModal('modal-admin-confirm');
+      adminCargarPerfiles();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al eliminar perfil', 'error');
+    }
+  } catch (e) {
+    console.error('error eliminar perfil:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// pcbots
+// ============================================================
+async function adminCargarPcbots() {
+  document.getElementById('tbody-pcbots').innerHTML = '<tr><td colspan="8"><div class="spinner-mini"></div> cargando pcbots...</td></tr>';
+  try {
+    var d = await admin.api.get('/admin/pcbots');
+    if (d && d.exito) {
+      admin.pcbots = d.pcbots || [];
+      adminRenderPcbots(admin.pcbots);
+    } else {
+      document.getElementById('tbody-pcbots').innerHTML = '<tr><td colspan="8" class="empty-state">error al cargar pcbots</td></tr>';
+    }
+  } catch (e) {
+    console.error('error pcbots:', e);
+    document.getElementById('tbody-pcbots').innerHTML = '<tr><td colspan="8" class="empty-state">error de conexion</td></tr>';
+  }
+}
+
+function adminRenderPcbots(lista) {
+  var tbody = document.getElementById('tbody-pcbots');
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">no se encontraron pcbots</td></tr>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function(p) {
+    var conectado = p.estado === 'conectado';
+    var estadoClass = conectado ? 'badge-ok' : 'badge-inactivo';
+    html += '<tr>'
+      + '<td>' + (p.id || '-') + '</td>'
+      + '<td>' + (p.usuario_id || '-') + '</td>'
+      + '<td><span class="badge-estado ' + estadoClass + '">' + (p.estado || 'desconectado') + '</span></td>'
+      + '<td>' + (p.ip || '-') + '</td>'
+      + '<td>' + (p.version || '-') + '</td>'
+      + '<td>' + (p.ultimo_heartbeat || '-') + '</td>'
+      + '<td>' + (p.perfiles_activos || 0) + '</td>'
+      + '<td class="acciones">'
+      + '<button class="btn-action btn-xs btn-danger" onclick="adminDesconectarPcbot(\'' + (p.id || '') + '\')">desconectar</button>'
+      + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function adminFiltrarPcbots() {
+  var q = (document.getElementById('admin-search-pcbots').value || '').toLowerCase().trim();
+  if (!q) { adminRenderPcbots(admin.pcbots); return; }
+  var filtrados = admin.pcbots.filter(function(p) {
+    return (p.id && p.id.toLowerCase().includes(q))
+        || (p.usuario_id && p.usuario_id.toString().includes(q));
+  });
+  adminRenderPcbots(filtrados);
+}
+
+async function adminDesconectarPcbot(id) {
+  if (!id) return;
+  document.getElementById('modal-confirm-titulo').textContent = 'desconectar pcbot';
+  document.getElementById('modal-confirm-texto').textContent = '¿forzar desconexion del pcbot ' + id + '?';
+  admin.confirmAction = function() { adminEjecutarDesconectarPcbot(id); };
+  document.getElementById('modal-confirm-btn').textContent = 'desconectar';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEjecutarDesconectarPcbot(id) {
+  try {
+    var d = await admin.api.post('/admin/pcbots/' + id + '/desconectar', {});
+    if (d && d.exito) {
+      adminToast('pcbot desconectado', 'success');
+      adminCerrarModal('modal-admin-confirm');
+      adminCargarPcbots();
+    } else {
+      adminToast(d && d.error ? d.error : 'error al desconectar', 'error');
+    }
+  } catch (e) {
+    console.error('error desconectar pcbot:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// config
+// ============================================================
+var configOriginal = {};
+
+async function adminCargarConfig() {
+  document.getElementById('config-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="spinner-mini"></div> cargando configuracion...</div>';
+  try {
+    var d = await admin.api.get('/admin/variables_globales');
+    if (d && d.exito) {
+      admin.config = d.variables || {};
+      configOriginal = JSON.parse(JSON.stringify(admin.config));
+      adminRenderConfig(admin.config);
+    } else {
+      document.getElementById('config-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;">error al cargar configuracion</div>';
+    }
+  } catch (e) {
+    console.error('error config:', e);
+    document.getElementById('config-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;">error de conexion</div>';
+  }
+}
+
+function adminRenderConfig(config) {
+  var grid = document.getElementById('config-grid');
+  var keys = Object.keys(config);
+  if (keys.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">no hay configuracion disponible</div>';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(key) {
+    var val = config[key];
+    var inputType = typeof val === 'number' ? 'number' : 'text';
+    html += '<div class="config-item">'
+      + '<label>' + key.replace(/_/g, ' ') + '</label>'
+      + '<div class="config-key">' + key + '</div>'
+      + '<input type="' + inputType + '" id="config-' + key + '" value="' + val + '" step="any">'
+      + '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+async function adminGuardarConfig() {
+  var nuevos = {};
+  var keys = Object.keys(admin.config);
+  var cambios = false;
+  keys.forEach(function(key) {
+    var el = document.getElementById('config-' + key);
+    if (el) {
+      var val = el.value;
+      if (typeof admin.config[key] === 'number') {
+        val = parseFloat(val);
+        if (isNaN(val)) val = admin.config[key];
+      }
+      nuevos[key] = val;
+      if (val != configOriginal[key]) cambios = true;
+    } else {
+      nuevos[key] = admin.config[key];
+    }
+  });
+  if (!cambios) {
+    adminToast('no hay cambios para guardar', 'warning');
+    return;
+  }
+  try {
+    var d = await admin.api.put('/admin/config', { config: nuevos });
+    if (d && d.exito) {
+      adminToast('configuracion guardada', 'success');
+      configOriginal = JSON.parse(JSON.stringify(nuevos));
+    } else {
+      adminToast(d && d.error ? d.error : 'error al guardar configuracion', 'error');
+    }
+  } catch (e) {
+    console.error('error guardar config:', e);
+    adminToast('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// logs
+// ============================================================
+async function adminCargarLogs() {
+  var viewer = document.getElementById('log-viewer');
+  try {
+    var d = await admin.api.get('/admin/logs');
+    if (d && d.exito) {
+      var lineas = d.logs || [];
+      var html = lineas.map(function(entry) {
+        var texto = typeof entry === 'string' ? entry : (entry.linea || '');
+        var cls = '';
+        if (texto.toLowerCase().includes('error') || texto.toLowerCase().includes('traceback')) cls = 'log-error';
+        else if (texto.toLowerCase().includes('warning') || texto.toLowerCase().includes('warn')) cls = 'log-warn';
+        else if (texto.toLowerCase().includes('info')) cls = 'log-info';
+        else if (texto.toLowerCase().includes('debug')) cls = 'log-debug';
+        return '<span class="' + cls + '">' + adminEscaparHtml(texto) + '</span>';
+      }).join('\n');
+      viewer.innerHTML = html || 'sin logs';
+      viewer.scrollTop = viewer.scrollHeight;
+    } else {
+      viewer.textContent = 'error al cargar logs';
+    }
+  } catch (e) {
+    console.error('error logs:', e);
+    viewer.textContent = 'error de conexion al cargar logs';
+  }
+}
+
+function adminToggleAutoLogs() {
+  if (document.getElementById('admin-auto-logs').checked) {
+    adminIniciarAutoLogs();
+  } else {
+    adminDetenerAutoLogs();
+  }
+}
+
+function adminIniciarAutoLogs() {
+  adminDetenerAutoLogs();
+  admin.logInterval = setInterval(function() {
+    // solo actualizar si el tab de logs esta visible
+    var logPanel = document.getElementById('admin-logs');
+    if (logPanel && logPanel.classList.contains('active')) {
+      adminCargarLogs();
+    }
+  }, 10000);
+}
+
+function adminDetenerAutoLogs() {
+  if (admin.logInterval) {
+    clearInterval(admin.logInterval);
+    admin.logInterval = null;
+  }
+}
+
+function adminEscaparHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// acciones
+// ============================================================
+function adminMostrarResultado(msg, tipo) {
+  var el = document.getElementById('admin-acciones-result');
+  el.innerHTML = '<div style="padding:0.75rem;border-radius:8px;background:' + (tipo === 'error' ? 'rgba(255,51,102,0.1)' : 'rgba(0,255,136,0.1)') + ';border:1px solid ' + (tipo === 'error' ? 'rgba(255,51,102,0.2)' : 'rgba(0,255,136,0.2)') + ';color:' + (tipo === 'error' ? '#ff3366' : '#00ff88') + ';font-size:0.85rem;">' + msg + '</div>';
+  setTimeout(function() { el.innerHTML = ''; }, 8000);
+}
+
+async function adminForzarMatch() {
+  adminMostrarResultado('ejecutando ciclo de match...', '');
+  try {
+    var d = await admin.api.post('/admin/acciones/match', {});
+    if (d && d.exito) {
+      adminMostrarResultado('ciclo de match ejecutado: ' + (d.mensaje || 'ok'), 'success');
+    } else {
+      adminMostrarResultado('error: ' + (d && d.error ? d.error : 'sin respuesta'), 'error');
+    }
+  } catch (e) {
+    adminMostrarResultado('error de conexion', 'error');
+  }
+}
+
+async function adminLimpiarHuerfanas() {
+  adminMostrarResultado('limpiando asignaciones huerfanas...', '');
+  try {
+    var d = await admin.api.post('/admin/acciones/limpiar-huerfanas', {});
+    if (d && d.exito) {
+      adminMostrarResultado(d.mensaje || 'asignaciones huerfanas limpiadas', 'success');
+    } else {
+      adminMostrarResultado('error: ' + (d && d.error ? d.error : 'sin respuesta'), 'error');
+    }
+  } catch (e) {
+    adminMostrarResultado('error de conexion', 'error');
+  }
+}
+
+async function adminBackupDB() {
+  adminMostrarResultado('realizando backup de la base de datos...', '');
+  try {
+    var d = await admin.api.post('/admin/acciones/backup', {});
+    if (d && d.exito) {
+      adminMostrarResultado(d.mensaje || 'backup completado', 'success');
+    } else {
+      adminMostrarResultado('error: ' + (d && d.error ? d.error : 'sin respuesta'), 'error');
+    }
+  } catch (e) {
+    adminMostrarResultado('error de conexion', 'error');
+  }
+}
+
+async function adminReiniciarProcesador() {
+  document.getElementById('modal-confirm-titulo').textContent = 'reiniciar procesador de cola';
+  document.getElementById('modal-confirm-texto').textContent = '¿estas seguro de reiniciar el procesador de cola? se detendra y reiniciara el ciclo de match.';
+  admin.confirmAction = function() { adminEjecutarReiniciarProcesador(); };
+  document.getElementById('modal-confirm-btn').textContent = 'reiniciar';
+  adminAbrirModal('modal-admin-confirm');
+}
+
+async function adminEjecutarReiniciarProcesador() {
+  adminMostrarResultado('reiniciando procesador de cola...', '');
+  try {
+    var d = await admin.api.post('/admin/acciones/reiniciar-procesador', {});
+    if (d && d.exito) {
+      adminMostrarResultado(d.mensaje || 'procesador reiniciado', 'success');
+      adminCerrarModal('modal-admin-confirm');
+    } else {
+      adminMostrarResultado('error: ' + (d && d.error ? d.error : 'sin respuesta'), 'error');
+    }
+  } catch (e) {
+    adminMostrarResultado('error de conexion', 'error');
+  }
+}
+
+// ============================================================
+// ejecutar confirmacion generica
+// ============================================================
+function adminEjecutarConfirmacion() {
+  if (typeof admin.confirmAction === 'function') {
+    admin.confirmAction();
+  }
+}
+
+// ============================================================
+// init (llamado desde el cargador de paneles del spa)
+// ============================================================
+function inicializarPanelAdmin() {
+  // limpiar intervalo previo si existe
+  adminDetenerAutoLogs();
+  // inicializar
+  adminInit();
+}
+</script>
+</body>
+</html>

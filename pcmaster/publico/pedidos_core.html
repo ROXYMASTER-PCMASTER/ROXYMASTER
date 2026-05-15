@@ -43,17 +43,20 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .pedido-field input:focus,.pedido-field select:focus{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,.15)}
 .pedido-field input::placeholder{color:#475569}
 .field-hint{font-size:.6rem;color:#475569;margin-top:.15rem}
-/* tiempo opt group */
-.tiempo-opt-group{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.2rem}
-.btn-opt-tiempo{padding:.3rem .55rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:6px;color:#94a3b8;font-size:.65rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-opt-tiempo:hover{background:rgba(124,58,237,.15);border-color:#7c3aed;color:#a78bfa}
-.btn-opt-tiempo.active{background:rgba(0,255,136,.12);border-color:#00ff88;color:#00ff88}
 /* toggle tipo */
 .toggle-group{display:flex;gap:.25rem;margin-top:.2rem}
 .toggle-btn{padding:.3rem .7rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:6px;color:#94a3b8;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase;letter-spacing:.5px}
 .toggle-btn:hover{border-color:#7c3aed;color:#a78bfa}
 .toggle-btn.active-normal{background:rgba(0,255,136,.1);border-color:#00ff88;color:#00ff88}
 .toggle-btn.active-vip{background:rgba(240,185,11,.12);border-color:#f0b90b;color:#f0b90b;text-shadow:0 0 6px rgba(240,185,11,.2)}
+/* checkboxes custom (programar y comentarista ia) */
+.checkbox-group{display:flex;flex-direction:column;gap:.35rem;margin-top:.2rem}
+.chk-label{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:#cbd5e1;cursor:pointer;user-select:none}
+.chk-label input[type="checkbox"]{display:none}
+.chk-custom{width:16px;height:16px;border:2px solid #2a2a4a;border-radius:4px;background:rgba(13,13,34,.7);display:inline-flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.chk-label input:checked + .chk-custom{background:#7c3aed;border-color:#7c3aed}
+.chk-label input:checked + .chk-custom::after{content:'';width:6px;height:6px;background:transparent;border:2px solid #e2e8f0;border-top:none;border-right:none;transform:rotate(-45deg);margin-top:-2px}
+.chk-label:hover .chk-custom{border-color:#7c3aed}
 /* costo visor - compacto horizontal */
 .costo-visor{background:rgba(13,13,34,.5);border-radius:8px;padding:.4rem .7rem;border:1px solid #1e1e3a;display:flex;flex-wrap:wrap;align-items:baseline;gap:.3rem;min-width:160px;flex:1 1 auto}
 .costo-visor .label{font-size:.55rem;text-transform:uppercase;letter-spacing:.1em;color:#64748b;width:100%;margin-bottom:0;font-weight:700}
@@ -71,30 +74,15 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .btn-crear:hover .btn-tooltip{opacity:1}
 /* wrap responsive */
 @media(max-width:700px){#card-formulario{flex-direction:column;align-items:stretch}.pedido-field{flex:1 1 100%;min-width:unset}}
-
-/* === BLOQUE PROGRAMACION (toggle + campos fecha) === */
-.prog-toggle-group{display:flex;gap:.25rem;margin-top:.2rem}
-.prog-btn{padding:.3rem .7rem;background:rgba(13,13,34,.7);border:1px solid #2a2a4a;border-radius:6px;color:#94a3b8;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase;letter-spacing:.5px}
-.prog-btn:hover{border-color:#7c3aed;color:#a78bfa}
-.prog-btn.active{background:rgba(124,58,237,.12);border-color:#7c3aed;color:#a78bfa}
-.prog-fields{display:none;flex-wrap:wrap;gap:.5rem;flex:1 1 100%;padding:.5rem;background:rgba(124,58,237,.04);border:1px solid rgba(124,58,237,.1);border-radius:8px;margin-top:.4rem}
-.prog-fields.visible{display:flex}
-.prog-fields .pedido-field{flex:1 1 180px}
-.prog-hint{font-size:.6rem;color:#64748b;width:100%;margin-top:.1rem}
-
-/* === LISTA HORIZONTAL DE PEDIDOS === */
-/* cada pedido es un card-horizontal con todos los campos en fila */
+/* lista horizontal de pedidos */
 .card-lista-pedidos{overflow:hidden}
 .lista-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
 .lista-info{font-size:.72rem;color:#64748b;display:flex;align-items:center;gap:.4rem}
 .btn-actualizar{padding:.35rem .75rem;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:8px;color:#a78bfa;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:.3rem}
 .btn-actualizar:hover{background:rgba(124,58,237,.2);border-color:#7c3aed}
-/* contenedor de la lista horizontal */
 .lista-pedidos-horizontal{display:flex;flex-direction:column;gap:.5rem;border-radius:10px;border:1px solid rgba(42,42,74,.3);padding:.5rem}
-/* cada item es un card horizontal (una fila) */
 .pedido-card-h{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;padding:.45rem .7rem;background:rgba(13,13,34,.4);border:1px solid rgba(42,42,74,.2);border-radius:10px;transition:background .2s,border .2s}
 .pedido-card-h:hover{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2)}
-/* cada campo dentro del card (todos en fila) */
 .pedido-card-h .pcampo{display:inline-flex;align-items:center;gap:.25rem;font-size:.72rem;color:#cbd5e1;white-space:nowrap}
 .pedido-card-h .pcampo .plabel{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:700}
 .pedido-card-h .pcampo .pvalor{font-weight:600;color:#e2e8f0}
@@ -102,14 +90,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .pedido-card-h .pcampo .pvalor.costo{color:#00ff88;font-family:'Courier New',monospace}
 .pedido-card-h .pcampo .pvalor.costo.vip{color:#f0b90b}
 .pedido-card-h .pcampo .pvalor.id{color:#7c3aed;font-weight:800}
-/* badge estado */
 .pedido-card-h .pbadge{display:inline-block;padding:.1rem .4rem;border-radius:20px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .pedido-card-h .pbadge.en_progreso,.pedido-card-h .pbadge.trabajando{background:rgba(0,255,136,.12);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
 .pedido-card-h .pbadge.completado{background:rgba(100,116,139,.12);color:#64748b;border:1px solid rgba(100,116,139,.2)}
 .pedido-card-h .pbadge.pendiente{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
 .pedido-card-h .pbadge.cancelado{background:rgba(255,51,102,.12);color:#ff3366;border:1px solid rgba(255,51,102,.2)}
 .pedido-card-h .pbadge.programado{background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.2)}
-/* acciones inline en el card */
 .pedido-card-h .pacciones{display:inline-flex;gap:.2rem;margin-left:auto;flex-shrink:0}
 .pedido-card-h .btn-paccion{padding:.15rem .4rem;border-radius:6px;font-size:.6rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
 .pedido-card-h .btn-paccion.cancelar{background:rgba(240,185,11,.12);color:#f0b90b;border:1px solid rgba(240,185,11,.2)}
@@ -118,11 +104,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
 .pedido-card-h .btn-paccion.eliminar:hover{background:rgba(255,51,102,.2);color:#ff6688}
 .pedido-card-h .btn-paccion.detener{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.15)}
 .pedido-card-h .btn-paccion.detener:hover{background:rgba(239,68,68,.2)}
-/* vip row */
 .pedido-card-h.vip{border-color:rgba(240,185,11,.25);background:rgba(240,185,11,.03)}
-/* empty state */
 .lista-empty{text-align:center;color:#475569;font-style:italic;padding:1.5rem;font-size:.8rem}
-/* en mobile los cards se apilan verticalmente (cada campo en su propia linea) */
 @media(max-width:640px){
   .pedido-card-h{flex-direction:column;align-items:stretch;gap:.35rem;padding:.55rem .65rem}
   .pedido-card-h .pcampo{justify-content:space-between;border-bottom:1px solid rgba(42,42,74,.1);padding-bottom:.2rem}
@@ -130,8 +113,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
   .pedido-card-h .pcampo .pvalor.url{max-width:200px}
   .pedido-card-h .pacciones{margin-left:0;justify-content:flex-end;margin-top:.25rem;padding-top:.25rem;border-top:1px solid rgba(42,42,74,.15)}
 }
-
-/* modal de validacion - clases con prefijo pedidos- para evitar conflicto con dashboard */
+/* modal de validacion */
 .modal-pedidos-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .modal-pedidos-card{background:linear-gradient(135deg,#1a1a2e,#0f0f23);border:1px solid #2a2a4a;border-radius:20px;padding:2rem;max-width:480px;width:90%;box-shadow:0 8px 48px rgba(0,0,0,.5);position:relative;overflow:hidden}
@@ -212,17 +194,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
         </div>
       </div>
       <div class="pedido-field">
-        <label>tiempo rapido</label>
-        <div class="tiempo-opt-group">
-          <button type="button" class="btn-opt-tiempo" data-minutos="5" onclick="window.setTiempo(5)">5 min</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="15" onclick="window.setTiempo(15)">15 min</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="30" onclick="window.setTiempo(30)">30 min</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="60" onclick="window.setTiempo(60)">1 hora</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="120" onclick="window.setTiempo(120)">2 horas</button>
-          <button type="button" class="btn-opt-tiempo" data-minutos="240" onclick="window.setTiempo(240)">4 horas</button>
-        </div>
-      </div>
-      <div class="pedido-field">
         <label for="ped-comentarios">comentarios</label>
         <select id="ped-comentarios">
           <option value="basico">basico</option>
@@ -238,24 +209,28 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
         </div>
       </div>
 
-      <!-- bloque programacion: toggle + campos fecha + costo extra -->
+      <!-- checkboxes: programar y comentarista ia -->
       <div class="pedido-field">
-        <label>programar</label>
-        <div class="prog-toggle-group">
-          <button type="button" class="prog-btn" data-prog="ahora" onclick="window.toggleProgramacion('ahora')">ahora</button>
-          <button type="button" class="prog-btn" data-prog="programar" onclick="window.toggleProgramacion('programar')">programar</button>
+        <label>extras</label>
+        <div class="checkbox-group">
+          <label class="chk-label">
+            <input type="checkbox" id="chk-programar">
+            <span class="chk-custom"></span>
+            programar para despues (+10%)
+          </label>
+          <label class="chk-label">
+            <input type="checkbox" id="chk-comentarista-ia">
+            <span class="chk-custom"></span>
+            activar comentarista ia (+15%)
+          </label>
         </div>
       </div>
-      <div class="prog-fields" id="prog-fields">
-        <div class="pedido-field">
-          <label for="ped-hora-inicio">inicio (fecha y hora)</label>
-          <input type="datetime-local" id="ped-hora-inicio">
-        </div>
-        <div class="pedido-field">
-          <label for="ped-hora-fin">fin (opcional)</label>
-          <input type="datetime-local" id="ped-hora-fin">
-        </div>
-        <div class="prog-hint">deja en blanco "programar" para ejecutar ahora. la hora se convierte a utc.</div>
+
+      <!-- hora de inicio (oculta hasta que se marque programar) -->
+      <div class="pedido-field" id="hora-inicio-wrapper" style="display:none">
+        <label for="ped-hora-inicio">inicio programado</label>
+        <input type="datetime-local" id="ped-hora-inicio" disabled>
+        <div class="field-hint">marca "programar para despues" para habilitar</div>
       </div>
 
       <div class="costo-visor">
@@ -271,7 +246,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1
       </div>
     </div>
 
-    <!-- lista horizontal de pedidos (reemplaza la tabla) -->
+    <!-- lista horizontal de pedidos -->
     <div class="card-pedido card-lista-pedidos">
       <div class="card-titulo">
         <i class="fas fa-history"></i> historial de pedidos
@@ -374,13 +349,34 @@ async function cargarFuncionesExtendidas() {
 }
 
 function configurarEventos() {
-  ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios','ped-hora-inicio','ped-hora-fin'].forEach(function(id) {
+  ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-comentarios'].forEach(function(id) {
     var el = $(id);
     if (el) {
       el.addEventListener('input', window.calcularCosto);
       el.addEventListener('change', window.calcularCosto);
     }
   });
+  // event listeners para checkboxes
+  var chkProg = $('chk-programar');
+  if (chkProg) {
+    chkProg.addEventListener('change', function() {
+      if (typeof window.toggleProgramacion === 'function') window.toggleProgramacion();
+      if (typeof window.calcularCosto === 'function') window.calcularCosto();
+    });
+  }
+  var chkIa = $('chk-comentarista-ia');
+  if (chkIa) {
+    chkIa.addEventListener('change', function() {
+      if (typeof window.toggleComentaristaIA === 'function') window.toggleComentaristaIA();
+      if (typeof window.calcularCosto === 'function') window.calcularCosto();
+    });
+  }
+  // ped-hora-inicio solo para recalculo
+  var horaInicio = $('ped-hora-inicio');
+  if (horaInicio) {
+    horaInicio.addEventListener('change', window.calcularCosto);
+    horaInicio.addEventListener('input', window.calcularCosto);
+  }
 }
 
 function iniciarAutoRecarga() {

@@ -312,13 +312,28 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
         logger.warning("usuario %s no tiene pcbot conectado", usuario_id)
         return False
 
-    # buscar perfil libre desde heartbeat_cache (ya excluye state='caido')
-    libres_cache = heartbeat_cache.obtener_perfiles_libres(pcbot_id)
-    if not libres_cache:
-        logger.warning("no hay perfiles libres en pcbot %s segun heartbeat", pcbot_id)
+    # buscar perfil libre directamente desde perfiles_roxy
+    # replica la logica de procesador_cola._obtener_perfiles_libres
+    # pero simplificado: solo perfiles sin asignaciones activas
+    libres_db = ejecutar_sql(
+        """select pr.hash as perfil_id, pr.pcbot_id
+           from perfiles_roxy pr
+           where pr.pcbot_id = ?
+             and pr.activo = 1
+             and not exists (
+                 select 1 from pedido_asignaciones pa
+                 where pa.perfil_id = pr.hash
+                   and pa.pcbot_id = pr.pcbot_id
+                   and pa.estado in ('planificado', 'ejecutando')
+             )
+           limit 1""",
+        (pcbot_id,),
+    )
+    if not libres_db:
+        logger.warning("no hay perfiles libres en pcbot %s segun bd", pcbot_id)
         return False
 
-    perfil_elegido = libres_cache[0].get("profile_id", "")
+    perfil_elegido = libres_db[0].get("perfil_id", "")
     if not perfil_elegido:
         logger.warning("perfil libre sin profile_id en pcbot %s", pcbot_id)
         return False

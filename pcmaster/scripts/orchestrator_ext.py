@@ -341,12 +341,31 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
                 f"where pcbot_id = ? and hash not in ({placeholders})",
                 params,
             )
-            # marcar los actuales como disponibles (activo=1 para que el match los encuentre)
-            ejecutar_sql(
-                f"update perfiles_roxy set activo = 1, "
-                f"url_actual = null, ultimo_heartbeat = ? "
-                f"where pcbot_id = ? and hash in ({placeholders})",
-                [ahora_str, pcbot_id] + list(perfiles_actuales),
+            # upsert de cada perfil actual: si existe -> activo=1, si no -> insertar con activo=1
+            contador = 0
+            for phash in perfiles_actuales:
+                existe = ejecutar_sql_unico(
+                    "select id from perfiles_roxy where hash = ? and pcbot_id = ?",
+                    (phash, pcbot_id),
+                )
+                if existe:
+                    ejecutar_sql(
+                        "update perfiles_roxy set activo = 1, url_actual = null, "
+                        "ultimo_heartbeat = ? where hash = ? and pcbot_id = ?",
+                        (ahora_str, phash, pcbot_id),
+                    )
+                else:
+                    nombre = f"perfil_{phash[:8]}"
+                    ejecutar_insercion(
+                        """insert into perfiles_roxy
+                           (hash, pcbot_id, nombre, activo, ultimo_heartbeat)
+                           values (?, ?, ?, 1, ?)""",
+                        (phash, pcbot_id, nombre, ahora_str),
+                    )
+                contador += 1
+            logger.info(
+                "evento reinicio: %d perfiles actualizados en perfiles_roxy para pcbot %s",
+                contador, pcbot_id,
             )
             # marcar asignaciones activas como fallidas por reinicio
             ejecutar_sql(
@@ -360,6 +379,10 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
                 "update perfiles_roxy set activo = 0 "
                 "where pcbot_id = ?",
                 (pcbot_id,),
+            )
+            logger.info(
+                "evento reinicio: 0 perfiles (sin lista) en perfiles_roxy para pcbot %s",
+                pcbot_id,
             )
 
     elif tipo == "liberacion_anticipada":

@@ -12,6 +12,8 @@ from db import ejecutar_sql, ejecutar_sql_unico, ejecutar_insercion
 from tokenomics_core import (
     calcular_costo_streamer,
     _cargar_params,
+    RECARGO_COMENTARISTA_IA,
+    RECARGO_PROGRAMACION,
 )
 from auth import verificar_token_opcional
 # (asignacion inmediata eliminada - ahora el procesador_cola maneja la planificacion)
@@ -97,6 +99,10 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     # aceptar 'tipo' (frontend) o 'tipo_pedido' (api directa)
     tipo_pedido = body.get("tipo_pedido") or body.get("tipo", "vistas")
 
+    # nuevos campos: comentarista ia y hora de inicio (programacion)
+    comentarios_ia = body.get("comentarios_ia", False)
+    hora_inicio = body.get("hora_inicio", None)
+
     if not url:
         raise HTTPException(status_code=400, detail="url requerida")
     if seguidores <= 0 or perfiles <= 0 or horas <= 0:
@@ -109,6 +115,12 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     # aplicar multiplicador vip (x2.0)
     multiplicador_vip = 2.0 if tipo_pedido == "vip" else 1.0
     costo_tokens *= multiplicador_vip
+
+    # aplicar recargos configurables
+    if hora_inicio:
+        costo_tokens *= RECARGO_PROGRAMACION
+    if comentarios_ia:
+        costo_tokens *= RECARGO_COMENTARISTA_IA
 
     # verificar saldo
     wallet = ejecutar_sql_unico("select balance from wallets where usuario_id = ?", (uid,))
@@ -124,18 +136,22 @@ async def crear_pedido(request: Request, sesion: dict = Depends(verificar_token_
     # generar comando_id
     comando_id = f"pedido_{uuid.uuid4().hex[:12]}"
 
-    logger.info(f"[PEDIDO-DIAG] uid={uid} url={url} perfiles={perfiles} horas={horas} costo={costo_tokens}")
+    logger.info(f"[PEDIDO-DIAG] uid={uid} url={url} perfiles={perfiles} horas={horas} costo={costo_tokens} comentarios_ia={comentarios_ia} hora_inicio={hora_inicio}")
 
     # LOG-ANTES: antes de insertar pedido en bd
     logger.info(f"[PEDIDO-LOG] paso 1/6: insertando pedido en bd uid={uid} url={url}")
     ahora = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    # preparar hora_inicio_programada si aplica
+    hora_inicio_programada = hora_inicio if hora_inicio else None
+
     pedido_id = ejecutar_insercion(
         """insert into pedidos (usuario_id, url, seguidores_streamer, cantidad_perfiles,
            duracion_horas, nivel_comentarios, tipo_pedido, costo_tokens, estado,
-           comando_id, fecha_creacion)
-           values (?, ?, ?, ?, ?, ?, ?, ?, 'agendado', ?, ?)""",
+           comando_id, fecha_creacion, comentarios_ia, hora_inicio_programada)
+           values (?, ?, ?, ?, ?, ?, ?, ?, 'agendado', ?, ?, ?, ?)""",
         (uid, url, seguidores, perfiles, horas, nivel_comentarios, tipo_pedido,
-         costo_tokens, comando_id, ahora),
+         costo_tokens, comando_id, ahora, comentarios_ia, hora_inicio_programada),
     )
 
     # LOG-DESPUES: resultado de insercion

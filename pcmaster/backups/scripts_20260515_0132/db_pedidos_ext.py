@@ -158,24 +158,3 @@ def crear_tabla_contextos_streamer():
     except Exception as e:
         logger.error("[DB_EXT] error al crear tabla contextos_streamer: %s", str(e)[:200])
         return False
-
-
-def agregar_columna_comentarios_ia():
-    """agrega la columna comentarios_ia a la tabla pedidos si no existe.
-    almacena 1 si el pedido tiene comentarista ia activado, 0 si no."""
-    try:
-        resultado = ejecutar_sql(
-            "select name from pragma_table_info('pedidos') "
-            "where name = 'comentarios_ia'"
-        )
-        if not resultado:
-            logger.info("[DB_EXT] agregando columna comentarios_ia a pedidos")
-            ejecutar_sql(
-                "alter table pedidos add column comentarios_ia integer default 0"
-            )
-        else:
-            logger.info("[DB_EXT] columna comentarios_ia ya existe")
-        return True
-    except Exception as e:
-        logger.error("[DB_EXT] error al agregar columna comentarios_ia: %s", str(e)[:200])
-        return False
