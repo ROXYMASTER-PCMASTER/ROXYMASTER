@@ -206,6 +206,7 @@ def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:
     ahora_str = _ahora_str()
     cinco_seg = (_ahora_dt() + timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
     libres = []
+    candidatos = []
 
     seen = set()
     for pcbot_id in pcbots:
@@ -218,7 +219,7 @@ def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:
               and not exists (
                   select 1 from pedido_asignaciones pa
                   where pa.perfil_id = pr.hash
-                    and pa.estado in ('planificado', 'ejecutando')
+                    and pa.estado in ('planificado', 'ejecutando', 'activo')
               )
             union
             select pr.hash as perfil_id, pr.pcbot_id, pr.liberacion_estimada
@@ -235,11 +236,25 @@ def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:
             if pid in seen:
                 continue
             seen.add(pid)
-            libres.append({
+            candidatos.append({
                 "perfil_id": pid,
                 "pcbot_id": pcbot_id,
                 "hash": pid,
             })
+
+    # doble verificacion: solo perfiles sin asignaciones activas en bd
+    for c in candidatos:
+        pid = c["perfil_id"]
+        ocupado = ejecutar_sql_unico(
+            "select count(*) as cnt from pedido_asignaciones "
+            "where perfil_id = ? and estado in ('planificado', 'ejecutando', 'activo')",
+            (pid,),
+        )
+        if ocupado and ocupado.get("cnt", 0) == 0:
+            libres.append(c)
+
+    logger.info("[MATCH] %s perfiles libres para asignar (de %s candidatos)",
+                len(libres), len(candidatos))
 
     return libres[:maximo]
 

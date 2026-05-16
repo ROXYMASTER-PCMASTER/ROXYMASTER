@@ -135,6 +135,12 @@ async def lifespan(app: FastAPI):
         logger.info("columnas de agendamiento y timeout verificadas/agregadas")
     except Exception as e:
         logger.warning(f"no se pudieron agregar columnas de agendamiento: {e}")
+    # forzar creacion de columna fecha_fin para evitar error 'no such column'
+    try:
+        from db_pedidos_ext import agregar_columna_fecha_fin
+        agregar_columna_fecha_fin()
+    except Exception as e:
+        logger.warning(f"no se pudo agregar columna fecha_fin: {e}")
     # crear tabla contextos_streamer
     try:
         from db_pedidos_ext import crear_tabla_contextos_streamer

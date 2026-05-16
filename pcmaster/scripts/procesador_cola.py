@@ -44,6 +44,9 @@ logger = logging.getLogger("procesador_cola")
 TIEMPO_ESPERA_CONFIRMACION = 35   # segundos maximo para que pcbot confirme
 INTERVALO_CICLO = 35               # segundos entre ciclos (30s heartbeat + 5s margen)
 
+# flag de reentrada para evitar ciclos de match simultaneos
+_match_en_progreso = False
+
 # estados de pedido_asignaciones en el nuevo modelo:
 # planificado: pcmaster decidio que este perfil va a este pedido, aun no se envio
 # ejecutando: se envio comando al pcbot y se confirmo (o se asume)
@@ -57,11 +60,19 @@ INTERVALO_CICLO = 35               # segundos entre ciclos (30s heartbeat + 5s m
 async def ejecutar_ciclo_match():
     """ejecuta un ciclo de match inmediatamente.
     llamada desde orchestrator tras recibir un heartbeat del pcbot.
-    no tiene su propio bucle sleep."""
+    no tiene su propio bucle sleep.
+    protegido contra reentrada via flag _match_en_progreso."""
+    global _match_en_progreso
+    if _match_en_progreso:
+        logger.warning("[MATCH] ciclo de match ya en ejecucion, se omite esta llamada (reentrada)")
+        return
+    _match_en_progreso = True
     try:
         await _ciclo_match()
     except Exception as e:
         logger.error("[MATCH] error en ciclo match: %s", str(e)[:400])
+    finally:
+        _match_en_progreso = False
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +131,9 @@ async def _ciclo_match():
                         uid, len(pedidos_user))
             continue
 
+        logger.info("[MATCH] usuario %s: %d perfiles en pool, %d pedidos pendientes",
+                    uid, len(perfiles_pool), len(pedidos_user))
+
         for pedido in pedidos_user:
             try:
                 await _planificar_pedido(pedido, ahora_str, ahora, perfiles_pool)
@@ -133,16 +147,12 @@ async def _ciclo_match():
 
 
 async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
-                              perfiles_pool: list = None):
-    """planifica un pedido usando perfiles de un pool compartido por usuario.
-
-    los perfiles asignados se eliminan de perfiles_pool para que
-    ningun perfil se reasigne a multiples pedidos en el mismo ciclo.
-
-    si perfiles_pool es none (llamada legacy), obtiene perfiles por su cuenta.
-
-    NOTA (tarea 4): despues de asignar exitosamente un perfil,
-    programa la distribucion de comentarios via _iniciar_distribucion_comentarios."""
+                              perfiles_pool: list):
+    """planifica un pedido usando UNICAMENTE el pool compartido por usuario.
+    perfiles_pool es obligatorio. no existe modo legacy.
+    si esta vacio, retorna sin hacer nada (el pedido queda para el siguiente ciclo).
+    los perfiles se eliminan del pool ANTES de insertar la asignacion,
+    y si la insercion falla no se reinsertan (se pierden para este ciclo)."""
     pedido_id = pedido["id"]
     usuario_id = pedido.get("usuario_id")
     cantidad_total = pedido.get("cantidad_perfiles", 1)
@@ -178,32 +188,20 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
         )
         return
 
-    # determinar que perfiles usar: pool compartido o busqueda propia
-    if perfiles_pool is not None:
-        # modo pool: consumir perfiles del pool compartido
-        disponibles = []
-        while len(disponibles) < pendientes and perfiles_pool:
-            disponibles.append(perfiles_pool.pop(0))
-        if not disponibles:
-            logger.info("[MATCH] pedido %s: pool compartido agotado", pedido_id)
-            return
-        perfiles_a_usar = disponibles
-        logger.info("[MATCH] pedido %s: %d pendientes, %d perfiles del pool",
-                    pedido_id, pendientes, len(perfiles_a_usar))
-    else:
-        # modo legacy: obtener perfiles por su cuenta
-        pcbots = _obtener_pcbots_usuario(usuario_id)
-        if not pcbots:
-            logger.info("[MATCH] usuario %s sin pcbots conectados, pedido %s queda agendado",
-                        usuario_id, pedido_id)
-            return
-        perfiles_libres = _obtener_perfiles_libres(pcbots, pendientes)
-        if not perfiles_libres:
-            logger.info("[MATCH] no hay perfiles libres para pedido %s", pedido_id)
-            return
-        perfiles_a_usar = perfiles_libres[:pendientes]
-        logger.info("[MATCH] pedido %s: %d pendientes, %d perfiles libres disponibles",
-                    pedido_id, pendientes, len(perfiles_a_usar))
+    # modo pool OBLIGATORIO: consumir perfiles del pool compartido
+    if not perfiles_pool:
+        logger.info("[MATCH] pool compartido vacio para pedido %s, se omite (siguiente ciclo)", pedido_id)
+        return
+
+    disponibles = []
+    while len(disponibles) < pendientes and perfiles_pool:
+        disponibles.append(perfiles_pool.pop(0))
+    if not disponibles:
+        logger.info("[MATCH] pedido %s: pool compartido agotado", pedido_id)
+        return
+    perfiles_a_usar = disponibles
+    logger.info("[MATCH] pedido %s: %d pendientes, %d perfiles del pool",
+                pedido_id, pendientes, len(perfiles_a_usar))
 
     # asignar perfiles uno a uno
     for perfil in perfiles_a_usar:
@@ -223,6 +221,9 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
                     url,
                 )
             )
+        else:
+            logger.warning("[MATCH] fallo asignacion perfil %s a pedido %s",
+                           perfil.get("perfil_id"), pedido_id)
 
     # verificar si el pedido ya se completo
     if asignadas >= cantidad_total:
@@ -247,6 +248,7 @@ async def _asignar_perfil_planificado(
 ) -> bool:
     """asigna un perfil especifico a un pedido usando el nuevo flujo planificado.
 
+    paso 0: verificacion atomica de unicidad (evita doble asignacion del mismo perfil).
     paso 1: insertar 'planificado' en pedido_asignaciones.
     paso 2: enviar comando 'asignar' al pcbot.
     paso 3: si exito -> 'ejecutando'; si fallo -> 'fallido'.
@@ -278,6 +280,25 @@ async def _asignar_perfil_planificado(
             "[MATCH] perfil %s designado observador en pcbot %s (pedido %s)",
             perfil_id, pcbot_id, pedido_id,
         )
+
+    # paso 0: verificacion atomica de unicidad
+    logger.info("[MATCH] verificando duplicidad: perfil=%s para pedido=%s", perfil_id, pedido_id)
+    try:
+        duplicado = ejecutar_sql_unico(
+            """select count(*) as cnt from pedido_asignaciones
+               where perfil_id = ? and estado in ('planificado', 'ejecutando')""",
+            (perfil_id,),
+        )
+        if duplicado and duplicado["cnt"] > 0:
+            logger.warning(
+                "[MATCH] intento de asignacion duplicada para perfil %s en pedido %s, se omite",
+                perfil_id, pedido_id,
+            )
+            return False
+    except Exception as e:
+        logger.error("[MATCH] error en verificacion de duplicidad perfil %s: %s",
+                     perfil_id, str(e)[:200])
+        return False
 
     # paso 1: insertar planificado
     try:

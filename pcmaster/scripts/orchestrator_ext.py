@@ -198,6 +198,8 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
         heartbeat_cache.registrar_heartbeat(pcbot_id, mensaje)
         logger.info("[HB] Heartbeat recibido de %s, procesando eventos", pcbot_id)
         # nuevo modelo centralizado: solo eventos + match
+        import procesador_cola
+        await procesador_cola.ejecutar_ciclo_match()
         await procesar_heartbeat_eventos(pcbot_id, mensaje)
         await _enviar_pendientes(pcbot_id)
     elif tipo == "respuesta_recargar_perfiles":
@@ -271,6 +273,12 @@ async def procesar_heartbeat_eventos(pcbot_id: str, datos: dict):
             logger.error("[HB-EVENTOS] error procesando evento %s: %s",
                          evento.get("tipo"), str(e)[:200])
 
+    # reactivar todos los perfiles de este pcbot (soluciona reinicio del servidor)
+    ejecutar_sql(
+        "update perfiles_roxy set activo = 1 where pcbot_id = ?",
+        (pcbot_id,),
+    )
+
     # disparar el match de planificacion justo despues de procesar eventos
     await ejecutar_ciclo_match()
 
@@ -333,15 +341,6 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
         logger.info("[HB-EVENTOS] reinicio en pcbot %s", pcbot_id)
         perfiles_actuales = evento.get("perfiles_actuales", [])
         if perfiles_actuales:
-            # marcar perfiles que ya no existen como inactivos
-            placeholders = ",".join("?" for _ in perfiles_actuales)
-            params = [pcbot_id] + list(perfiles_actuales)
-            ejecutar_sql(
-                f"update perfiles_roxy set activo = 0 "
-                f"where pcbot_id = ? and hash not in ({placeholders})",
-                params,
-            )
-            # upsert de cada perfil actual: si existe -> activo=1, si no -> insertar con activo=1
             contador = 0
             for phash in perfiles_actuales:
                 existe = ejecutar_sql_unico(
@@ -350,39 +349,25 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
                 )
                 if existe:
                     ejecutar_sql(
-                        "update perfiles_roxy set activo = 1, url_actual = null, "
-                        "ultimo_heartbeat = ? where hash = ? and pcbot_id = ?",
-                        (ahora_str, phash, pcbot_id),
+                        "update perfiles_roxy set activo = 1 where hash = ? and pcbot_id = ?",
+                        (phash, pcbot_id),
                     )
                 else:
                     nombre = f"perfil_{phash[:8]}"
                     ejecutar_insercion(
                         """insert into perfiles_roxy
-                           (hash, pcbot_id, nombre, activo, ultimo_heartbeat)
-                           values (?, ?, ?, 1, ?)""",
-                        (phash, pcbot_id, nombre, ahora_str),
+                           (hash, pcbot_id, nombre, activo)
+                           values (?, ?, ?, 1)""",
+                        (phash, pcbot_id, nombre),
                     )
                 contador += 1
             logger.info(
-                "evento reinicio: %d perfiles actualizados en perfiles_roxy para pcbot %s",
+                "evento reinicio: %d perfiles activados/insertados en perfiles_roxy para pcbot %s",
                 contador, pcbot_id,
             )
-            # marcar asignaciones activas como fallidas por reinicio
-            ejecutar_sql(
-                "update pedido_asignaciones set estado = 'fallido', fin = ? "
-                "where pcbot_id = ? and estado = 'ejecutando'",
-                (ahora_str, pcbot_id),
-            )
         else:
-            # sin lista, marcar todo como inactivo
-            ejecutar_sql(
-                "update perfiles_roxy set activo = 0 "
-                "where pcbot_id = ?",
-                (pcbot_id,),
-            )
-            logger.info(
-                "evento reinicio: 0 perfiles (sin lista) en perfiles_roxy para pcbot %s",
-                pcbot_id,
+            logger.warning(
+                "evento reinicio: sin lista de perfiles_actuales para pcbot %s", pcbot_id,
             )
 
     elif tipo == "liberacion_anticipada":

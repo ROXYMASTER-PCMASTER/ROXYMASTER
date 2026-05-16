@@ -8,6 +8,29 @@ from db import ejecutar_sql
 
 logger = logging.getLogger("roxymaster.db_pedidos_ext")
 
+def agregar_columna_fecha_fin():
+    """agrega la columna fecha_fin a la tabla pedidos si no existe.
+    necesaria para cerrar pedidos completados correctamente.
+    el error 'no such column: fecha_fin' se produce cuando el procesador
+    intenta escribirla pero no existe en el esquema."""
+    try:
+        resultado = ejecutar_sql(
+            "select name from pragma_table_info('pedidos') "
+            "where name = 'fecha_fin'"
+        )
+        if not resultado:
+            logger.info("[DB_EXT] agregando columna fecha_fin a pedidos")
+            ejecutar_sql(
+                "alter table pedidos add column fecha_fin text"
+            )
+        else:
+            logger.info("[DB_EXT] columna fecha_fin ya existe")
+        return True
+    except Exception as e:
+        logger.error("[DB_EXT] error al agregar columna fecha_fin: %s", str(e)[:200])
+        return False
+
+
 def agregar_columna_fecha_inicio():
     """agrega la columna fecha_inicio a la tabla pedidos si no existe."""
     try:
@@ -31,9 +54,10 @@ def agregar_columna_fecha_inicio():
 def agregar_columnas_agendamiento():
     """agrega las columnas hora_inicio_programada y hora_fin_programada
     a la tabla pedidos si no existen.
-    tambien agrega fecha_inicio si no existe."""
-    # primero asegurar fecha_inicio (necesaria para el procesador de cola)
+    tambien agrega fecha_inicio y fecha_fin si no existen."""
+    # primero asegurar fecha_inicio y fecha_fin (necesarias para el procesador de cola)
     agregar_columna_fecha_inicio()
+    agregar_columna_fecha_fin()
 
     try:
         # verificar si las columnas ya existen
@@ -179,3 +203,14 @@ def agregar_columna_comentarios_ia():
     except Exception as e:
         logger.error("[DB_EXT] error al agregar columna comentarios_ia: %s", str(e)[:200])
         return False
+
+
+def agregar_todas_las_columnas():
+    """ejecuta todas las migraciones de esquema pendientes.
+    esta funcion se llama durante el inicio del servidor para asegurar
+    que todas las columnas necesarias existan en la base de datos."""
+    agregar_columnas_agendamiento()
+    agregar_columna_timeout()
+    agregar_columna_rol()
+    agregar_columna_cache_hash()
+    agregar_columna_comentarios_ia()

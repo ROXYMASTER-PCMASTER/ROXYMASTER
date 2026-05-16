@@ -315,6 +315,9 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
     # buscar perfil libre directamente desde perfiles_roxy
     # replica la logica de procesador_cola._obtener_perfiles_libres
     # pero simplificado: solo perfiles sin asignaciones activas
+    # IMPORTANTE: excluir TODOS los estados que indican uso activo,
+    # incluyendo 'planificado', 'ejecutando', 'activo', 'enviado', 'pendiente'
+    # para evitar reasignar perfiles que ya estan en uso en este mismo ciclo
     libres_db = ejecutar_sql(
         """select pr.hash as perfil_id, pr.pcbot_id
            from perfiles_roxy pr
@@ -324,18 +327,36 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
                  select 1 from pedido_asignaciones pa
                  where pa.perfil_id = pr.hash
                    and pa.pcbot_id = pr.pcbot_id
-                   and pa.estado in ('planificado', 'ejecutando')
+                   and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente')
              )
            limit 1""",
         (pcbot_id,),
     )
     if not libres_db:
-        logger.warning("no hay perfiles libres en pcbot %s segun bd", pcbot_id)
+        logger.warning(
+            "[VIGILANTE] no hay perfiles libres en pcbot %s segun bd "
+            "(todos ocupados por asignaciones activas)", pcbot_id
+        )
         return False
 
     perfil_elegido = libres_db[0].get("perfil_id", "")
     if not perfil_elegido:
-        logger.warning("perfil libre sin profile_id en pcbot %s", pcbot_id)
+        logger.warning("[VIGILANTE] perfil libre sin profile_id en pcbot %s", pcbot_id)
+        return False
+
+    # verificacion atomica adicional: confirmar que el perfil no tenga
+    # asignacion activa justo en este momento (race condition)
+    conteo_activo = ejecutar_sql_unico(
+        "select count(*) as cnt from pedido_asignaciones "
+        "where perfil_id = ? and estado in ('planificado', 'ejecutando', 'activo')",
+        (perfil_elegido,),
+    )
+    if conteo_activo and conteo_activo.get("cnt", 0) > 0:
+        logger.warning(
+            "[VIGILANTE] perfil %s ya tiene asignacion activa "
+            "(race condition detectada), se omite reemplazo",
+            perfil_elegido,
+        )
         return False
 
     url = pedido.get("url", "")
