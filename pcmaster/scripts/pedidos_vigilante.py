@@ -3,7 +3,8 @@
 # modulo simplificado: la cola fifo y el agendamiento los maneja
 # procesador_cola.py
 # dependencias: heartbeat_cache, ws_manager, db
-# v2: distingue perfil caido (no reemplaza) vs desaparecido/url incorrecta (reemplaza)
+# v3: estados de asignacion corregidos a 'planificado'/'ejecutando'
+#     (se eliminaron estados legacy 'activo','enviado','pendiente')
 
 import asyncio
 import logging
@@ -124,13 +125,13 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         return
 
     # caso 2: verificar cada asignacion activa
-    # bug C fix: incluir 'enviado' y 'pendiente' para no reasignar reemplazos que ya se enviaron
+    # fix 1: usar estados correctos del modelo centralizado ('planificado','ejecutando')
     # NOTA: 'reservado' se excluye explicitamente; esas asignaciones estan en proceso
     # de confirmacion por el procesador de cola y no deben evaluarse aqui.
     # si estuvieran incluidas, se saltarian con continue (ver bucle for abajo).
     asignaciones = ejecutar_sql(
         "select id, perfil_id, pcbot_id, url, inicio, estado from pedido_asignaciones "
-        "where pedido_id = ? and estado in ('activo', 'enviado', 'pendiente')",
+        "where pedido_id = ? and estado in ('planificado', 'ejecutando')",
         (pedido_id,),
     )
     if not asignaciones:
@@ -212,6 +213,20 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 (asig["id"],),
             )
             caidos_sin_reemplazo += 1
+            continue
+
+        # caso a2: perfil inactivo (activo=0 en perfiles_roxy, fue cerrado)
+        if estado_real == "inactivo":
+            logger.info(
+                "perfil %s en pcbot %s esta inactivo (cerrado) para pedido %s, "
+                "sera reemplazado",
+                perfil_id, pcbot_id, pedido_id,
+            )
+            ejecutar_sql(
+                "update pedido_asignaciones set estado = 'fallido' where id = ?",
+                (asig["id"],),
+            )
+            perfiles_a_reemplazar += 1
             continue
 
         # buscar el perfil en los activos del heartbeat cache
@@ -382,12 +397,12 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
         )
         return False
 
-    # registrar asignacion
+    # fix 4: registrar asignacion con estado 'planificado' (no 'activo')
     ahora_str = _ahora_str()
     ejecutar_insercion(
         "insert into pedido_asignaciones "
         "(pedido_id, perfil_id, pcbot_id, url, duracion_seg, inicio, estado) "
-        "values (?, ?, ?, ?, ?, ?, 'activo')",
+        "values (?, ?, ?, ?, ?, ?, 'planificado')",
         (pedido["id"], perfil_elegido, pcbot_id, url, duracion_int, ahora_str),
     )
 
@@ -407,10 +422,10 @@ async def _finalizar_pedido(pedido: dict):
     pedido_id = pedido["id"]
     usuario_id = pedido.get("usuario_id")
 
-    # obtener asignaciones activas
+    # fix 2: obtener asignaciones activas con estados correctos
     asignaciones = ejecutar_sql(
         "select id, perfil_id, pcbot_id from pedido_asignaciones "
-        "where pedido_id = ? and estado = 'activo'",
+        "where pedido_id = ? and estado in ('planificado', 'ejecutando')",
         (pedido_id,),
     )
 
@@ -429,11 +444,11 @@ async def _finalizar_pedido(pedido: dict):
                     perfil_id, str(e)[:200],
                 )
 
-    # marcar asignaciones como completadas
+    # fix 3: marcar asignaciones como completadas usando estados correctos
     ahora_str = _ahora_str()
     ejecutar_sql(
         "update pedido_asignaciones set estado = 'completado', fin = ? "
-        "where pedido_id = ? and estado = 'activo'",
+        "where pedido_id = ? and estado in ('planificado', 'ejecutando')",
         (ahora_str, pedido_id),
     )
 

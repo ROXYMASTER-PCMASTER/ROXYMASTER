@@ -347,10 +347,20 @@
       this.token = obtenerToken() || '';
       this.base = '';
     }
+    _redirigirSiNoAuth(status) {
+      if (status === 401) {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        window.location.href = '/publico/login.html?expirada=1';
+        return true;
+      }
+      return false;
+    }
     async get(path) {
       const r = await fetch(this.base + '/api' + path, {
         headers: { 'Authorization': 'Bearer ' + this.token }
       });
+      if (this._redirigirSiNoAuth(r.status)) return {};
       return r.json();
     }
     async post(path, body) {
@@ -362,6 +372,7 @@
         },
         body: JSON.stringify(body)
       });
+      if (this._redirigirSiNoAuth(r.status)) return {};
       return r.json();
     }
   }

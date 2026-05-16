@@ -140,6 +140,15 @@
       const msg = document.getElementById('msg');
       const form = document.getElementById('loginForm');
 
+      // mostrar mensaje si viene de sesion expirada
+      (function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('expirada') === '1') {
+          msg.className = 'msg-box error';
+          msg.textContent = 'tu sesion ha expirado. inicia sesion nuevamente.';
+        }
+      })();
+
       window.handleLogin = async function(e) {
         e.preventDefault();
         msg.className = 'msg-box';

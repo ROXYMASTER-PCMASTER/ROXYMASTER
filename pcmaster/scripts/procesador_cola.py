@@ -155,10 +155,19 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
     y si la insercion falla no se reinsertan (se pierden para este ciclo)."""
     pedido_id = pedido["id"]
     usuario_id = pedido.get("usuario_id")
-    cantidad_total = pedido.get("cantidad_perfiles", 1)
+    try:
+        cantidad_total = int(pedido.get("cantidad_perfiles", 1))
+    except (ValueError, TypeError):
+        cantidad_total = 1
     url = pedido.get("url", "")
-    nivel_comentarios = pedido.get("nivel_comentarios", 0)
-    duracion_horas = pedido.get("duracion_horas", 0)
+    try:
+        nivel_comentarios = int(pedido.get("nivel_comentarios", 0))
+    except (ValueError, TypeError):
+        nivel_comentarios = 0
+    try:
+        duracion_horas = float(pedido.get("duracion_horas", 0))
+    except (ValueError, TypeError):
+        duracion_horas = 0.0
 
     if not usuario_id:
         logger.warning("[MATCH] pedido %s sin usuario_id", pedido_id)
@@ -273,8 +282,9 @@ async def _asignar_perfil_planificado(
     liberacion_str = liberacion_dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # tarea 1: designacion de observador
-    # verificar si el pcbot destino ya tiene un observador activo
-    if not _tiene_observador_activo(pcbot_id):
+    # solo si el pedido contrato comentarista ia (nivel_comentarios > 0)
+    # y el pcbot no tiene ya un observador activo
+    if nivel_comentarios > 0 and not _tiene_observador_activo(pcbot_id):
         rol = "observador"
         logger.info(
             "[MATCH] perfil %s designado observador en pcbot %s (pedido %s)",

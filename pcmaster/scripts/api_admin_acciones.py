@@ -71,9 +71,9 @@ async def api_admin_backup_manual(
     sesion: dict = Depends(verificar_admin_dependencia),
 ):
     """crea un backup manual de roxymaster.db en backups/ con timestamp."""
-    db_path = RUTA_PROYECTO / "roxymaster.db"
+    db_path = RUTA_PROYECTO / "data" / "roxymaster.db"
     if not db_path.exists():
-        raise HTTPException(status_code=404, detail="base de datos no encontrada")
+        raise HTTPException(status_code=404, detail="base de datos no encontrada en data/")
 
     RUTA_BACKUPS.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

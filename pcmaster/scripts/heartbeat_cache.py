@@ -49,14 +49,15 @@ def ultimo_evento(pcbot_id: str) -> list:
 
 def obtener_estado_perfil(pcbot_id: str, profile_id: str) -> str:
     """consulta el estado de un perfil en perfiles_roxy.
-    retorna 'activo', 'inactivo' o 'caido'."""
+    retorna 'activo', 'inactivo' o 'caido'.
+    si el perfil no existe en la bd (row is none), retorna 'inactivo'."""
     from db import ejecutar_sql_unico
     row = ejecutar_sql_unico(
         "select activo from perfiles_roxy where hash = ? and pcbot_id = ?",
         (profile_id, pcbot_id),
     )
     if row is None:
-        return "activo"
+        return "inactivo"
     return "activo" if row.get("activo", 0) == 1 else "inactivo"
 
 
@@ -93,7 +94,7 @@ def obtener_perfiles_libres(pcbot_id: str) -> list:
              and not exists (
                  select 1 from pedido_asignaciones pa
                  where pa.perfil_id = pr.hash
-                   and pa.estado in ('planificado', 'ejecutando')
+                   and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente')
              )""",
         (pcbot_id,),
     )
