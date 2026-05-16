@@ -53,12 +53,12 @@ def obtener_estado_perfil(pcbot_id: str, profile_id: str) -> str:
     si el perfil no existe en la bd (row is none), retorna 'inactivo'."""
     from db import ejecutar_sql_unico
     row = ejecutar_sql_unico(
-        "select activo from perfiles_roxy where hash = ? and pcbot_id = ?",
+        "select activo from perfiles_roxy where hash = ? and pcbot_id = ? and activo = 1",
         (profile_id, pcbot_id),
     )
     if row is None:
         return "inactivo"
-    return "activo" if row.get("activo", 0) == 1 else "inactivo"
+    return "activo"
 
 
 def obtener_perfiles_activos(pcbot_id: str) -> list:
@@ -94,7 +94,7 @@ def obtener_perfiles_libres(pcbot_id: str) -> list:
              and not exists (
                  select 1 from pedido_asignaciones pa
                  where pa.perfil_id = pr.hash
-                   and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente')
+                    and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente', 'reservado')
              )""",
         (pcbot_id,),
     )

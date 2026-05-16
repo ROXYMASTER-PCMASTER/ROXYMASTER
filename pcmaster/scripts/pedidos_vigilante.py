@@ -5,6 +5,8 @@
 # dependencias: heartbeat_cache, ws_manager, db
 # v3: estados de asignacion corregidos a 'planificado'/'ejecutando'
 #     (se eliminaron estados legacy 'activo','enviado','pendiente')
+# v3.1: fix race condition - agregado 'reservado' a las lists de exclusion
+#       en _asignar_perfil_reemplazo para evitar doble asignacion
 
 import asyncio
 import logging
@@ -331,8 +333,9 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
     # replica la logica de procesador_cola._obtener_perfiles_libres
     # pero simplificado: solo perfiles sin asignaciones activas
     # IMPORTANTE: excluir TODOS los estados que indican uso activo,
-    # incluyendo 'planificado', 'ejecutando', 'activo', 'enviado', 'pendiente'
+    # incluyendo 'planificado', 'ejecutando', 'activo', 'enviado', 'pendiente', 'reservado'
     # para evitar reasignar perfiles que ya estan en uso en este mismo ciclo
+    # v3.1: agregado 'reservado' para evitar race condition con procesador_cola
     libres_db = ejecutar_sql(
         """select pr.hash as perfil_id, pr.pcbot_id
            from perfiles_roxy pr
@@ -342,7 +345,7 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
                  select 1 from pedido_asignaciones pa
                  where pa.perfil_id = pr.hash
                    and pa.pcbot_id = pr.pcbot_id
-                   and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente')
+                   and pa.estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente', 'reservado')
              )
            limit 1""",
         (pcbot_id,),
@@ -361,9 +364,10 @@ async def _asignar_perfil_reemplazo(pedido: dict, duracion: float) -> bool:
 
     # verificacion atomica adicional: confirmar que el perfil no tenga
     # asignacion activa justo en este momento (race condition)
+    # v3.1: agregado 'enviado', 'pendiente', 'reservado' a la lista de exclusion
     conteo_activo = ejecutar_sql_unico(
         "select count(*) as cnt from pedido_asignaciones "
-        "where perfil_id = ? and estado in ('planificado', 'ejecutando', 'activo')",
+        "where perfil_id = ? and estado in ('planificado', 'ejecutando', 'activo', 'enviado', 'pendiente', 'reservado')",
         (perfil_elegido,),
     )
     if conteo_activo and conteo_activo.get("cnt", 0) > 0:
