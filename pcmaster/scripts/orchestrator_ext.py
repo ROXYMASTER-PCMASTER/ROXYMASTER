@@ -203,11 +203,8 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
         import procesador_cola
         await procesar_heartbeat_eventos(pcbot_id, mensaje)
 
-        # ejecutar vigilante inmediatamente para detectar bajas sin evento explicito
-        from pedidos_vigilante import _ciclo_vigilante
-        await _ciclo_vigilante()
-
-        # segundo match para reasignar bajas detectadas en el mismo ciclo heartbeat
+        # el vigilante se ejecuta en bucle independiente (desde server.py)
+        # ya no se llama bajo demanda aqui para evitar doble ejecucion
         await procesador_cola.ejecutar_ciclo_match()
 
         await _enviar_pendientes(pcbot_id)

@@ -178,11 +178,10 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 )
                 continue
 
-        # fix: grace period de 45s desde inicio de asignacion antes de
-        # marcar perfil como desaparecido. esto da tiempo al pcbot para
-        # confirmar el perfil en el siguiente heartbeat.
+        # calcular tiempo desde asignacion para grace periods
         inicio_asig = asig.get("inicio")
-        if inicio_asig and asig.get("estado") == "planificado":
+        segundos_desde_asignacion = None
+        if inicio_asig:
             try:
                 if "+" in inicio_asig or "Z" in inicio_asig:
                     limpia = inicio_asig.replace("Z", "+00:00")
@@ -191,15 +190,30 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                     inicio_dt = datetime.strptime(inicio_asig, "%Y-%m-%d %H:%M:%S")
                     inicio_dt = inicio_dt.replace(tzinfo=timezone.utc)
                 segundos_desde_asignacion = (ahora - inicio_dt).total_seconds()
-                if segundos_desde_asignacion < 45:
-                    logger.info(
-                        "perfil %s asignado hace %.0fs (<45) y en estado planificado, "
-                        "esperando confirmacion para pedido %s",
-                        perfil_id, segundos_desde_asignacion, pedido_id,
-                    )
-                    continue  # no evaluar este perfil aun
             except Exception as e:
                 logger.debug("error parseando inicio_asig %s: %s", inicio_asig, str(e)[:100])
+
+        # grace period de 5s: dar tiempo al perfil para navegar
+        # antes de evaluar url incorrecta o perfil desaparecido
+        if segundos_desde_asignacion is not None and segundos_desde_asignacion < 15:
+            logger.info(
+                "perfil %s asignado hace %.0fs (<15), esperando que "
+                "complete navegacion para pedido %s",
+                perfil_id, segundos_desde_asignacion, pedido_id,
+            )
+            continue
+
+        # fix: grace period de 45s desde inicio de asignacion antes de
+        # marcar perfil como desaparecido si aun esta planificado.
+        # esto da tiempo al pcbot para confirmar el perfil en heartbeat.
+        if inicio_asig and asig.get("estado") == "planificado" and segundos_desde_asignacion is not None:
+            if segundos_desde_asignacion < 45:
+                logger.info(
+                    "perfil %s asignado hace %.0fs (<45) y en estado planificado, "
+                    "esperando confirmacion para pedido %s",
+                    perfil_id, segundos_desde_asignacion, pedido_id,
+                )
+                continue  # no evaluar este perfil aun
 
         # obtener estado del perfil en el ultimo heartbeat
         estado_real = heartbeat_cache.obtener_estado_perfil(pcbot_id, perfil_id)
