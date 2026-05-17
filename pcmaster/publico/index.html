@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="WAFABOT - audiencia real para tus directos. multiplica tu audiencia en kick, twitch, youtube y muchos mpas... beta abierta.">
+<meta name="keywords" content="WAFABOT, audiencia, stream, kick, twitch, tiktok, youtube y muchos mas... espectadores reales, comentarios y reacciones">
+<meta property="og:title" content="WAFABOT - Espectadores, comentarios y reacciones 99.9% reales  reales!!!">
+<meta property="og:description" content="audiencia real para tus directos en kick, tiktok, youtube, twitch y muchas otras mas... beta abierta - acceso gratuito por tiempo limitado.">
+<meta property="og:url" content="https://www.WAFABOT.com">
+<meta name="theme-color" content="#0a0a1a">
+<title>WAFABOT - audiencia real para tus directos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@400;500;600;700;800;900&family=poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="css/estilo_gamer.css">
+<style>
+/* ===== RESET ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'poppins',sans-serif;background:#0a0a1a;color:#e0e0e0;overflow-x:hidden;line-height:1.6;min-height:100vh}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+img{max-width:100%;display:block}
+.container{width:100%;max-width:1200px;margin:0 auto;padding:0 20px}
+section{padding:80px 0}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;text-align:center;margin-bottom:10px;letter-spacing:-0.5px}
+.section-subtitle{font-size:clamp(1rem,2vw,1.3rem);text-align:center;color:#a0a0b0;margin-bottom:50px;font-weight:300}
+.gold{color:#ffd700}
+.neon{color:#00ff88;text-shadow:0 0 20px rgba(0,255,136,0.4)}
+.purple{color:#7c3aed}
+
+/* ===== HEADER ===== */
+header{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:15px 0;transition:all 0.3s;background:rgba(10,10,26,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,215,0,0.1)}
+header.scrolled{background:rgba(10,10,26,0.95);box-shadow:0 4px 30px rgba(0,0,0,0.5)}
+header .container{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ffffff;display:inline-flex;flex-direction:column;align-items:center}
+.logo .logo-main{color:#ffffff}di
+.logo .logo-main span{color:#ffd700}
+.logo .neon{color:#00ff88;display:block;font-size:0.5em}
+.nav-links{display:flex;gap:15px;align-items:center}
+.nav-links a{font-size:1rem;font-weight:600;color:#e0e0e0;transition:all 0.3s;position:relative;padding:8px 16px;border-radius:8px}
+.nav-links a:hover,.nav-links a.active{color:#ffd700;background:rgba(255,215,0,0.08)}
+.nav-links a::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:0;height:2px;background:linear-gradient(90deg,#ffd700,#00ff88);transition:width 0.3s;border-radius:2px}
+.nav-links a:hover::after,.nav-links a.active::after{width:60%}
+.nav-cta{padding:10px 24px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#ffffff;border-radius:50px;font-weight:700;font-size:1rem;transition:all 0.3s}
+.nav-cta:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 4px 20px rgba(0,255,136,0.5);color:#ffffff}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:5px;z-index:1001}
+.hamburger span{display:block;width:28px;height:2.5px;background:#fff;border-radius:2px;transition:all 0.3s}
+.hamburger.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.active span:nth-child(2){opacity:0}
+.hamburger.active span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+
+/* ===== HERO ===== */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding-top:80px}
+#hero canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.hero-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,rgba(124,58,237,0.15) 0%,rgba(10,10,26,0.9) 70%);z-index:1}
+.hero-content{position:relative;z-index:2;text-align:center;max-width:900px;padding:0 20px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:50px;padding:8px 20px;font-size:0.85rem;color:#00ff88;margin-bottom:25px}
+.hero-title{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff,#ffd700,#00ff88,#7c3aed);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:hero-grad 6s ease-in-out infinite}
+@keyframes hero-grad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero-sub{font-size:clamp(1rem,2vw,1.4rem);color:#a0a0b0;margin-bottom:15px;font-weight:300}
+.hero-big{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:30px;background:linear-gradient(135deg,#ffd700,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-buttons{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-bottom:35px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.3s ease;border:none;font-family:'poppins',sans-serif;position:relative;overflow:hidden}
+.btn-cta{background:linear-gradient(135deg,#00ff88,#00cc6a);color:#0a0a1a;box-shadow:0 4px 25px rgba(0,255,136,0.3);padding:18px 44px;font-size:1.15rem;font-weight:700;letter-spacing:0.5px}
+.btn-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 40px rgba(0,255,136,0.5)}
+.btn-gold{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#0a0a1a;box-shadow:0 4px 25px rgba(255,215,0,0.3)}
+.btn-gold:hover{transform:translateY(-3px);box-shadow:0 8px 35px rgba(255,215,0,0.5)}
+.btn-outline{background:transparent;border:2px solid rgba(255,255,255,0.2);color:#fff}
+.btn-outline:hover{border-color:#ffd700;color:#ffd700}
+
+/* ===== COUNTDOWN ===== */
+.countdown{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:30px 0}
+.countdown-item{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.countdown-num{font-size:clamp(2rem,5vw,4rem);font-weight:900;background:linear-gradient(135deg,#ffd700,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.countdown-label{font-size:0.75rem;color:#707080;text-transform:uppercase;letter-spacing:2px;margin-top:5px}
+.hero-stats{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:1.8rem;font-weight:800;color:#ffd700}
+.hero-stat-label{font-size:0.75rem;color:#707080;text-transform:uppercase;letter-spacing:1px}
+
+/* ===== PLATFORMAS MARQUEE ===== */
+#plataformas{background:linear-gradient(180deg,rgba(255,215,0,0.03),transparent);padding:40px 0}
+.marquee-wrapper{overflow:hidden;position:relative;width:100%}
+.marquee-wrapper::before,.marquee-wrapper::after{content:'';position:absolute;top:0;width:80px;height:100%;z-index:2;pointer-events:none}
+.marquee-wrapper::before{left:0;background:linear-gradient(90deg,#0a0a1a,transparent)}
+.marquee-wrapper::after{right:0;background:linear-gradient(90deg,transparent,#0a0a1a)}
+.marquee-track{display:flex;gap:60px;animation:marquee 25s linear infinite;width:max-content;padding:10px 0}
+.marquee-track:hover{animation-play-state:paused}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.platform-icon{display:flex;align-items:center;gap:10px;font-size:1.3rem;color:#606080;transition:color 0.3s;white-space:nowrap}
+.platform-icon i{font-size:2rem}
+.platform-icon:hover{color:#ffd700}
+.platform-icon .fa-kickstarter{color:#00ff88}
+.platform-icon .fa-twitch{color:#9146ff}
+.platform-icon .fa-tiktok{color:#fe2c55}
+.platform-icon .fa-youtube{color:#ff0000}
+.platform-icon .fa-instagram{color:#e4405f}
+
+/* ===== BENEFICIOS ===== */
+.beneficios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px}
+.beneficio-card{background:linear-gradient(145deg,rgba(255,255,255,0.03),rgba(124,58,237,0.05));border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:35px 25px;text-align:center;transition:all 0.4s;position:relative;overflow:hidden}
+.beneficio-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#ffd700,#00ff88,#7c3aed);opacity:0;transition:opacity 0.4s}
+.beneficio-card:hover::before{opacity:1}
+.beneficio-card:hover{transform:translateY(-8px);border-color:rgba(255,215,0,0.2);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.beneficio-icon{width:60px;height:60px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(124,58,237,0.1));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.beneficio-icon.gold i{color:#ffd700}
+.beneficio-icon.neon i{color:#00ff88}
+.beneficio-icon.purple i{color:#7c3aed}
+.beneficio-card h3{font-size:1.2rem;font-weight:700;margin-bottom:10px;color:#fff}
+.beneficio-card p{font-size:0.9rem;color:#9090a0;line-height:1.7}
+
+/* ===== USE CASES ===== */
+.usecases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:30px}
+.usecase-card{background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(255,215,0,0.03));border:1px solid rgba(255,215,0,0.1);border-radius:20px;padding:40px 30px;transition:all 0.4s;position:relative;overflow:hidden}
+.usecase-card:hover{transform:translateY(-10px);box-shadow:0 20px 80px rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3)}
+.usecase-card .tag{display:inline-block;padding:4px 12px;border-radius:50px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px}
+.usecase-card .tag.streamer{background:rgba(0,255,136,0.15);color:#00ff88}
+.usecase-card .tag.agency{background:rgba(124,58,237,0.15);color:#7c3aed}
+.usecase-card .tag.creator{background:rgba(255,215,0,0.15);color:#ffd700}
+.usecase-card h3{font-size:1.4rem;font-weight:800;margin-bottom:12px;color:#fff}
+.usecase-card p{font-size:0.95rem;color:#9090a0;line-height:1.7;margin-bottom:20px}
+.usecase-card .usecase-link{color:#ffd700;font-weight:600;font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;transition:gap 0.3s}
+.usecase-card .usecase-link:hover{gap:15px}
+
+/* ===== GROWTH CHART ===== */
+#crecimiento{background:linear-gradient(180deg,transparent,rgba(0,255,136,0.02),transparent)}
+.chart-container{max-width:600px;margin:0 auto 30px;padding:30px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px}
+.chart-bar-container{display:flex;align-items:flex-end;gap:8px;height:200px;padding:0 10px;justify-content:center}
+.chart-bar{width:35px;background:linear-gradient(180deg,#ffd700,#ffaa00);border-radius:6px 6px 0 0;transition:height 1.5s cubic-bezier(0.34,1.56,0.64,1);height:0;min-width:25px;position:relative}
+.chart-bar:nth-child(even){background:linear-gradient(180deg,#00ff88,#00cc6a)}
+.chart-bar .bar-label{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:#707080;white-space:nowrap}
+.chart-bar .bar-value{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:0.65rem;color:#505060}
+
+/* ===== LIVE COUNTER ===== */
+.live-counter{text-align:center;padding:20px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:16px;max-width:500px;margin:30px auto 0}
+.live-counter .count{font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#00ff88,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.live-counter .label{font-size:0.85rem;color:#707080;margin-top:5px}
+.live-users{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:15px;font-size:0.8rem;color:#606080}
+.live-users span{display:none;animation:fadeUser 2s ease}
+.live-users span.active{display:inline}
+@keyframes fadeUser{0%{opacity:0}100%{opacity:1}}
+
+/* ===== TESTIMONIOS ===== */
+.testimonios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px}
+.testimonio-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:30px;transition:all 0.4s}
+.testimonio-card:hover{transform:translateY(-5px);border-color:rgba(255,215,0,0.2);box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.testimonio-stars{color:#ffd700;margin-bottom:15px;font-size:0.9rem}
+.testimonio-text{font-size:0.95rem;color:#c0c0d0;line-height:1.7;margin-bottom:20px;font-style:italic}
+.testimonio-text i{color:#ffd700;margin-right:5px}
+.testimonio-author{display:flex;align-items:center;gap:12px}
+.testimonio-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex-shrink:0}
+.testimonio-avatar.gold{background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,170,0,0.2));color:#ffd700}
+.testimonio-avatar.neon{background:linear-gradient(135deg,rgba(0,255,136,0.2),rgba(0,204,106,0.2));color:#00ff88}
+.testimonio-avatar.purple{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(100,40,200,0.2));color:#7c3aed}
+.testimonio-name{font-weight:600;font-size:0.9rem;color:#fff}
+.testimonio-role{font-size:0.75rem;color:#707080}
+
+/* ===== CERTIFICACIONES ===== */
+.cert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.cert-card{text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;transition:all 0.4s}
+.cert-card:hover{transform:translateY(-5px);border-color:rgba(255,215,0,0.2)}
+.cert-icon{font-size:2.5rem;margin-bottom:15px;display:block}
+.cert-card h4{font-size:0.9rem;font-weight:600;color:#fff;margin-bottom:5px}
+.cert-card p{font-size:0.75rem;color:#606080}
+
+/* ===== HOW IT WORKS ===== */
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:25px;counter-reset:step}
+.step-card{text-align:center;padding:30px 20px;position:relative;transition:all 0.4s}
+.step-card:hover{transform:translateY(-5px)}
+.step-num{width:50px;height:50px;margin:0 auto 20px;background:linear-gradient(135deg,#ffd700,#00ff88);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#0a0a1a}
+.step-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;color:#fff}
+.step-card p{font-size:0.85rem;color:#9090a0;line-height:1.6}
+
+/* ===== PRICING ===== */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;max-width:1000px;margin:0 auto}
+.pricing-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:35px 25px;text-align:center;transition:all 0.4s;position:relative}
+.pricing-card.featured{border-color:#ffd700;background:linear-gradient(145deg,rgba(255,215,0,0.05),rgba(255,170,0,0.02));transform:scale(1.03);box-shadow:0 0 40px rgba(255,215,0,0.1)}
+.pricing-card.featured .popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffd700,#ffaa00);color:#0a0a1a;padding:4px 20px;border-radius:50px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.pricing-card h3{font-size:1.3rem;font-weight:700;margin-bottom:10px;color:#fff}
+.pricing-card .price{font-size:2.5rem;font-weight:900;margin:15px 0}
+.pricing-card .price .currency{font-size:1rem;color:#707080}
+.pricing-card .price .period{font-size:0.9rem;color:#707080;font-weight:400}
+.pricing-card .price.gold{color:#ffd700}
+.pricing-card .price.neon{color:#00ff88}
+.pricing-card .price .old{font-size:1.2rem;color:#505060;text-decoration:line-through;margin-right:8px}
+.pricing-card ul{text-align:left;margin:20px 0;padding:0}
+.pricing-card ul li{padding:8px 0;font-size:0.85rem;color:#9090a0;display:flex;align-items:center;gap:10px}
+.pricing-card ul li i{width:18px}
+.pricing-card ul li .fa-check{color:#00ff88}
+.pricing-card ul li .fa-times{color:#505060;opacity:0.5}
+.pricing-card .btn{width:100%}
+
+/* ===== FAQ ===== */
+.faq-list{max-width:750px;margin:0 auto}
+.faq-item{border:1px solid rgba(255,255,255,0.05);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all 0.3s}
+.faq-item.active{border-color:rgba(255,215,0,0.3)}
+.faq-question{width:100%;padding:18px 20px;background:none;border:none;color:#e0e0e0;font-size:1rem;font-weight:500;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:'poppins',sans-serif;transition:color 0.3s}
+.faq-question:hover{color:#ffd700}
+.faq-question i{transition:transform 0.3s;color:#ffd700}
+.faq-item.active .faq-question i{transform:rotate(45deg)}
+.faq-answer{padding:0 20px;max-height:0;overflow:hidden;transition:all 0.4s ease}
+.faq-item.active .faq-answer{max-height:300px;padding:0 20px 18px}
+.faq-answer p{font-size:0.9rem;color:#9090a0;line-height:1.7}
+
+/* ===== REGISTRO ===== */
+.registro-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:1000px;margin:0 auto;align-items:start}
+.registro-benefits h3{font-size:1.5rem;font-weight:800;margin-bottom:20px;color:#fff}
+.registro-benefits ul li{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:0.95rem;color:#b0b0c0}
+.registro-benefits ul li i{color:#00ff88;font-size:1rem;width:20px}
+.registro-form{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:35px;transition:all 0.4s}
+.registro-form:hover{box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.registro-form h3{font-size:1.3rem;font-weight:700;margin-bottom:20px;text-align:center;color:#fff}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;margin-bottom:6px;font-size:0.85rem;color:#b0b0c0;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:12px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.95rem;font-family:'poppins',sans-serif;transition:border-color 0.3s;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:#ffd700;box-shadow:0 0 0 3px rgba(255,215,0,0.1)}
+.form-group select option{background:#0a0a1a;color:#fff}
+.form-submit{width:100%;padding:14px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#0a0a1a;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.3s;font-family:'poppins',sans-serif}
+.form-submit:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,255,136,0.4)}
+.form-success{display:none;text-align:center;padding:20px}
+.form-success i{font-size:3rem;color:#00ff88;margin-bottom:15px}
+.form-success h4{font-size:1.2rem;font-weight:700;margin-bottom:8px;color:#fff}
+.form-success p{font-size:0.9rem;color:#9090a0}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:modalFade 0.3s ease}
+.modal-overlay.active{display:flex}
+@keyframes modalFade{0%{opacity:0}100%{opacity:1}}
+.modal-content{background:linear-gradient(145deg,#12122a,#0a0a1a);border:1px solid rgba(255,215,0,0.2);border-radius:24px;max-width:500px;width:90%;padding:40px;position:relative;animation:modalSlide 0.4s ease}
+@keyframes modalSlide{0%{transform:translateY(30px) scale(0.95);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+.modal-close{position:absolute;top:15px;right:20px;background:none;border:none;color:#707080;font-size:1.5rem;cursor:pointer;transition:color 0.3s;font-family:'poppins',sans-serif}
+.modal-close:hover{color:#ffd700}
+.modal-content h2{font-size:1.5rem;font-weight:800;margin-bottom:8px;text-align:center;color:#fff}
+.modal-content p{text-align:center;color:#9090a0;margin-bottom:25px;font-size:0.9rem}
+.modal-content .form-submit{background:linear-gradient(135deg,#ffd700,#ffaa00)}
+
+/* ===== SHARE ===== */
+.share-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.share-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:50px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.3s;border:none;font-family:'poppins',sans-serif}
+.share-btn.twitter{background:#1da1f2;color:#fff}
+.share-btn.facebook{background:#1877f2;color:#fff}
+.share-btn.whatsapp{background:#25d366;color:#fff}
+.share-btn.copy{background:rgba(255,255,255,0.1);color:#fff}
+.share-btn:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,0.3)}
+
+/* ===== FLOATING CONTACT ===== */
+.floating-contact{position:fixed;bottom:30px;right:30px;z-index:999;display:flex;flex-direction:column;gap:10px}
+.floating-btn{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;border:none;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.3);position:relative}
+.floating-btn:hover{transform:scale(1.1)}
+.floating-btn.whatsapp{background:#25d366}
+.floating-btn.email{background:#7c3aed}
+.floating-btn .tooltip{position:absolute;right:65px;background:#1a1a2e;color:#fff;padding:6px 12px;border-radius:8px;font-size:0.75rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.floating-btn:hover .tooltip{opacity:1}
+
+/* ===== FOOTER ===== */
+footer{background:#050510;border-top:1px solid rgba(255,255,255,0.03);padding:60px 0 30px}
+.footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:40px;margin-bottom:40px}
+.footer-col h4{font-size:1.1rem;font-weight:700;margin-bottom:15px;color:#fff}
+.footer-col p{font-size:0.85rem;color:#707080;line-height:1.7}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{font-size:0.85rem;color:#606080;transition:color 0.3s}
+.footer-col ul li a:hover{color:#ffd700}
+.footer-social{display:flex;gap:12px;margin-top:15px}
+.footer-social a{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:#707080;transition:all 0.3s}
+.footer-social a:hover{background:#ffd700;color:#0a0a1a}
+.footer-bottom{text-align:center;padding-top:30px;border-top:1px solid rgba(255,255,255,0.03);font-size:0.8rem;color:#505060}
+
+/* ===== SCROLL REVEAL ===== */
+.reveal{opacity:0;transform:translateY(40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(40px);transition:all 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+
+/* ===== LOADING ===== */
+.loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.6s}
+.loading-screen.hidden{opacity:0;pointer-events:none}
+.loader{width:50px;height:50px;border:3px solid rgba(255,215,0,0.1);border-top-color:#ffd700;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen p{color:#ffd700;margin-top:15px;font-size:0.9rem;letter-spacing:2px;text-transform:uppercase}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){.registro-wrapper{grid-template-columns:1fr}
+.registro-benefits{display:none}
+.pricing-card.featured{transform:none}
+}
+@media(max-width:768px){section{padding:50px 0}
+.nav-links{position:fixed;top:0;right:-100%;width:280px;height:100vh;background:rgba(10,10,26,0.98);backdrop-filter:blur(20px);flex-direction:column;padding:80px 30px 30px;transition:right 0.4s;gap:15px;align-items:flex-start;border-left:1px solid rgba(255,215,0,0.1)}
+.nav-links.active{right:0}
+.hamburger{display:flex}
+.countdown{gap:10px}
+.countdown-item{min-width:60px}
+.countdown-num{font-size:2rem}
+.hero-buttons{flex-direction:column;align-items:center}
+.hero-buttons .btn{width:100%;max-width:300px}
+.chart-bar{width:25px;min-width:18px}
+.floating-contact{bottom:20px;right:20px}
+.floating-btn{width:48px;height:48px;font-size:1.2rem}
+.modal-content{padding:25px}
+}
+@media(max-width:480px){.container{padding:0 15px}
+.section-title{font-size:1.5rem}
+.beneficios-grid,.usecases-grid,.testimonios-grid,.cert-grid,.pricing-grid{grid-template-columns:1fr}
+.cert-grid{grid-template-columns:repeat(2,1fr)}
+.hero-stats{gap:20px}
+.share-buttons{flex-direction:column;align-items:center}
+.share-btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="loading-screen" id="loading-screen">
+  <div class="loader"></div>
+  <p>WAFABOT</p>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="container">
+    <a href="#hero" class="logo"><span class="logo-main">WAFABOT<span>.</span></span><span class="neon">beta</span></a>
+    <nav class="nav-links" id="nav-links">
+      <a href="#hero">inicio</a>
+      <a href="#beneficios">beneficios</a>
+      <a href="#usecases">casos de uso</a>
+      <a href="#testimonios">testimonios</a>
+      <a href="#pricing">planes</a>
+      <a href="/login" class="btn-login"><i class="fas fa-sign-in-alt"></i> iniciar sesion</a>
+      <a href="/registro" class="nav-cta"><i class="fas fa-user-plus"></i> crear cuenta</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section id="hero">
+  <canvas id="particles-canvas"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><i class="fas fa-bolt"></i> beta abierta - acceso gratuito limitado</div>
+    <h1 class="hero-title">revoluciona tu audiencia en kick y twitch</h1>
+    <p class="hero-sub">convierte visitas en seguidores reales con la tecnologia anti-deteccion mas avanzada</p>
+    <div class="hero-big">muy pronto! estamos en beta abierta</div>
+    <div class="countdown" id="countdown">
+      <div class="countdown-item"><span class="countdown-num" id="days">00</span><span class="countdown-label">dias</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="hours">00</span><span class="countdown-label">horas</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="minutes">00</span><span class="countdown-label">minutos</span></div>
+      <div class="countdown-item"><span class="countdown-num" id="seconds">00</span><span class="countdown-label">segundos</span></div>
+    </div>
+    <div class="hero-buttons">
+      <button class="btn btn-cta" onclick="openModal()"><i class="fas fa-rocket"></i> solicitar acceso anticipado</button>
+      <a href="#beneficios" class="btn btn-outline"><i class="fas fa-arrow-down"></i> conocer mas</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num" id="user-count-hero">5,247</div><div class="hero-stat-label">streamers registrados</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">98.7%</div><div class="hero-stat-label">uptime garantizado</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">kick</div><div class="hero-stat-label">plataforma principal</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLATAFORMAS ===== -->
+<section id="plataformas">
+  <div class="marquee-wrapper">
+    <div class="marquee-track" id="marquee-track">
+      <span class="platform-icon"><i class="fab fa-kickstarter" style="color:#00ff88"></i> kick</span>
+      <span class="platform-icon"><i class="fab fa-twitch" style="color:#9146ff"></i> twitch</span>
+      <span class="platform-icon"><i class="fab fa-tiktok" style="color:#fe2c55"></i> tiktok</span>
+      <span class="platform-icon"><i class="fab fa-youtube" style="color:#ff0000"></i> youtube</span>
+      <span class="platform-icon"><i class="fab fa-instagram" style="color:#e4405f"></i> instagram</span>
+      <span class="platform-icon"><i class="fab fa-kickstarter" style="color:#00ff88"></i> kick</span>
+      <span class="platform-icon"><i class="fab fa-twitch" style="color:#9146ff"></i> twitch</span>
+      <span class="platform-icon"><i class="fab fa-tiktok" style="color:#fe2c55"></i> tiktok</span>
+      <span class="platform-icon"><i class="fab fa-youtube" style="color:#ff0000"></i> youtube</span>
+      <span class="platform-icon"><i class="fab fa-instagram" style="color:#e4405f"></i> instagram</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BENEFICIOS ===== -->
+<section id="beneficios">
+  <div class="container">
+    <h2 class="section-title">por que <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">la unica plataforma que combina inteligencia artificial, huella digital unica y total anonimato</p>
+    <div class="beneficios-grid">
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon neon"><i class="fas fa-users"></i></div>
+        <h3>audiencia real, no bots</h3>
+        <p>espectadores genuinos con comportamiento humano. nada de bots detectables que arruinen tu canal.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon purple"><i class="fas fa-fingerprint"></i></div>
+        <h3>huella digital unica</h3>
+        <p>cada perfil tiene su propia identidad digital, navegador y proxy residencial. indetectable.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon gold"><i class="fas fa-chart-line"></i></div>
+        <h3>dashboard en tiempo real</h3>
+        <p>controla todas tus campañas desde un solo panel. metricas en vivo, resultados instantaneos.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon neon"><i class="fas fa-coins"></i></div>
+        <h3>pago solo por resultados</h3>
+        <p>sin contratos ni mensualidades ocultas. pagas unicamente por las visitas reales entregadas.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon purple"><i class="fas fa-shield-alt"></i></div>
+        <h3>seguridad y anonimato</h3>
+        <p>tus datos estan protegidos con encriptacion de grado militar. nunca compartimos informacion.</p>
+      </div>
+      <div class="beneficio-card reveal">
+        <div class="beneficio-icon gold"><i class="fas fa-headset"></i></div>
+        <h3>soporte 24/7</h3>
+        <p>equipo humano e inteligencia artificial disponible en todo momento para ayudarte.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== USE CASES ===== -->
+<section id="usecases">
+  <div class="container">
+    <h2 class="section-title">para quien es <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">soluciones especificas para cada tipo de creador y profesional</p>
+    <div class="usecases-grid">
+      <div class="usecase-card reveal-left">
+        <span class="tag streamer"><i class="fas fa-gamepad"></i> streamer</span>
+        <h3>multiplica tu visibilidad en kick</h3>
+        <p>pasa de 0 a 1000 espectadores en semanas. alcanza nuevos seguidores y dispara tu carrera como creador de contenido. audiencia real que interactua y se queda.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="usecase-card reveal">
+        <span class="tag agency"><i class="fas fa-building"></i> agencia</span>
+        <h3>gestiona clientes desde un panel</h3>
+        <p>administra multiples cuentas y campanas simultaneamente. campañas automatizadas de alto rendimiento para tus clientes. resultados medibles y escalables.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="usecase-card reveal-right">
+        <span class="tag creator"><i class="fas fa-video"></i> creador</span>
+        <h3>convierte visitas en suscriptores</h3>
+        <p>aumenta tu engagement y monetizacion. convierte espectadores pasivos en seguidores leales que impulsan tus ingresos por publicidad y donaciones.</p>
+        <a href="#" class="usecase-link">ver caso de exito <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GROWTH CHART ===== -->
+<section id="crecimiento">
+  <div class="container">
+    <h2 class="section-title">crecimiento <span class="neon">exponencial</span> garantizado</h2>
+    <p class="section-subtitle">nuestros usuarios duplican su audiencia en los primeros 7 dias</p>
+    <div class="chart-container reveal">
+      <div class="chart-bar-container" id="chart-bars">
+        <div class="chart-bar" style="height:0" data-height="20"><span class="bar-label">sem 1</span></div>
+        <div class="chart-bar" style="height:0" data-height="35"><span class="bar-label">sem 2</span></div>
+        <div class="chart-bar" style="height:0" data-height="55"><span class="bar-label">sem 3</span></div>
+        <div class="chart-bar" style="height:0" data-height="75"><span class="bar-label">sem 4</span></div>
+        <div class="chart-bar" style="height:0" data-height="100"><span class="bar-label">sem 5</span></div>
+        <div class="chart-bar" style="height:0" data-height="130"><span class="bar-label">sem 6</span></div>
+        <div class="chart-bar" style="height:0" data-height="170"><span class="bar-label">sem 7</span></div>
+        <div class="chart-bar" style="height:0" data-height="200"><span class="bar-label">sem 8</span></div>
+      </div>
+    </div>
+    <div class="live-counter reveal">
+      <div class="count" id="live-count">0</div>
+      <div class="label">streamers registrados en la beta</div>
+      <div class="live-users" id="live-users">
+        <span>carlos_m se unio hace 2 min</span>
+        <span>laura_stream se unio hace 5 min</span>
+        <span>el_gamer_gt se unio hace 8 min</span>
+        <span>juego_rapido se unio hace 12 min</span>
+        <span>streamer_kick se unio hace 15 min</span>
+        <span>agency_pro se unio hace 20 min</span>
+        <span>creador_total se unio hace 25 min</span>
+        <span>visitor_live se unio hace 30 min</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIOS ===== -->
+<section id="testimonios">
+  <div class="container">
+    <h2 class="section-title">lo que dicen nuestros <span class="gold">usuarios</span></h2>
+    <p class="section-subtitle">mas de 5000 streamers ya confian en WAFABOT</p>
+    <div class="testimonios-grid">
+      <div class="testimonio-card reveal-left">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> pase de 20 espectadores promedio a 500 en una semana. WAFABOT cambio mi carrera por completo. la mejor decision que tome como streamer.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar neon">CM</div>
+          <div><div class="testimonio-name">carlos "el gamer" mendez</div><div class="testimonio-role">streamer de kick, +50k seguidores</div></div>
+        </div>
+      </div>
+      <div class="testimonio-card reveal">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> la herramienta mas poderosa para agencias. nuestros clientes aumentaron un 300% su audiencia en menos de un mes. WAFABOT es un antes y un despues.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar gold">LF</div>
+          <div><div class="testimonio-name">laura fernandez</div><div class="testimonio-role">ceo de growthstream agency</div></div>
+        </div>
+      </div>
+      <div class="testimonio-card reveal-right">
+        <div class="testimonio-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+        <div class="testimonio-text"><i class="fas fa-quote-left"></i> increible el nivel de personalizacion y soporte. WAFABOT es el futuro de la automatizacion de audiencia. mis videos ahora tienen miles de vistas reales.</div>
+        <div class="testimonio-author">
+          <div class="testimonio-avatar purple">MA</div>
+          <div><div class="testimonio-name">miguel angel rivera</div><div class="testimonio-role">creador de contenido educativo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CERTIFICACIONES ===== -->
+<section id="certificaciones">
+  <div class="container">
+    <h2 class="section-title">certificaciones y <span class="gold">reconocimientos</span></h2>
+    <p class="section-subtitle">avalado por las principales organizaciones de la industria</p>
+    <div class="cert-grid">
+      <div class="cert-card reveal"><span class="cert-icon gold"><i class="fas fa-certificate"></i></span><h4>kick partner program</h4><p>certificado oficial como herramienta de crecimiento</p></div>
+      <div class="cert-card reveal"><span class="cert-icon neon"><i class="fas fa-check-circle"></i></span><h4>twitch creator community</h4><p>miembro oficial de la comunidad de creadores</p></div>
+      <div class="cert-card reveal"><span class="cert-icon purple"><i class="fas fa-shield-alt"></i></span><h4>blockchain auditing association</h4><p>aprobado por seguridad y transparencia</p></div>
+      <div class="cert-card reveal"><span class="cert-icon gold"><i class="fas fa-trophy"></i></span><h4>influencer monthly top 10</h4><p>top 10 herramientas de marketing de influencia 2026</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how">
+  <div class="container">
+    <h2 class="section-title">como funciona <span class="gold">WAFABOT</span>?</h2>
+    <p class="section-subtitle">en 3 pasos simples empiezas a multiplicar tu audiencia</p>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <h3>crea tu cuenta</h3>
+        <p>registrate en segundos. sin tarjeta de credito, sin compromisos. la beta es completamente gratuita.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">2</div>
+        <h3>configura tu campana</h3>
+        <p>selecciona plataforma, perfil objetivo y duracion. nuestra ia optimiza cada visita para que sea natural.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">3</div>
+        <h3>observa el crecimiento</h3>
+        <p>en minutos empezaras a recibir visitas reales. monitorea todo desde tu dashboard en tiempo real.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section id="pricing">
+  <div class="container">
+    <h2 class="section-title">planes <span class="gold">flexibles</span></h2>
+    <p class="section-subtitle">empieza gratis durante la beta. sin tarjeta, sin riesgos.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card featured reveal-left">
+        <span class="popular-badge">mas popular</span>
+        <h3>beta gratis</h3>
+        <div class="price neon">gratis <span class="period">por tiempo limitado</span></div>
+        <ul>
+          <li><i class="fas fa-check"></i> 500 visitas reales de prueba</li>
+          <li><i class="fas fa-check"></i> dashboard basico en tiempo real</li>
+          <li><i class="fas fa-check"></i> soporte por email</li>
+          <li><i class="fas fa-check"></i> acceso a kick y twitch</li>
+          <li><i class="fas fa-times"></i> perfiles personalizados</li>
+          <li><i class="fas fa-times"></i> soporte prioritario 24/7</li>
+        </ul>
+        <button class="btn btn-cta" onclick="openModal()">quiero mi beta gratis</button>
+      </div>
+      <div class="pricing-card reveal-right">
+        <h3>pro</h3>
+        <div class="price gold"><span class="old">$29.99</span> $9.99 <span class="period">/mes</span></div>
+        <ul>
+          <li><i class="fas fa-check"></i> 10,000 visitas reales por mes</li>
+          <li><i class="fas fa-check"></i> dashboard avanzado con metricas</li>
+          <li><i class="fas fa-check"></i> perfiles con huella digital unica</li>
+          <li><i class="fas fa-check"></i> soporte prioritario 24/7</li>
+          <li><i class="fas fa-check"></i> compatibilidad multiplataforma</li>
+          <li><i class="fas fa-times"></i> campanas multi-cliente</li>
+        </ul>
+        <button class="btn btn-gold" disabled>proximamente</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="faq">
+  <div class="container">
+    <h2 class="section-title">preguntas <span class="gold">frecuentes</span></h2>
+    <p class="section-subtitle">todo lo que necesitas saber antes de empezar</p>
+    <div class="faq-list">
+      <div class="faq-item active">
+        <button class="faq-question">que es WAFABOT exactamente? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>WAFABOT es una plataforma saas que permite a streamers, empresas y agencias aumentar su audiencia real en kick, twitch y otras plataformas mediante visitas de perfiles reales automatizados basados en roxybrowser. usamos tecnologia anti-deteccion avanzada para garantizar que cada visita sea indistinguible de un usuario real.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">es seguro? me pueden banear? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>totalmente seguro. cada perfil tiene su propia huella digital unica, proxy residencial y comportamiento humano simulado. nuestras visitas pasan todas las pruebas de deteccion de las plataformas. ademas, usamos encriptacion de grado militar para proteger tus datos.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">cuanto tiempo toma ver resultados? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>los resultados son inmediatos. al crear tu campana, las visitas empiezan a llegar en cuestion de minutos. la mayoria de nuestros usuarios duplican su audiencia en los primeros 7 dias con campanas bien configuradas.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">necesito tarjeta de credito para la beta? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>no, la beta es completamente gratuita y sin compromisos. no pedimos ningun dato de pago. solo registrate con tu email y empieza a recibir visitas reales de prueba. sin trampas, sin cargos ocultos.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">funciona con kick y twitch? <i class="fas fa-plus"></i></button>
+        <div class="faq-answer"><p>si, WAFABOT es compatible con kick, twitch, youtube, tiktok e instagram. cada plataforma tiene sus propios perfiles optimizados para garantizar la maxima naturalidad y evitar cualquier tipo de deteccion.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== REGISTRO ===== -->
+<section id="registro">
+  <div class="container">
+    <h2 class="section-title">unete a la <span class="neon">beta</span> ahora</h2>
+    <p class="section-subtitle">cupos limitados. mas de 5000 streamers ya estan dentro.</p>
+    <div class="registro-wrapper">
+      <div class="registro-benefits reveal-left">
+        <h3>al registrarte obtienes:</h3>
+        <ul>
+          <li><i class="fas fa-check"></i> 500 visitas reales de prueba gratuitas</li>
+          <li><i class="fas fa-check"></i> acceso completo al dashboard en tiempo real</li>
+          <li><i class="fas fa-check"></i> soporte prioritario durante la beta</li>
+          <li><i class="fas fa-check"></i> sin tarjeta de credito, sin compromisos</li>
+          <li><i class="fas fa-check"></i> acceso vitalicio al plan beta gratis</li>
+          <li><i class="fas fa-check"></i> actualizaciones y nuevas funciones prioritarias</li>
+        </ul>
+        <div style="margin-top:30px;padding:20px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:12px;text-align:center">
+          <div style="font-size:2rem;font-weight:900;color:#00ff88" id="registro-counter">5,247</div>
+          <div style="font-size:0.8rem;color:#707080">ya se registraron</div>
+        </div>
+      </div>
+      <div class="registro-form reveal-right" id="registro-form-wrap">
+        <h3>solicita tu acceso ahora</h3>
+        <form id="registro-form" onsubmit="handleRegistro(event)">
+          <div class="form-group">
+            <label for="reg-nombre">nombre completo</label>
+            <input type="text" id="reg-nombre" required placeholder="tu nombre" minlength="2" pattern=".{2,}">
+          </div>
+          <div class="form-group">
+            <label for="reg-email">correo electronico</label>
+            <input type="email" id="reg-email" required placeholder="tu@email.com">
+          </div>
+          <div class="form-group">
+            <label for="reg-tipo">tipo de usuario</label>
+            <select id="reg-tipo">
+              <option value="streamer">streamer / creador</option>
+              <option value="agencia">agencia de marketing</option>
+              <option value="otro">otro</option>
+            </select>
+          </div>
+          <button type="submit" class="form-submit"><i class="fas fa-rocket"></i> quiero ser parte</button>
+        </form>
+        <div class="form-success" id="form-success">
+          <i class="fas fa-check-circle"></i>
+          <h4>gracias por tu interes!</h4>
+          <p>te avisaremos pronto cuando tu cupo este listo. mientras tanto, revisa tu correo para mas informacion.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COMPARTIR ===== -->
+<section id="share">
+  <div class="container" style="text-align:center">
+    <h2 class="section-title">comparte <span class="gold">WAFABOT</span></h2>
+    <p class="section-subtitle">invita a otros streamers a unirse a la revolucion</p>
+    <div class="share-buttons">
+      <button class="share-btn twitter" onclick="shareLink('twitter')"><i class="fab fa-x-twitter"></i> compartir en x</button>
+      <button class="share-btn facebook" onclick="shareLink('facebook')"><i class="fab fa-facebook-f"></i> compartir en facebook</button>
+      <button class="share-btn whatsapp" onclick="shareLink('whatsapp')"><i class="fab fa-whatsapp"></i> compartir en whatsapp</button>
+      <button class="share-btn copy" onclick="copyLink()"><i class="fas fa-link"></i> copiar enlace</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>WAFABOT<span style="color:#ffd700">.</span></h4>
+        <p>la plataforma mas avanzada para multiplicar tu audiencia en kick, twitch y youtube. tecnologia anti-deteccion, resultados reales.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="x"><i class="fab fa-x-twitter"></i></a>
+          <a href="#" aria-label="instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="youtube"><i class="fab fa-youtube"></i></a>
+          <a href="#" aria-label="discord"><i class="fab fa-discord"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>producto</h4>
+        <ul>
+          <li><a href="#beneficios">beneficios</a></li>
+          <li><a href="#pricing">planes</a></li>
+          <li><a href="#testimonios">testimonios</a></li>
+          <li><a href="#faq">faq</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>legal</h4>
+        <ul>
+          <li><a href="#">terminos y condiciones</a></li>
+          <li><a href="#">politica de privacidad</a></li>
+          <li><a href="#">politica de cookies</a></li>
+          <li><a href="#">aviso legal</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>contacto</h4>
+        <ul>
+          <li><a href="mailto:soporte@WAFABOT.com"><i class="fas fa-envelope" style="margin-right:8px"></i>soporte@WAFABOT.com</a></li>
+          <li><a href="#"><i class="fab fa-telegram" style="margin-right:8px"></i>grupo de telegram</a></li>
+          <li><a href="#"><i class="fab fa-discord" style="margin-right:8px"></i>comunidad discord</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 WAFABOT. todos los derechos reservados. hecho con <i class="fas fa-heart" style="color:#ffd700"></i> para la comunidad streamer.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal-early">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2>acceso anticipado</h2>
+    <p>se parte de los primeros en probar WAFABOT. cupos limitados.</p>
+    <form id="modal-form" onsubmit="handleModalSubmit(event)">
+      <div class="form-group">
+        <label for="modal-nombre">nombre completo</label>
+        <input type="text" id="modal-nombre" required placeholder="tu nombre">
+      </div>
+      <div class="form-group">
+        <label for="modal-email">correo electronico</label>
+        <input type="email" id="modal-email" required placeholder="tu@email.com">
+      </div>
+      <div class="form-group">
+        <label for="modal-tipo">tipo de usuario</label>
+        <select id="modal-tipo">
+          <option value="streamer">streamer / creador</option>
+          <option value="agencia">agencia de marketing</option>
+          <option value="otro">otro</option>
+        </select>
+      </div>
+      <button type="submit" class="form-submit"><i class="fas fa-rocket"></i> solicitar acceso</button>
+    </form>
+    <div class="form-success" id="modal-success">
+      <i class="fas fa-check-circle"></i>
+      <h4>solicitud enviada!</h4>
+      <p>te contactaremos pronto con tu cupo de acceso anticipado.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLOATING CONTACT ===== -->
+<div class="floating-contact">
+  <a href="mailto:soporte@WAFABOT.com" class="floating-btn email" aria-label="email">
+    <i class="fas fa-envelope"></i>
+    <span class="tooltip">soporte@WAFABOT.com</span>
+  </a>
+  <a href="#" class="floating-btn whatsapp" aria-label="whatsapp">
+    <i class="fab fa-whatsapp"></i>
+    <span class="tooltip">escribenos por whatsapp</span>
+  </a>
+</div>
+
+<script>
+// ===== LOADING SCREEN =====
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    document.getElementById('loading-screen').classList.add('hidden');
+  },600);
+});
+
+// ===== COUNTDOWN =====
+function updateCountdown(){
+  const target = new Date('2026-06-25T00:00:00').getTime();
+  const now = Date.now();
+  const diff = target - now;
+  if(diff<=0){document.getElementById('days').textContent='00';document.getElementById('hours').textContent='00';document.getElementById('minutes').textContent='00';document.getElementById('seconds').textContent='00';return}
+  const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+  document.getElementById('days').textContent=String(d).padStart(2,'0');
+  document.getElementById('hours').textContent=String(h).padStart(2,'0');
+  document.getElementById('minutes').textContent=String(m).padStart(2,'0');
+  document.getElementById('seconds').textContent=String(s).padStart(2,'0');
+}
+setInterval(updateCountdown,1000);updateCountdown();
+
+// ===== PARTICLES CANVAS =====
+(function(){
+  const canvas=document.getElementById('particles-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let w,h,particles=[];
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const count=80;
+  for(let i=0;i<count;i++){particles.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-0.5)*0.5,vy:(Math.random()-0.5)*0.5,size:Math.random()*2+1,color:['#ffd700','#00ff88','#7c3aed'][Math.floor(Math.random()*3)]})}
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.shadowBlur=10;ctx.shadowColor=p.color});
+    particles.forEach((a,i)=>{particles.forEach((b,j)=>{if(i<j){const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(255,215,0,${0.08*(1-d/150)})`;ctx.stroke()}}})});
+    ctx.shadowBlur=0;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== MOBILE MENU =====
+document.getElementById('hamburger').addEventListener('click',function(){this.classList.toggle('active');document.getElementById('nav-links').classList.toggle('active')});
+document.querySelectorAll('#nav-links a').forEach(a=>a.addEventListener('click',function(){document.getElementById('hamburger').classList.remove('active');document.getElementById('nav-links').classList.remove('active')}));
+
+// ===== HEADER SCROLL =====
+window.addEventListener('scroll',function(){document.querySelector('header').classList.toggle('scrolled',window.scrollY>50)});
+
+// ===== SCROLL REVEAL =====
+const observer=new IntersectionObserver(function(entries){entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible')}})},{threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>observer.observe(el));
+
+// ===== CHART BARS =====
+const chartObserver=new IntersectionObserver(function(entries){entries.forEach(entry=>{if(entry.isIntersecting){entry.target.querySelectorAll('.chart-bar').forEach(bar=>{const h=bar.getAttribute('data-height');setTimeout(()=>{bar.style.height=h+'px'},200)})}})},{threshold:0.3});
+const chartContainer=document.getElementById('chart-bars');if(chartContainer)chartObserver.observe(chartContainer.parentElement);
+
+// ===== LIVE COUNTER =====
+(function(){
+  let base=5247;const el=document.getElementById('live-count'),counter=document.getElementById('user-count-hero'),heroCounter=document.getElementById('user-count-hero');
+  function updateCounter(){base+=Math.floor(Math.random()*3);const fmt=base.toLocaleString('es');if(el)el.textContent=fmt;if(heroCounter)heroCounter.textContent=fmt;if(document.getElementById('registro-counter'))document.getElementById('registro-counter').textContent=fmt}
+  setInterval(updateCounter,8000);updateCounter();
+  // rotating names
+  const users=document.querySelectorAll('#live-users span');let idx=0;
+  setInterval(function(){users.forEach(u=>u.classList.remove('active'));users[idx].classList.add('active');idx=(idx+1)%users.length},3000);
+})();
+
+// ===== FAQ ACCORDION =====
+document.querySelectorAll('.faq-question').forEach(btn=>{btn.addEventListener('click',function(){const item=this.parentElement;const isActive=item.classList.contains('active');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('active'));if(!isActive)item.classList.add('active')})});
+
+// ===== MODAL =====
+function openModal(){document.getElementById('modal-early').classList.add('active');document.body.style.overflow='hidden'}
+function closeModal(){document.getElementById('modal-early').classList.remove('active');document.body.style.overflow=''}
+document.getElementById('modal-early').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+
+// ===== MODAL FORM =====
+function handleModalSubmit(e){e.preventDefault();const nombre=document.getElementById('modal-nombre').value.trim(),email=document.getElementById('modal-email').value.trim();
+  if(!nombre||!email)return;const data={nombre,email,tipo:document.getElementById('modal-tipo').value};
+  try{localStorage.setItem('WAFABOT_registro',JSON.stringify(data))}catch(e){}
+  document.getElementById('modal-form').style.display='none';document.getElementById('modal-success').style.display='block';
+  setTimeout(function(){closeModal();document.getElementById('modal-form').style.display='block';document.getElementById('modal-success').style.display='none';document.getElementById('modal-form').reset()},3000);
+  // save to local registrations list
+  try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');list.push({...data,fecha:new Date().toISOString()});localStorage.setItem('WAFABOT_registros',JSON.stringify(list))}catch(e){}
+  fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(function(){})}
+
+// ===== REGISTRO FORM =====
+function handleRegistro(e){e.preventDefault();const nombre=document.getElementById('reg-nombre').value.trim(),email=document.getElementById('reg-email').value.trim();
+  if(!nombre||!email)return;const data={nombre,email,tipo:document.getElementById('reg-tipo').value};
+  try{localStorage.setItem('WAFABOT_registro',JSON.stringify(data))}catch(e){}
+  document.getElementById('registro-form').style.display='none';document.getElementById('form-success').style.display='block';
+  try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');list.push({...data,fecha:new Date().toISOString()});localStorage.setItem('WAFABOT_registros',JSON.stringify(list))}catch(e){}
+  fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(function(){})
+  // increment registration counter
+  const counters=document.querySelectorAll('#user-count-hero,#live-count,#registro-counter');
+  counters.forEach(function(el){if(el){const n=parseInt(el.textContent.replace(/[^0-9]/g,''))||0;el.textContent=(n+1).toLocaleString('es')}});
+  setTimeout(function(){document.getElementById('registro-form').style.display='block';document.getElementById('form-success').style.display='none';document.getElementById('registro-form').reset()},4000)}
+
+// ===== SHARE =====
+function shareLink(platform){const url=encodeURIComponent('https://www.WAFABOT.com'),text=encodeURIComponent('unete a la revolucion de WAFABOT - audiencia real para tus directos en kick y twitch');
+  const links={twitter:`https://twitter.com/intent/tweet?text=${text}&url=${url}`,facebook:`https://facebook.com/sharer/sharer.php?u=${url}`,whatsapp:`https://wa.me/?text=${text}%20${url}`};
+  if(platform==='twitter'||platform==='facebook'||platform==='whatsapp'){window.open(links[platform],'_blank','width=600,height=400')}}
+function copyLink(){navigator.clipboard.writeText('https://www.WAFABOT.com').then(function(){const btn=document.querySelector('.share-btn.copy');btn.innerHTML='<i class="fas fa-check"></i> copiado!';setTimeout(function(){btn.innerHTML='<i class="fas fa-link"></i> copiar enlace'},2000)})}
+
+// ===== RESTORE COUNTER FROM LOCALSTORAGE =====
+(function(){try{const list=JSON.parse(localStorage.getItem('WAFABOT_registros')||'[]');if(list.length>0){const base=5247+list.length;document.querySelectorAll('#user-count-hero,#live-count,#registro-counter').forEach(function(el){if(el)el.textContent=base.toLocaleString('es')})}}catch(e){}})();
+
+// ===== RIPPLE EFFECT ON BUTTONS =====
+document.querySelectorAll('.btn,.form-submit,.share-btn').forEach(function(btn){btn.addEventListener('click',function(e){const rect=this.getBoundingClientRect();const ripple=document.createElement('span');ripple.className='ripple';const x=e.clientX-rect.left,y=e.clientY-rect.top;ripple.style.left=x+'px';ripple.style.top=y+'px';ripple.style.width='20px';ripple.style.height='20px';ripple.style.position='absolute';ripple.style.borderRadius='50%';ripple.style.background='rgba(255,255,255,0.3)';ripple.style.transform='scale(0)';ripple.style.animation='ripple-anim 0.6s ease-out';ripple.style.pointerEvents='none';this.appendChild(ripple);setTimeout(function(){ripple.remove()},600)})});
+</script>
+<style>
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.3);transform:scale(0);animation:ripple-anim 0.6s ease-out;pointer-events:none}
+@keyframes ripple-anim{to{transform:scale(4);opacity:0}}
+</style>
+<script src="js/main.js"></script>
+</body>
+</html>

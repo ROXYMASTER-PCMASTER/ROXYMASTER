@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ayuda - roxymaster</title>
+<script>
+(function() {
+if (window.top === window.self) {
+window.location.replace('/publico/dashboard_publico.html?tab=ayuda');
+}
+})();
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a1a;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+.header{background:linear-gradient(135deg,#0d0d2b 0%,#1a0533 30%,#0a1628 60%,#0d2137 100%);padding:2.5rem 1.5rem 2rem;text-align:center;border-bottom:1px solid rgba(0,255,136,0.1);position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-60%;left:-40%;width:180%;height:180%;background:radial-gradient(circle at 30% 40%,rgba(124,58,237,0.12) 0%,transparent 50%),radial-gradient(circle at 70% 60%,rgba(0,255,136,0.06) 0%,transparent 40%);pointer-events:none}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#7c3aed,#00ff88,#ff6b35,transparent);animation:headerGlow 3s ease-in-out infinite}
+@keyframes headerGlow{0%,100%{opacity:0.6}50%{opacity:1}}
+.header-content{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:1.25rem;flex-wrap:wrap}
+.header-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#00ff88);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;color:#fff;flex-shrink:0;box-shadow:0 0 20px rgba(124,58,237,0.4),0 0 40px rgba(0,255,136,0.2);animation:avatarPulse 3s ease-in-out infinite}
+@keyframes avatarPulse{0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.4),0 0 40px rgba(0,255,136,0.2)}50%{box-shadow:0 0 30px rgba(124,58,237,0.6),0 0 60px rgba(0,255,136,0.3)}}
+.header-text{text-align:left}
+.header h1{font-size:1.85rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,#00ff88,#7c3aed,#ff6b35);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradientShift 4s ease-in-out infinite}
+.header h1::after{content:'◆';font-size:0.5rem;vertical-align:super;margin-left:4px;-webkit-text-fill-color:#ff6b35}
+@keyframes gradientShift{0%,100%{background-position:0% center}50%{background-position:100% center}}
+.header .subtitle{font-size:0.9rem;color:#94a3b8;margin-top:0.3rem;max-width:500px;line-height:1.5;letter-spacing:0.3px}
+.header .subtitle span{color:#00ff88;font-weight:600}
+.header .user-info{margin-top:0.75rem;font-size:0.8rem;color:#64748b}
+.header .user-info span{margin:0 0.5rem}
+.header .user-info .badge{display:inline-block;padding:0.15rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;background:linear-gradient(135deg,#7c3aed33,#00ff8822);border:1px solid rgba(124,58,237,0.3);-webkit-text-fill-color:#a78bfa;color:#a78bfa}
+.help-section{max-width:900px;margin:2rem auto;padding:0 1.5rem}
+.help-card{background:linear-gradient(145deg,#111133,#0f0f25);border-radius:16px;border:1px solid rgba(124,58,237,0.2);overflow:hidden;margin-bottom:1.25rem;transition:border-color 0.3s}
+.help-card:hover{border-color:rgba(0,255,136,0.3)}
+.help-card summary{padding:1.25rem 1.5rem;cursor:pointer;font-size:1.05rem;font-weight:700;color:#a78bfa;list-style:none;display:flex;align-items:center;justify-content:space-between;transition:color 0.3s}
+.help-card summary:hover{color:#00ff88}
+.help-card summary::after{content:'+';font-size:1.3rem;color:#7c3aed;transition:transform 0.3s}
+.help-card[open] summary::after{content:'−';transform:rotate(180deg)}
+.help-card .help-content{padding:0 1.5rem 1.5rem;color:#94a3b8;line-height:1.7}
+.help-card .help-content p{margin-bottom:0.75rem}
+.help-card .help-content ul{list-style:none;padding:0}
+.help-card .help-content ul li{padding:0.4rem 0;border-bottom:1px solid rgba(124,58,237,0.06)}
+.help-card .help-content ul li:last-child{border:none}
+.help-card .help-content ul li::before{content:'▸ ';color:#7c3aed;font-weight:700}
+.help-card .help-content .highlight{color:#00ff88;font-weight:600}
+.bottom-nav{display:flex;gap:0.5rem;flex-wrap:wrap;max-width:1200px;margin:0 auto 2rem;padding:0 1.5rem;justify-content:center}
+.nav-btn{padding:0.6rem 1.5rem;background:linear-gradient(145deg,#111133,#0f0f25);border:1px solid rgba(124,58,237,0.2);border-radius:10px;color:#94a3b8;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.3s ease;text-transform:uppercase;letter-spacing:0.5px}
+.nav-btn:hover{border-color:#00ff88;color:#00ff88;box-shadow:0 0 20px rgba(0,255,136,0.1);transform:translateY(-2px)}
+.nav-btn.active{background:linear-gradient(135deg,#00ff8822,#7c3aed22);border-color:rgba(0,255,136,0.4);color:#00ff88}
+</style>
+</head>
+<body>
+<header class="header">
+<div class="header-content">
+<div class="header-avatar">?</div>
+<div class="header-text">
+<h1>ayuda</h1>
+<p class="subtitle">todo lo que necesitas saber para usar <span>roxymaster</span> al maximo.</p>
+</div>
+</div>
+<div class="user-info">
+<span id="user-email">---</span>
+<span>|</span>
+<span class="badge" id="user-rol">---</span>
+</div>
+</header>
+
+<div class="help-section">
+<details class="help-card" open>
+<summary>¿que es roxymaster?</summary>
+<div class="help-content">
+<p>roxymaster es un ecosistema de mineria descentralizada donde puedes conectar tus dispositivos (pc, laptop, servidores) para generar <span class="highlight">tokens kbt</span> mientras no los usas.</p>
+<p>cada perfil conectado aporta potencia de procesamiento y genera recompensas proporcionales a su tiempo activo. puedes usar tus kbt para comprar tokens, intercambiarlos en el marketplace, o retirarlos a tu billetera externa.</p>
+</div>
+</details>
+
+<details class="help-card">
+<summary>¿como empiezo a minar?</summary>
+<div class="help-content">
+<ul>
+<li>crea tu cuenta o inicia sesion en el dashboard</li>
+<li>ve a la seccion <span class="highlight">perfiles</span> y agrega un nuevo perfil (pc, servidor, etc.)</li>
+<li>descarga e instala el agente roxymaster en el dispositivo que quieras conectar</li>
+<li>el agente se conectara automaticamente y comenzara a generar kbt mientras el dispositivo este encendido</li>
+<li>revisa tus ganancias en tiempo real desde el dashboard</li>
+</ul>
+</div>
+</details>
+
+<details class="help-card">
+<summary>¿que son los tokens kbt?</summary>
+<div class="help-content">
+<p>kbt (<span class="highlight">kilo byte token</span>) es la moneda digital del ecosistema roxymaster. cada token representa una fraccion del poder de procesamiento que aportas a la red.</p>
+<ul>
+<li>1 kbt = 1 unidad de procesamiento validado</li>
+<li>los tokens se generan automaticamente mientras tus perfiles estan activos</li>
+<li>puedes comprar kbt directamente desde la wallet con soles (pen)</li>
+<li>tambien puedes vender kbt a otros granjeros en el marketplace p2p</li>
+</ul>
+</div>
+</details>
+
+<details class="help-card">
+<summary>niveles de fidelidad</summary>
+<div class="help-content">
+<p>tu nivel de fidelidad aumenta cuanto mas dispositivos conectas y mas tiempo permanecen activos. los niveles disponibles son:</p>
+<ul>
+<li><span class="highlight">bronce</span> (0-33%): nivel inicial, empieza a construir tu red</li>
+<li><span class="highlight">plata</span> (33-66%): multiplicador de ganancias x1.5</li>
+<li><span class="highlight">oro</span> (66-100%): multiplicador de ganancias x2.0 y acceso prioritario</li>
+</ul>
+<p>conecta mas dispositivos y mantenlos activos para subir de nivel y desbloquear mejores recompensas.</p>
+</div>
+</details>
+
+<details class="help-card">
+<summary>modos de operacion</summary>
+<div class="help-content">
+<p>tu cuenta puede estar en uno de dos modos:</p>
+<ul>
+<li><span class="highlight" style="color:#22c55e">pidiendo ordenes</span>: modo optimo de mineria. tus perfiles estan generando kbt activamente y recibiendo ordenes de procesamiento. este es el modo recomendado para maximizar ganancias.</li>
+<li><span class="highlight" style="color:#ef4444">uso personal</span>: modo de pausa. la mineria se detiene temporalmente mientras usas tus dispositivos para otras tareas. no se generan kbt en este modo.</li>
+</ul>
+<p>puedes cambiar de modo en cualquier momento desde el dashboard con un solo clic.</p>
+</div>
+</details>
+
+<details class="help-card">
+<summary>marketplace p2p</summary>
+<div class="help-content">
+<p>el marketplace es un mercado peer-to-peer donde puedes comprar y vender tokens kbt con otros granjeros.</p>
+<ul>
+<li>crea ordenes de compra o venta con el precio que elijas</li>
+<li>el sistema empareja automaticamente ordenes compatibles</li>
+<li>puedes ver el precio mas alto (venta) y mas bajo (compra) en tiempo real</li>
+<li>las transacciones son seguras y quedan registradas en la blockchain de roxymaster</li>
+</ul>
+</div>
+</details>
+
+<details class="help-card">
+<summary>sistema de referidos</summary>
+<div class="help-content">
+<p>invita a otros granjeros a unirse a roxymaster usando tu enlace de referido y gana comisiones por cada nivel de tu red.</p>
+<ul>
+<li><span class="highlight">nivel 1</span> (directos): 10% de comision sobre sus ganancias</li>
+<li><span class="highlight">nivel 2</span> (referidos de tus referidos): 5% de comision</li>
+<li><span class="highlight">nivel 3+</span>: 2.5% de comision</li>
+</ul>
+<p>comparte tu enlace unico de invitacion y construye tu red de ganancias pasivas.</p>
+</div>
+</details>
+
+<details class="help-card">
+<summary>soporte tecnico</summary>
+<div class="help-content">
+<p>si tienes problemas o preguntas, puedes contactarnos a traves de:</p>
+<ul>
+<li>email: soporte@roxymaster.local</li>
+<li>telegram: @roxymaster_support</li>
+<li>discord: roxymaster community</li>
+</ul>
+<p>tambien puedes revisar la documentacion completa en nuestra seccion de <span class="highlight">recursos</span>.</p>
+</div>
+</details>
+</div>
+
+<div class="bottom-nav">
+<button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html?tab=dashboard'">dashboard</button>
+<button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html?tab=wallet'">wallet</button>
+<button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html?tab=marketplace'">marketplace</button>
+<button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html?tab=referidos'">referidos</button>
+<button class="nav-btn" onclick="window.location.href='/publico/dashboard_publico.html?tab=perfiles'">perfiles</button>
+<button class="nav-btn active" onclick="window.location.href='/publico/dashboard_publico.html?tab=ayuda'">ayuda</button>
+</div>
+
+<div id="toast-container"></div>
+<script src="/publico/dashboard.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+ui.api.get('/dashboard').then(function(d) {
+if (d.exito) {
+document.getElementById('user-email').textContent = d.usuario?.email || '---';
+document.getElementById('user-rol').textContent = d.usuario?.rol || '---';
+}
+}).catch(function(e) { console.error(e); });
+});
+</script>
+</body>
+</html>

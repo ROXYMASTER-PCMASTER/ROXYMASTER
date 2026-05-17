@@ -1,0 +1,507 @@
+<script>
+/* ============================================================================
+   panel pedidos - logica principal
+   version con checkboxes de programacion y comentarista ia
+   ============================================================================ */
+
+(function() {
+  "use strict";
+
+  // --- constantes ---
+  var RECARGO_COMENTARISTA_IA = 1.15;    // 15% extra
+  var RECARGO_PROGRAMACION = 1.10;       // 10% extra
+  var MARGEN_HORAS_PROGRAMACION = 3;     // minimo 3h de anticipacion
+
+  // --- estado interno ---
+  var estado = {
+    tipo: 'normal',
+    intervalId: null,
+    programacion_activa: false,
+    comentarista_ia_activo: false,
+  };
+
+  // --- helpers ---
+  function $(id) { return document.getElementById(id); }
+  function valor(id) { var el = $(id); return el ? el.value : ''; }
+
+  // --- mensajes ---
+  window.mostrarMensaje = function(texto, tipo) {
+    var msg = $('pedido-msg');
+    if (!msg) return;
+    msg.textContent = texto || '';
+    msg.className = 'pedido-msg' + (tipo ? ' ' + tipo : '');
+    if (texto) {
+      msg.style.display = 'block';
+      setTimeout(function() {
+        msg.style.display = 'none';
+        msg.className = 'pedido-msg';
+      }, 6000);
+    } else {
+      msg.style.display = 'none';
+      msg.className = 'pedido-msg';
+    }
+  };
+
+  // --- obtener token ---
+  window.obtenerToken = function() {
+    return (window.obtenerTokenGlobal && window.obtenerTokenGlobal()) ||
+      localStorage.getItem('token') ||
+      sessionStorage.getItem('token') ||
+      (function() {
+        var m = window.location.search.match(/[?&]token=([^&]+)/);
+        return m ? decodeURIComponent(m[1]) : null;
+      })();
+  };
+
+  // --- headers ---
+  window.getHeaders = function() {
+    var token = window.obtenerToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+  };
+
+  // --- set tipo ---
+  window.setTipo = function(tipo) {
+    estado.tipo = tipo;
+    document.querySelectorAll('.toggle-btn').forEach(function(b) {
+      b.classList.remove('active-normal', 'active-vip');
+      if (b.getAttribute('data-tipo') === tipo) {
+        b.classList.add(tipo === 'vip' ? 'active-vip' : 'active-normal');
+      }
+    });
+    window.calcularCosto();
+  };
+
+  // --- toggle comentarista ia ---
+  window.toggleComentaristaIA = function() {
+    estado.comentarista_ia_activo = !!$('chk-comentarista-ia').checked;
+    var selectNivel = $('ped-comentarios');
+    if (selectNivel) {
+      selectNivel.disabled = !estado.comentarista_ia_activo;
+      if (!estado.comentarista_ia_activo) {
+        selectNivel.value = 'normal';
+      }
+    }
+    window.calcularCosto();
+  };
+
+  // --- toggle programacion ---
+  window.toggleProgramacion = function() {
+    var chk = $('chk-programar');
+    estado.programacion_activa = !!chk.checked;
+    var horaInicio = $('ped-hora-inicio');
+    var minutosInput = $('ped-minutos');
+
+    if (estado.programacion_activa) {
+      // habilitar campo de hora y deshabilitar minutos
+      horaInicio.disabled = false;
+      minutosInput.disabled = true;
+      minutosInput.value = '';
+
+      // establecer valor minimo = ahora + 3h
+      var ahora = new Date();
+      var minFecha = new Date(ahora.getTime() + MARGEN_HORAS_PROGRAMACION * 60 * 60 * 1000);
+      // formato datetime-local: YYYY-MM-DDTHH:MM
+      var y = minFecha.getFullYear();
+      var m = String(minFecha.getMonth() + 1).padStart(2, '0');
+      var d = String(minFecha.getDate()).padStart(2, '0');
+      var h = String(minFecha.getHours()).padStart(2, '0');
+      var min = String(minFecha.getMinutes()).padStart(2, '0');
+      horaInicio.min = y + '-' + m + '-' + d + 'T' + h + ':' + min;
+    } else {
+      // deshabilitar campo de hora y habilitar minutos
+      horaInicio.disabled = true;
+      horaInicio.value = '';
+      horaInicio.min = '';
+      minutosInput.disabled = false;
+    }
+
+    window.calcularCosto();
+  };
+
+  // --- calcular costo ---
+  window.calcularCosto = function() {
+    var seguidores = parseInt(valor('ped-seguidores')) || 0;
+    var perfiles = parseInt(valor('ped-perfiles')) || 0;
+    var horas = (parseInt(valor('ped-minutos')) || 0) / 60;
+    var nivel = valor('ped-comentarios') || 'basico';
+    var costoEl = $('costo-valor');
+    var detalleEl = $('costo-detalle-linea');
+    if (!costoEl || !detalleEl) return;
+
+    // si programacion activa y hay hora, usar tiempo desde ahora hasta hora_inicio
+    if (estado.programacion_activa) {
+      var horaVal = valor('ped-hora-inicio');
+      if (horaVal) {
+        var fechaInicio = new Date(horaVal);
+        var ahora = new Date();
+        var diffMs = fechaInicio.getTime() - ahora.getTime();
+        if (diffMs > 0) {
+          horas = diffMs / (1000 * 60 * 60); // convertir a horas
+        }
+      }
+    }
+
+    if (seguidores <= 0 || perfiles <= 0 || horas <= 0) {
+      costoEl.innerHTML = '0.00 <span class="small">kbt</span>';
+      detalleEl.textContent = 'ingresa datos para calcular costo';
+      return;
+    }
+
+    var tasaBase = 0.0001;
+    var multNivel = { basico: 1, normal: 1.5, intenso: 2.5 };
+    var multVip = estado.tipo === 'vip' ? 2.0 : 1.0;
+    var costo = seguidores * perfiles * horas * tasaBase * (multNivel[nivel] || 1) * multVip;
+
+    // recargos acumulativos
+    var partesRecargo = [];
+
+    if (estado.comentarista_ia_activo) {
+      costo = costo * RECARGO_COMENTARISTA_IA;
+      partesRecargo.push('+15% comentarista ia');
+    }
+
+    if (estado.programacion_activa) {
+      costo = costo * RECARGO_PROGRAMACION;
+      partesRecargo.push('+10% programacion');
+    }
+
+    var costoStr = costo.toFixed(4);
+
+    costoEl.innerHTML = (estado.tipo === 'vip' ? 'vip ' : '') + costoStr + ' <span class="small">kbt</span>';
+    costoEl.className = 'valor' + (estado.tipo === 'vip' ? ' vip' : '');
+
+    var detalle = seguidores + ' seguidores x ' + perfiles + ' perfiles x ' + horas.toFixed(1) + 'h';
+    if (partesRecargo.length > 0) {
+      detalle += ' (' + partesRecargo.join(', ') + ')';
+    }
+    detalleEl.textContent = detalle;
+    if (estado.tipo === 'vip') detalleEl.className = 'detalle-linea vip';
+    else detalleEl.className = 'detalle-linea';
+  };
+
+  // --- convertir datetime-local a iso utc ---
+  function convertirAHoraUTC(idCampo) {
+    var el = $(idCampo);
+    if (!el || !el.value) return '';
+    var fechaLocal = new Date(el.value);
+    if (isNaN(fechaLocal.getTime())) return '';
+    return fechaLocal.toISOString().replace('Z', '+00:00');
+  }
+
+  // --- validar hora programada (minimo 3h desde ahora) ---
+  function validarHoraProgramada(horaValor) {
+    if (!horaValor) return { valido: false, razon: 'no se especifico hora de inicio' };
+    var fechaInicio = new Date(horaValor);
+    if (isNaN(fechaInicio.getTime())) return { valido: false, razon: 'hora de inicio invalida' };
+    var ahora = new Date();
+    var diffMs = fechaInicio.getTime() - ahora.getTime();
+    var diffHoras = diffMs / (1000 * 60 * 60);
+    if (diffHoras < MARGEN_HORAS_PROGRAMACION) {
+      return { valido: false, razon: 'la hora de inicio debe ser al menos ' + MARGEN_HORAS_PROGRAMACION + 'h despues del momento actual' };
+    }
+    return { valido: true, razon: '' };
+  }
+
+  // --- crear pedido ---
+  window.crearPedido = function() {
+    var url = valor('ped-url');
+    if (!url) { window.mostrarMensaje('ingresa la url del directo', 'error'); return; }
+    var seguidores = parseInt(valor('ped-seguidores')) || 0;
+    if (seguidores <= 0) { window.mostrarMensaje('ingresa una cantidad valida de seguidores', 'error'); return; }
+    var perfiles = parseInt(valor('ped-perfiles')) || 0;
+    if (perfiles <= 0) { window.mostrarMensaje('ingresa una cantidad valida de perfiles', 'error'); return; }
+    var nivel = valor('ped-comentarios') || 'basico';
+    var btn = $('btn-crear-pedido');
+    if (btn) btn.disabled = true;
+
+    var minutos = parseInt(valor('ped-minutos')) || 0;
+    var horaInicio = '';
+
+    // validar programacion
+    if (estado.programacion_activa) {
+      horaInicio = convertirAHoraUTC('ped-hora-inicio');
+      var validacion = validarHoraProgramada(horaInicio);
+      if (!validacion.valido) {
+        window.mostrarMensaje(validacion.razon, 'error');
+        if (btn) btn.disabled = false;
+        return;
+      }
+      // calcular duracion como diferencia entre hora_inicio y ahora
+      var fechaInicio = new Date(horaInicio);
+      var ahora = new Date();
+      var diffMs = fechaInicio.getTime() - ahora.getTime();
+      if (diffMs > 0) {
+        minutos = Math.round(diffMs / (1000 * 60)); // en minutos
+      }
+    } else {
+      // sin programacion: validar minutos
+      if (minutos <= 0) { window.mostrarMensaje('ingresa un tiempo valido', 'error'); if (btn) btn.disabled = false; return; }
+    }
+
+    var data = {
+      url: url,
+      seguidores: seguidores,
+      perfiles: perfiles,
+      minutos: minutos,
+      nivel_comentarios: nivel,
+      tipo: estado.tipo,
+      programado: estado.programacion_activa,
+      comentarios_ia: estado.comentarista_ia_activo,
+    };
+
+    // agregar hora_inicio solo si programacion activa
+    if (estado.programacion_activa && horaInicio) {
+      data.hora_inicio = horaInicio;
+    }
+
+    // endpoint unificado
+    var endpoint = '/api/pedidos/crear';
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: window.getHeaders(),
+      body: JSON.stringify(data),
+    })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+    .then(function(resp) {
+      if (resp.status >= 200 && resp.status < 300) {
+        var mensaje = resp.json.mensaje || resp.json.detail || 'pedido creado exitosamente';
+        if (resp.json.programado) {
+          mensaje += ' (programado)';
+        }
+        window.mostrarMensaje(mensaje, 'success');
+        window.cargarPedidos();
+        window.calcularCosto();
+      } else {
+        window.mostrarMensaje(resp.json.detail || 'error al crear pedido', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+    })
+    .finally(function() {
+      if (btn) btn.disabled = false;
+    });
+  };
+
+  // --- cargar pedidos como CARDS HORIZONTALES ---
+  window.cargarPedidos = function() {
+    var lista = $('lista-pedidos-horizontal');
+    if (!lista) return;
+
+    fetch('/api/pedidos/mis_pedidos', { headers: window.getHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var pedidos = data.pedidos || [];
+      if (pedidos.length === 0) {
+        lista.innerHTML = '<div class="lista-empty">no hay pedidos aun. crea tu primer pedido arriba.</div>';
+        return;
+      }
+
+      var cards = pedidos.map(function(p) {
+        var estadoCls = (p.estado || 'desconocido').toLowerCase();
+        var esPendiente = estadoCls === 'pendiente';
+        var esProgramado = estadoCls === 'programado';
+        var esTrabajando = estadoCls === 'trabajando' || estadoCls === 'en_progreso';
+        var esVip = p.tipo === 'vip';
+        // mapear estado pendiente -> "esperando" visualmente
+        var estadoTexto = (p.estado || '?');
+        if (estadoTexto.toLowerCase() === 'pendiente') estadoTexto = 'esperando';
+        var costo = p.costo_total || p.costo || 0;
+        var costoStr = typeof costo === 'number' ? costo.toFixed(2) : costo;
+
+        var urlMostrar = p.url || '-';
+        var urlCorta = urlMostrar.length > 35 ? urlMostrar.substring(0, 35) + '...' : urlMostrar;
+        var fecha = p.fecha_creacion || p.created_at || '-';
+        if (fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
+
+        var duracion = p.duracion || p.minutos || '-';
+        if (typeof duracion === 'number') duracion = duracion + ' min';
+
+        // acciones
+        var accHtml = '';
+        if (estadoCls !== 'completado') {
+          accHtml += '<button class="btn-paccion cancelar" onclick="window.cancelarPedido(' + p.id + ')" title="cancelar">cancelar</button>';
+        }
+        if (esPendiente) {
+          accHtml += '<button class="btn-paccion eliminar" onclick="window.eliminarPedido(' + p.id + ')" title="eliminar"><i class="fas fa-trash-alt"></i></button>';
+        }
+        if (esTrabajando) {
+          accHtml += '<button class="btn-paccion detener" onclick="window.detenerPedido(' + p.id + ')" title="detener"><i class="fas fa-stop-circle"></i></button>';
+        }
+
+        var vipCls = esVip ? ' vip' : '';
+
+        return '<div class="pedido-card-h' + vipCls + '">' +
+          '<span class="pcampo"><span class="plabel">#</span><span class="pvalor id">' + (p.id || '-') + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">url</span><span class="pvalor url" title="' + urlMostrar.replace(/"/g, '"') + '">' + urlCorta + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">perfiles</span><span class="pvalor">' + (p.perfiles || '-') + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">duracion</span><span class="pvalor">' + duracion + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">costo</span><span class="pvalor costo' + (esVip ? ' vip' : '') + '">' + costoStr + ' kbt</span></span>' +
+          '<span class="pcampo"><span class="pbadge ' + estadoCls + '">' + estadoTexto + '</span></span>' +
+          '<span class="pcampo"><span class="plabel">fecha</span><span class="pvalor">' + fecha + '</span></span>' +
+          '<span class="pacciones">' + accHtml + '</span>' +
+        '</div>';
+      });
+
+      lista.innerHTML = cards.join('');
+    })
+    .catch(function(err) {
+      lista.innerHTML = '<div class="lista-empty">error al cargar pedidos: ' + err.message + '</div>';
+    });
+  };
+
+  // --- eliminar pedido ---
+  window.eliminarPedido = function(id) {
+    if (!confirm('eliminar pedido #' + id + '?')) return;
+    fetch('/api/pedidos/' + id, {
+      method: 'DELETE',
+      headers: window.getHeaders(),
+    })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+    .then(function(resp) {
+      if (resp.status >= 200 && resp.status < 300) {
+        window.mostrarMensaje('pedido #' + id + ' eliminado', 'success');
+        window.cargarPedidos();
+      } else {
+        window.mostrarMensaje(resp.json.detail || 'error al eliminar pedido', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+    });
+  };
+
+  // --- cancelar pedido ---
+  window.cancelarPedido = function(id) {
+    if (!confirm('cancelar pedido #' + id + '?')) return;
+    fetch('/api/pedidos/' + id + '/cancelar', {
+      method: 'POST',
+      headers: window.getHeaders(),
+    })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+    .then(function(resp) {
+      if (resp.status >= 200 && resp.status < 300) {
+        window.mostrarMensaje('pedido #' + id + ' cancelado', 'success');
+        window.cargarPedidos();
+      } else {
+        window.mostrarMensaje(resp.json.detail || 'error al cancelar pedido', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+    });
+  };
+
+  // --- detener pedido ---
+  window.detenerPedido = function(id) {
+    if (!confirm('detener pedido #' + id + '?')) return;
+    fetch('/api/pedidos/' + id + '/detener', {
+      method: 'POST',
+      headers: window.getHeaders(),
+    })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, json: j }; }); })
+    .then(function(resp) {
+      if (resp.status >= 200 && resp.status < 300) {
+        window.mostrarMensaje('pedido #' + id + ' detenido', 'info');
+        window.cargarPedidos();
+      } else {
+        window.mostrarMensaje(resp.json.detail || 'error al detener pedido', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.mostrarMensaje('error de conexion: ' + err.message, 'error');
+    });
+  };
+
+  // --- configurar eventos del formulario ---
+  function configurarEventos() {
+    ['ped-url','ped-seguidores','ped-perfiles','ped-minutos','ped-hora-inicio'].forEach(function(id) {
+      var el = $(id);
+      if (el) {
+        el.addEventListener('input', window.calcularCosto);
+        el.addEventListener('change', window.calcularCosto);
+      }
+    });
+
+    // checkbox comentarista ia
+    var chkIa = $('chk-comentarista-ia');
+    if (chkIa) {
+      chkIa.addEventListener('change', window.toggleComentaristaIA);
+    }
+
+    // checkbox programar
+    var chkProg = $('chk-programar');
+    if (chkProg) {
+      chkProg.addEventListener('change', window.toggleProgramacion);
+    }
+  }
+
+  // --- iniciar auto-recarga ---
+  function iniciarAutoRecarga() {
+    estado.intervalId = setInterval(function() {
+      var lista = $('lista-pedidos-horizontal');
+      if (lista && lista.querySelector('.lista-empty') === null) {
+        window.cargarPedidos();
+      }
+    }, 15000);
+  }
+
+  // --- limpiar intervalo ---
+  window.limpiarIntervaloPedidos = function() {
+    if (estado.intervalId) {
+      clearInterval(estado.intervalId);
+      estado.intervalId = null;
+    }
+  };
+
+  // --- live count: inicia en 1, aumenta 1-2 cada 67 minutos ---
+  function iniciarLiveCount() {
+    var el = document.getElementById('live-count');
+    if (!el) return;
+    // recuperar valor guardado o empezar en 1
+    var count = parseInt(localStorage.getItem('pedidos_live_count') || '1', 10);
+    var lastUpdate = parseInt(localStorage.getItem('pedidos_live_count_time') || '0', 10);
+    var ahora = Date.now();
+    var intervalo = 67 * 60 * 1000; // 67 minutos en ms
+    // si paso mas de 1 intervalo desde la ultima actualizacion, recalcular
+    if (lastUpdate > 0 && (ahora - lastUpdate) >= intervalo) {
+      var intervalosPasados = Math.floor((ahora - lastUpdate) / intervalo);
+      for (var i = 0; i < intervalosPasados; i++) {
+        count += Math.random() < 0.5 ? 1 : 2; // 1 o 2 aleatorio
+      }
+      localStorage.setItem('pedidos_live_count', String(count));
+      localStorage.setItem('pedidos_live_count_time', String(ahora));
+    } else if (lastUpdate === 0) {
+      // primera vez
+      localStorage.setItem('pedidos_live_count', String(count));
+      localStorage.setItem('pedidos_live_count_time', String(ahora));
+    }
+    el.textContent = count;
+    // timer que aumenta cada 67 minutos
+    setInterval(function() {
+      var c = parseInt(localStorage.getItem('pedidos_live_count') || '1', 10);
+      c += Math.random() < 0.5 ? 1 : 2;
+      localStorage.setItem('pedidos_live_count', String(c));
+      localStorage.setItem('pedidos_live_count_time', String(Date.now()));
+      var e = document.getElementById('live-count');
+      if (e) e.textContent = c;
+    }, intervalo);
+  }
+
+  // --- inicializacion principal ---
+  window.inicializarPanelPedidos = function() {
+    estado.programacion_activa = false;
+    estado.comentarista_ia_activo = false;
+    configurarEventos();
+    window.calcularCosto();
+    window.cargarPedidos();
+    window.limpiarIntervaloPedidos();
+    iniciarAutoRecarga();
+    iniciarLiveCount();
+  };
+
+})();
+</script>

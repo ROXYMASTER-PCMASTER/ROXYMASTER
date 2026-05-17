@@ -1,0 +1,15 @@
+﻿:root {
+  --bg-primario: #0d1117;
+  --bg-secundario: #161b22;
+  --bg-terciario: #21262d;
+  --borde: #30363d;
+  --texto-primario: #c9d1d9;
+  --texto-secundario: #8b949e;
+  --texto-terciario: #484f58;
+  --acento: #8b5cf6;
+  --acento-hover: #7c3aed;
+  --rojo: #f85149;
+  --verde: #3fb950;
+  --amarillo: #f6921e;
+  --azul: #58a6ff;
+}
