@@ -1,4 +1,6 @@
 # .clinerules para roxymaster v8.3 (minúsculas)
+# Regla obligatoria antes de cualquier modificación en pcmaster/ o pcbot/
+Leer y aplicar C:\Users\PCMASTER\Desktop\roxymaster\pcmaster\REGLAS_ROXYMASTER.md
 ## nomenclatura obligatoria
 - todo en minúsculas: variables, funciones, rutas, comentarios, nombres de archivo.
 - solo mayúsculas en siglas técnicas: json, utf-8, api, kbt, sql, html, css, http, ws, hmac, sha256, pbkdf2, jwt, aiohttp, fastapi, url, id, ip, pc.

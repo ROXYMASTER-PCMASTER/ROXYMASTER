@@ -174,13 +174,37 @@ def _obtener_contexto_streamer(url: str):
     )
 
 
-def _obtener_pedidos_planificables() -> list:
-    """obtiene pedidos agendados y programados listos para planificar.
-    returns:
-        list[dict]: pedidos ordenados por fecha_creacion asc (fifo)
+def _obtener_pedidos_planificables() -> (list, list):
+    """devuelve (urgentes, normales) ordenados por fecha_creacion asc.
+    urgentes: pedidos en_progreso con deficit y prioridad activa (< 5s).
+    normales: pedidos agendados y programados listos.
     """
+    # lazy import para evitar import circular
+    from procesador_cola import _prioridad_recuperacion, MARGEN_PRIORIDAD
+
     ahora = _ahora_dt()
-    return ejecutar_sql(
+
+    # --- grupo urgente: pedidos en_progreso con deficit y prioridad activa ---
+    urgente_ids = [
+        pid for pid, ts in _prioridad_recuperacion.items()
+        if (ahora - ts).total_seconds() < MARGEN_PRIORIDAD
+    ]
+    urgentes = []
+    if urgente_ids:
+        urgentes = ejecutar_sql(
+            """select id, usuario_id, url, cantidad_perfiles, duracion_horas,
+                      nivel_comentarios, tipo_pedido, comando_id, fecha_creacion,
+                      estado, hora_inicio_programada, hora_fin_programada
+               from pedidos
+               where id in ({}) and estado = 'en_progreso'
+               order by fecha_creacion asc""".format(
+                ','.join('?' for _ in urgente_ids)
+            ),
+            urgente_ids,
+        )
+
+    # --- grupo normal: pedidos agendados y programados listos ---
+    normales = ejecutar_sql(
         """select id, usuario_id, url, cantidad_perfiles, duracion_horas,
                   nivel_comentarios, tipo_pedido, comando_id, fecha_creacion,
                   estado, hora_inicio_programada, hora_fin_programada
@@ -192,6 +216,9 @@ def _obtener_pedidos_planificables() -> list:
            order by fecha_creacion asc""",
         (_ahora_str(),),
     )
+
+    # urgentes primero, normales despues
+    return urgentes, normales
 
 
 def _obtener_perfiles_libres(pcbots: list, maximo: int) -> list:

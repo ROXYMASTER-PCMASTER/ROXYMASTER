@@ -43,9 +43,13 @@ logger = logging.getLogger("procesador_cola")
 # ---------------------------------------------------------------------------
 TIEMPO_ESPERA_CONFIRMACION = 35   # segundos maximo para que pcbot confirme
 INTERVALO_CICLO = 35               # segundos entre ciclos (30s heartbeat + 5s margen)
+MARGEN_PRIORIDAD = 5               # segundos de prioridad post-heartbeat para reasignar bajas
 
 # flag de reentrada para evitar ciclos de match simultaneos
 _match_en_progreso = False
+
+# diccionario de prioridad de recuperacion: {pedido_id: timestamp_deteccion}
+_prioridad_recuperacion: dict = {}
 
 # estados de pedido_asignaciones en el nuevo modelo:
 # planificado: pcmaster decidio que este perfil va a este pedido, aun no se envio
@@ -101,13 +105,21 @@ async def _ciclo_match():
     # paso 0.1: liberar asignaciones que ya cumplieron su duracion
     await _liberar_asignaciones_vencidas()
 
-    # paso 1: obtener pedidos agendados (y programados que ya llegaron)
-    pedidos = _obtener_pedidos_planificables()
+    # paso 0.2: limpiar prioridades de recuperacion caducadas
+    ahora_local = _ahora_dt()
+    for pid, ts in list(_prioridad_recuperacion.items()):
+        if (ahora_local - ts).total_seconds() >= MARGEN_PRIORIDAD:
+            del _prioridad_recuperacion[pid]
+
+    # paso 1: obtener pedidos urgentes (con prioridad post-heartbeat) + normales
+    urgentes, normales = _obtener_pedidos_planificables()
+    pedidos = urgentes + normales
     if not pedidos:
         logger.debug("[MATCH] no hay pedidos planificables")
         return
 
-    logger.info("[MATCH] procesando %s pedidos planificables", len(pedidos))
+    logger.info("[MATCH] procesando %s pedidos (%s urgentes, %s normales)",
+                len(pedidos), len(urgentes), len(normales))
 
     # agrupar pedidos por usuario para obtener perfiles libres una sola vez por grupo
     pedidos_por_usuario = {}
@@ -219,6 +231,7 @@ async def _planificar_pedido(pedido: dict, ahora_str: str, ahora_dt: datetime,
             nivel_comentarios, perfil,
         )
         if exito:
+            _prioridad_recuperacion.pop(pedido_id, None)
             asignadas += 1
             # tarea 4: distribucion de comentarios
             # programar tarea asincrona que distribuya comentarios
@@ -475,6 +488,14 @@ def _rotar_observador_al_completar(asig: dict):
             usuario_id, pcbot_id, perfil_saliente, perfil_entrante, asig_id,
         )
     )
+
+
+def registrar_baja(pedido_id: int):
+    """llamado por el vigilante cuando detecta un perfil caido o desviado.
+    registra el timestamp para dar prioridad en el proximo ciclo."""
+    _prioridad_recuperacion[pedido_id] = datetime.now(timezone.utc)
+    logger.info("[RECUPERACION] baja registrada para pedido %s con prioridad %ds",
+                pedido_id, MARGEN_PRIORIDAD)
 
 
 async def _ejecutar_rotacion_observador(usuario_id: int, pcbot_id: str,

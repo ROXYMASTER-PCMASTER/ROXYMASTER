@@ -310,12 +310,17 @@ async def manejar_conexion_pcbot(websocket, pcbot_id: str):
                 if datos.get("tipo") == "heartbeat":
                     _conexiones_ws[pcbot_id]["ultimo_heartbeat"] = time.time()
                     heartbeat_cache.registrar_heartbeat(pcbot_id, datos)
-                    # disparar match centralizado inmediatamente despues del registro
-                    import procesador_cola
-                    await procesador_cola.ejecutar_ciclo_match()
                     # procesar eventos centralizados
                     from orchestrator_ext import procesar_heartbeat_eventos
                     await procesar_heartbeat_eventos(pcbot_id, datos)
+                    # ejecutar vigilante inmediatamente para detectar bajas en este mismo ciclo
+                    logger.info("[DIAG] ejecutando _ciclo_vigilante tras heartbeat")
+                    from pedidos_vigilante import _ciclo_vigilante
+                    await _ciclo_vigilante()
+                    # esperar 5s para que el match vea las bajas recien registradas
+                    import procesador_cola
+                    await asyncio.sleep(5)
+                    await procesador_cola.ejecutar_ciclo_match()
                     await _enviar_pendientes(pcbot_id)
                     await websocket.send_json({"tipo": "ack"})
                     continue

@@ -13,6 +13,7 @@ import logging
 from datetime import datetime, timezone
 
 import heartbeat_cache
+import procesador_cola
 from ws_manager import enviar_comando_al_pcbot, obtener_pcbot_de_usuario
 from db import ejecutar_sql, ejecutar_insercion, ejecutar_sql_unico
 
@@ -152,9 +153,9 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             await _asignar_perfil_reemplazo(pedido, tiempo_restante)
         return
 
-    # contadores para reemplazo
-    perfiles_a_reemplazar = 0   # desaparecidos o url incorrecta
-    caidos_sin_reemplazo = 0    # state='caido', no se reemplazan
+    # contadores para logging
+    bajas_registradas = 0       # perfiles caidos/desviados que registran baja
+    caidos_sin_reemplazo = 0    # state='caido', no se registran como baja
     usuario_id = pedido.get("usuario_id")
     url_pedido = pedido.get("url", "")
 
@@ -181,7 +182,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         # marcar perfil como desaparecido. esto da tiempo al pcbot para
         # confirmar el perfil en el siguiente heartbeat.
         inicio_asig = asig.get("inicio")
-        if inicio_asig:
+        if inicio_asig and asig.get("estado") == "planificado":
             try:
                 if "+" in inicio_asig or "Z" in inicio_asig:
                     limpia = inicio_asig.replace("Z", "+00:00")
@@ -192,7 +193,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 segundos_desde_asignacion = (ahora - inicio_dt).total_seconds()
                 if segundos_desde_asignacion < 45:
                     logger.info(
-                        "perfil %s asignado hace %.0fs (<45), "
+                        "perfil %s asignado hace %.0fs (<45) y en estado planificado, "
                         "esperando confirmacion para pedido %s",
                         perfil_id, segundos_desde_asignacion, pedido_id,
                     )
@@ -221,14 +222,15 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         if estado_real == "inactivo":
             logger.info(
                 "perfil %s en pcbot %s esta inactivo (cerrado) para pedido %s, "
-                "sera reemplazado",
+                "registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, pedido_id,
             )
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
             )
-            perfiles_a_reemplazar += 1
+            procesador_cola.registrar_baja(pedido_id)
+            bajas_registradas += 1
             continue
 
         # buscar el perfil en los activos del heartbeat cache
@@ -243,27 +245,49 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         if not perfil_en_cache:
             logger.info(
                 "perfil %s caido (no aparece en heartbeat activo) en pcbot %s "
-                "para pedido %s, sera reemplazado",
+                "para pedido %s, registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, pedido_id,
             )
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
             )
-            perfiles_a_reemplazar += 1
+            # marcar perfil como inactivo para evitar reasignacion prematura
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 where hash = ? and pcbot_id = ?",
+                (perfil_id, pcbot_id),
+            )
+            procesador_cola.registrar_baja(pedido_id)
+            bajas_registradas += 1
             continue
 
         # caso c: perfil activo pero url incorrecta
-        url_actual = perfil_en_cache.get("url", "")
+        # paso 1: obtener url desde heartbeat cache en memoria (mas fiable que bd)
+        # el heartbeat del pcbot trae la url en tiempo real con cada latido
+        url_actual = None
+        hb = heartbeat_cache.obtener_heartbeat(pcbot_id)
+        if hb:
+            for p in hb.get("perfiles", []):
+                if p.get("profile_id") == perfil_id:
+                    url_actual = p.get("url", "")
+                    break
+        # paso 2: fallback a url de la bd (perfiles_roxy.url_actual) si el cache no tiene datos
+        if not url_actual:
+            url_actual = perfil_en_cache.get("url", "")
         if url_pedido and url_actual and url_actual != url_pedido:
             logger.info(
                 "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) "
-                "para pedido %s, sera reemplazado",
+                "para pedido %s, registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, url_actual, url_pedido, pedido_id,
             )
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
+            )
+            # marcar perfil como inactivo para evitar reasignacion prematura
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 where hash = ? and pcbot_id = ?",
+                (perfil_id, pcbot_id),
             )
             # enviar comando detener para liberar ese perfil
             comando_detener = {
@@ -277,18 +301,8 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                     "error enviando detener perfil %s con url incorrecta: %s",
                     perfil_id, str(e)[:200],
                 )
-            perfiles_a_reemplazar += 1
-
-    # reemplazar solo los perfiles desaparecidos o con url incorrecta
-    # los caidos (state='caido') no se reemplazan automaticamente
-    if perfiles_a_reemplazar > 0:
-        logger.info(
-            "reemplazando %s perfiles en pedido %s "
-            "(%d caidos sin reemplazo)",
-            perfiles_a_reemplazar, pedido_id, caidos_sin_reemplazo,
-        )
-        for _ in range(perfiles_a_reemplazar):
-            await _asignar_perfil_reemplazo(pedido, tiempo_restante)
+            procesador_cola.registrar_baja(pedido_id)
+            bajas_registradas += 1
 
 
 async def _enviar_comando_seguro(usuario_id: int, comando: dict) -> dict:

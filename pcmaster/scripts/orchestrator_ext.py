@@ -195,12 +195,21 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
         logger.info("[HB-DEBUG] Heartbeat recibido de %s, eventos=%s",
                      pcbot_id, len(mensaje.get("eventos", [])))
         # actualizar heartbeat_cache
+        if "perfiles" in mensaje:
+            mensaje["perfiles"] = mensaje["perfiles"]
         heartbeat_cache.registrar_heartbeat(pcbot_id, mensaje)
         logger.info("[HB] Heartbeat recibido de %s, procesando eventos", pcbot_id)
-        # nuevo modelo centralizado: solo eventos + match
+        # nuevo modelo: eventos -> vigilante -> match
         import procesador_cola
-        await procesador_cola.ejecutar_ciclo_match()
         await procesar_heartbeat_eventos(pcbot_id, mensaje)
+
+        # ejecutar vigilante inmediatamente para detectar bajas sin evento explicito
+        from pedidos_vigilante import _ciclo_vigilante
+        await _ciclo_vigilante()
+
+        # segundo match para reasignar bajas detectadas en el mismo ciclo heartbeat
+        await procesador_cola.ejecutar_ciclo_match()
+
         await _enviar_pendientes(pcbot_id)
     elif tipo == "respuesta_recargar_perfiles":
         req_id = mensaje.get("comando_id")
@@ -325,14 +334,14 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
             ejecutar_insercion(
                 """insert into perfiles_roxy
                    (hash, pcbot_id, nombre, activo, ultimo_heartbeat)
-                   values (?, ?, ?, 0, ?)""",
+                   values (?, ?, ?, 1, ?)""",
                 (perfil_id, pcbot_id, nombre, ahora_str),
             )
             logger.info("[HB-EVENTOS] nuevo perfil %s registrado en bd", perfil_id)
         else:
             # ya existe, solo actualizar estado
             ejecutar_sql(
-                "update perfiles_roxy set activo = 0, "
+                "update perfiles_roxy set activo = 1, "
                 "ultimo_heartbeat = ? where hash = ? and pcbot_id = ?",
                 (ahora_str, perfil_id, pcbot_id),
             )

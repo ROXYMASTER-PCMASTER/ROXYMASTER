@@ -1,43 +1,47 @@
-﻿# REGLAS DE ORO DEL PROYECTO ROXYMASTER v8.3
+﻿# REGLAS TÉCNICAS COMPLEMENTARIAS – ROXYMASTER v8.3
 
-## 1. Nomenclatura y estilo
-- Todo en minúsculas: variables, funciones, rutas, comentarios. Solo mayúsculas en siglas técnicas (API, KBT, JSON, HTML, CSS, HTTP, WS, HMAC, SHA256, JWT, URL, ID, IP, PC).
-- Ningún archivo supera las 400 líneas. Si crece, se divide en dos módulos con sufijo `_core` y `_ext`.
-- Se usa `async/await` siempre. No threading para lógica core. Solo `asyncio.create_task` para tareas concurrentes.
-- Prohibido usar emojis en código, comentarios, logs, respuestas API, nombres de archivo.
-- Codificación UTF-8 sin BOM.
-- Contraseñas hasheadas con pbkdf2-hmac-sha256 (100000 iteraciones). Tokens de sesión con expiración de 7 días.
-- Logs sin datos sensibles. Rutas dinámicas con variables de entorno, nunca hardcodeadas.
-
-## 2. Estructura del proyecto
+## Estructura del proyecto
 - `pcmaster/`: servidor FastAPI + WebSocket.
-- `pcbot/`: agente zombie (detección de perfiles, heartbeat, cliente WS).
-- `pcmaster/scripts/publico/`: portal público (login, registro, dashboard).
+- `pcbot/`: agente zombie (solo ejecuta, no decide).
 - `pcmaster/scripts/`: lógica del servidor.
 - `pcbot/scripts/`: lógica del agente.
-- Backups y logs se guardan **fuera** de las carpetas principales (`_backups/`, `_bitacora/`, `archived_tools/`, etc.).
+- Backups y logs fuera de las carpetas principales (`_backups/`, `_bitacora/`).
 
-## 3. Colaboración entre máquinas
-- PCMaster (servidor) y PCBot (agente) se comunican vía WebSocket a través de Tailscale.
-- La carpeta compartida `pcbot_clon` mapeada como `Z:\` en PCBot se usa para intercambiar reportes y correcciones.
-- No se usa SHS ni secretos compartidos en archivos; toda la comunicación es por la carpeta compartida o WebSocket.
+## Archivos críticos del modelo centralizado (intocables sin autorización)
 
-## 4. Anti-bucles y anti-errores
-- Si una estrategia falla 2 veces seguidas, se cambia de enfoque y se documenta.
-- Si un error se repite 3 veces, se escribe `error_repetido.md` en el escritorio con diagnóstico y 3 caminos alternativos.
-- Si el servidor o script no arranca tras 2 correcciones, se escribe `errores_pendientes.txt` en el escritorio con traceback.
-- Si un bucle supera 4 ciclos sin progreso, se rompe y se pide instrucciones explícitas.
-- Cada 5 ciclos de espera, se escribe `esperando [recurso]` para mostrar que no está congelado.
-- Si se encuentra un archivo corrupto o ilegible, se renombra añadiendo `.corrupto` al final y se genera uno nuevo en blanco.
+| Archivo | Rol |
+|---------|-----|
+| `pcmaster/scripts/procesador_cola.py` | Planificador central (match bajo demanda, prioridad de recuperación) |
+| `pcmaster/scripts/procesador_cola_ext.py` | Auxiliares del planificador (`_obtener_perfiles_libres`, etc.) |
+| `pcmaster/scripts/pedidos_vigilante.py` | Vigilante de pedidos activos (detecta caídas, registra bajas) |
+| `pcmaster/scripts/heartbeat_cache.py` | Cache mínimo de heartbeats (guarda `"perfiles"`) |
+| `pcmaster/scripts/orchestrator_ext.py` | Procesa heartbeat, ejecuta eventos, vigilante y match en orden |
+| `pcmaster/scripts/db_pedidos_ext.py` | Migraciones (columnas nuevas, `contextos_streamer`) |
+| `pcbot/scripts/orchestrator_local_ext.py` | Ejecutor en PCBot (observador, captura de chat, cierre) |
 
-## 5. Seguridad
-- No se almacenan secretos en el código. Se usan variables de entorno o archivos de configuración no versionados.
-- Los endpoints de heartbeat y registro de perfiles requieren autenticación por token.
-- Las API Keys de RoxyBrowser se almacenan encriptadas y se envían al agente solo a través de WebSocket autenticado.
+## Flujo de heartbeat (no modificar)
+1. Heartbeat recibido → `heartbeat_cache` almacena `"perfiles"`.
+2. `procesar_heartbeat_eventos` actualiza `perfiles_roxy`.
+3. `_ciclo_vigilante()` inmediato → detecta bajas.
+4. `asyncio.sleep(5)`.
+5. `ejecutar_ciclo_match()` con prioridad urgente.
 
-## 6. Watchdog y Heartbeat (estado actual)
-- PCBot envía heartbeat cada 60s con hostname, IPs, workspace_id y lista de perfiles.
-- PCMaster responde con API Keys pendientes.
-- Al recibir una nueva API Key, PCBot consulta la API local de RoxyBrowser (http://127.0.0.1:50000) y registra los perfiles en el servidor.
+## Variables globales protegidas
+- `MARGEN_PRIORIDAD = 5` (segundos, en `procesador_cola.py`)
+- `_prioridad_recuperacion` (dict, pedidos con baja reciente)
+- `_match_en_progreso` (flag anti-reentrada)
+- `_cache` (dict en `heartbeat_cache.py`, clave `"perfiles"`)
 
-**Última actualización:** 2026-05-08
+## Colaboración entre máquinas
+- PCBot envía heartbeat cada **30 s** con lista `"perfiles"`.
+- PCBot **no** toma decisiones de asignación.
+- Handshake bootstrap sin SHS.
+- Carpeta compartida `pcbot_clon` mapeada como `Z:\` en PCBot.
+
+## Estado actual del heartbeat
+- Frecuencia: 30 segundos.
+- Contenido: `pcbot_id`, `uptime`, `modo`, `"perfiles"` (con `profile_id`, `activo`, `url`, `state`).
+- PCMaster **no** responde con API Keys.
+- Tras reinicio del PCBot, PCMaster reactiva perfiles (`activo=1`) mediante el evento `reinicio`.
+
+**Última actualización:** 2026-05-17

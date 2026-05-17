@@ -13,15 +13,17 @@ _cache: dict = {}
 
 
 def registrar_heartbeat(pcbot_id: str, datos: dict) -> None:
-    """almacena el timestamp y los eventos del ultimo heartbeat de un pcbot.
-    en el nuevo modelo, datos["eventos"] es una lista de eventos explicitos.
-    si no hay eventos, solo se actualiza el timestamp."""
+    """almacena el timestamp, eventos y perfiles del ultimo heartbeat de un pcbot.
+    en el nuevo modelo, datos["eventos"] es una lista de eventos explicitos
+    y datos["perfiles"] es un dict con el estado actual de los perfiles."""
     if not pcbot_id or not datos:
         return
 
     eventos = datos.get("eventos", [])
     entry = _cache.get(pcbot_id, {})
     entry["ultimo_hb"] = datetime.now().isoformat()
+    if "perfiles" in datos:
+        entry["perfiles"] = datos["perfiles"]
     entry["recibido_en"] = datetime.now().isoformat()
     entry["pcbot_id"] = pcbot_id
 
@@ -32,6 +34,10 @@ def registrar_heartbeat(pcbot_id: str, datos: dict) -> None:
     else:
         entry["eventos"] = []
         logger.debug("heartbeat cache: pcbot %s heartbeat sin eventos", pcbot_id)
+
+    # si no hay perfiles en este heartbeat, mantener los anteriores
+    if "perfiles" not in entry:
+        entry["perfiles"] = []
 
     _cache[pcbot_id] = entry
 
@@ -76,7 +82,7 @@ def obtener_url_perfil(pcbot_id: str, profile_id: str) -> str:
     """devuelve la url actual de un perfil desde perfiles_roxy."""
     from db import ejecutar_sql_unico
     row = ejecutar_sql_unico(
-        "select url_actual from perfiles_roxy where hash = ? and pcbot_id = ?",
+        "select url_actual from perfiles_roxy where hash = ? and pcbot_id = ? and activo = 1",
         (profile_id, pcbot_id),
     )
     return row["url_actual"] if row and row.get("url_actual") else ""

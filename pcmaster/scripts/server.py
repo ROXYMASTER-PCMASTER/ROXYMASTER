@@ -194,9 +194,9 @@ async def lifespan(app: FastAPI):
     # iniciar tareas periodicas en segundo plano
     tarea_fondo = asyncio.create_task(iniciar_tareas_periodicas())
     logger.info("tareas periodicas iniciadas")
-    # iniciar vigilante de pedidos
-    tarea_vigilante = asyncio.create_task(monitorear_pedidos())
-    logger.info("vigilante de pedidos iniciado")
+    # vigilante de pedidos desactivado: ahora se ejecuta bajo demanda tras cada heartbeat desde orchestrator.py
+    # tarea_vigilante = asyncio.create_task(monitorear_pedidos())
+    logger.info("vigilante de pedidos desactivado - se ejecuta bajo demanda tras heartbeat")
 
     # procesador de cola: ahora se ejecuta bajo demanda tras heartbeats
     # no hay bucle continuo; el match se dispara desde orchestrator
