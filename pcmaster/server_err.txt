@@ -1,1 +1,0 @@
-C:\Users\PCMASTER\AppData\Local\Programs\Python\Python310\python.exe: can't open file 'C:\\Users\\PCMASTER\\Desktop\\roxymaster\\pcmaster\\server.py': [Errno 2] No such file or directory
