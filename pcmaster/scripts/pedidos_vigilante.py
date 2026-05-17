@@ -219,17 +219,24 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
             continue
 
         # caso a2: perfil inactivo (activo=0 en perfiles_roxy, fue cerrado)
-        if estado_real == "inactivo":
+        activo_bd = ejecutar_sql_unico(
+            "SELECT activo FROM perfiles_roxy WHERE hash = ? AND pcbot_id = ?",
+            (perfil_id, pcbot_id)
+        )
+        if activo_bd and activo_bd.get("activo") == 0:
             logger.info(
-                "perfil %s en pcbot %s esta inactivo (cerrado) para pedido %s, "
-                "registrando baja para recuperacion prioritaria",
+                "perfil %s en pcbot %s esta inactivo (cerrado) para pedido %s, registrando baja",
                 perfil_id, pcbot_id, pedido_id,
             )
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
             )
-            procesador_cola.registrar_baja(pedido_id)
+            # marcar perfil como inactivo para evitar reasignacion prematura
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0 where hash = ? and pcbot_id = ?",
+                (perfil_id, pcbot_id),
+            )
             bajas_registradas += 1
             continue
 
