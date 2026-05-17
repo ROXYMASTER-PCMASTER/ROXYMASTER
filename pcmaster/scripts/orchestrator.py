@@ -457,6 +457,17 @@ async def _procesar_respuesta(pcbot_id: str, datos: dict):
         except Exception as e:
             logger.warning(f"error actualizando pedido por comando {comando_id}: {e}")
 
+    # si es respuesta de asignacion exitosa, actualizar url_actual en perfiles_roxy
+    if exito and isinstance(resultado, dict):
+        url_final = resultado.get("url_final")
+        perfil_id = resultado.get("perfil_id")
+        if url_final and perfil_id:
+            ejecutar_sql(
+                "update perfiles_roxy set url_actual = ? where hash = ? and pcbot_id = ?",
+                (url_final, perfil_id, pcbot_id),
+            )
+            logger.info(f"url_actual actualizado a {url_final} para perfil {perfil_id} en pcbot {pcbot_id}")
+
     if comando_id in _pending_commands:
         _pending_commands[comando_id].set_result(datos)
 

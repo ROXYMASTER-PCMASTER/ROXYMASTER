@@ -199,6 +199,7 @@ async def procesar_mensaje_ws(pcbot_id: str, mensaje: dict) -> dict:
             mensaje["perfiles"] = mensaje["perfiles"]
         heartbeat_cache.registrar_heartbeat(pcbot_id, mensaje)
         logger.info("[HB] Heartbeat recibido de %s, procesando eventos", pcbot_id)
+        logger.info("[DIAG-ORCH] heartbeat procesado, vigilante llamado: NO se llama (el vigilante corre en bucle independiente desde server.py)")
         # nuevo modelo: eventos -> vigilante -> match
         import procesador_cola
         await procesar_heartbeat_eventos(pcbot_id, mensaje)
@@ -375,6 +376,27 @@ async def _procesar_evento_perfil(pcbot_id: str, evento: dict):
             logger.warning(
                 "evento reinicio: sin lista de perfiles_actuales para pcbot %s", pcbot_id,
             )
+
+    elif tipo == "evento_perfil":
+        perfil = evento.get("perfil", {})
+        pid = perfil.get("profile_id")
+        activo = perfil.get("activo", False)
+        url = perfil.get("url", "")
+        if not pid:
+            logger.warning("[HB-EVENTOS] evento_perfil sin profile_id en %s", pcbot_id)
+            return
+        if activo:
+            ejecutar_sql(
+                "update perfiles_roxy set url_actual = ?, activo = 1 where hash = ? and pcbot_id = ?",
+                (url, pid, pcbot_id),
+            )
+            logger.info("[DIAG-EVENTO] url_actual actualizada para perfil %s: %s", pid, url)
+        else:
+            ejecutar_sql(
+                "update perfiles_roxy set activo = 0, url_actual = ? where hash = ? and pcbot_id = ?",
+                (url, pid, pcbot_id),
+            )
+            logger.info("[DIAG-EVENTO] perfil %s marcado inactivo, url_actual=%s", pid, url)
 
     elif tipo == "liberacion_anticipada":
         if not perfil_id:

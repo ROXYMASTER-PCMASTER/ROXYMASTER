@@ -51,6 +51,7 @@ async def _ciclo_vigilante():
     """ejecuta una ronda de verificacion sobre todos los pedidos activos.
     solo procesa pedidos en 'en_progreso' o 'trabajando'.
     los estados 'pendiente', 'programado' los maneja procesador_cola.py."""
+    logger.info("[DIAG-VIG] _ciclo_vigilante iniciado a las %s", datetime.now().strftime("%H:%M:%S.%f"))
     pedidos = ejecutar_sql(
         "select id, usuario_id, url, cantidad_perfiles, duracion_horas, "
         "nivel_comentarios, fecha_creacion, fecha_inicio, estado "
@@ -167,6 +168,9 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         pcbot_id = asig.get("pcbot_id")
         perfil_id = asig.get("perfil_id")
 
+        logger.info("[DIAG-VIG] evaluando pedido %s, estado=%s, url=%s, cantidad_perfiles=%s",
+                    pedido.get("id"), pedido.get("estado"), pedido.get("url"), pedido.get("cantidad_perfiles"))
+
         if not pcbot_id:
             # si no tiene pcbot_id, obtenerlo del usuario
             try:
@@ -215,6 +219,9 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 )
                 continue  # no evaluar este perfil aun
 
+        logger.info("[DIAG-VIG]   asignacion id=%s, perfil=%s, estado=%s, url_asig=%s",
+                    asig.get("id"), perfil_id, asig.get("estado"), asig.get("url"))
+
         # obtener estado del perfil en el ultimo heartbeat
         estado_real = heartbeat_cache.obtener_estado_perfil(pcbot_id, perfil_id)
 
@@ -225,6 +232,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 "(no se reemplaza automaticamente)",
                 perfil_id, pcbot_id, pedido_id,
             )
+            logger.info("[DIAG-VIG]   >>> asignacion %s marcada como FALLIDO. Motivo: caido", asig.get("id"))
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
@@ -239,6 +247,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 "registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, pedido_id,
             )
+            logger.info("[DIAG-VIG]   >>> asignacion %s marcada como FALLIDO. Motivo: inactivo", asig.get("id"))
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
@@ -262,6 +271,7 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
                 "para pedido %s, registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, pedido_id,
             )
+            logger.info("[DIAG-VIG]   >>> asignacion %s marcada como FALLIDO. Motivo: perfil no aparece en heartbeat", asig.get("id"))
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
@@ -288,12 +298,17 @@ async def _verificar_pedido(pedido: dict, ahora: datetime):
         # paso 2: fallback a url de la bd (perfiles_roxy.url_actual) si el cache no tiene datos
         if not url_actual:
             url_actual = perfil_en_cache.get("url", "")
+
+        logger.info("[DIAG-VIG]   comparando url_pedido=%s vs url_actual=%s (perfil=%s)",
+                    url_pedido, url_actual, perfil_id)
+
         if url_pedido and url_actual and url_actual != url_pedido:
             logger.info(
                 "perfil %s en pcbot %s navegando a url incorrecta (%s vs %s esperada) "
                 "para pedido %s, registrando baja para recuperacion prioritaria",
                 perfil_id, pcbot_id, url_actual, url_pedido, pedido_id,
             )
+            logger.info("[DIAG-VIG]   >>> asignacion %s marcada como FALLIDO. Motivo: url incorrecta", asig.get("id"))
             ejecutar_sql(
                 "update pedido_asignaciones set estado = 'fallido' where id = ?",
                 (asig["id"],),
@@ -499,4 +514,4 @@ async def _finalizar_pedido(pedido: dict):
             (comando_id,),
         )
 
-    logger.info("pedido %s finalizado y marcado como completado", pedido_id)
+    logger.info("[DIAG-MATCH] pedido %s completado (todas las asignaciones finalizadas)", pedido_id)

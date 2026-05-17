@@ -67,6 +67,7 @@ async def ejecutar_ciclo_match():
     no tiene su propio bucle sleep.
     protegido contra reentrada via flag _match_en_progreso."""
     global _match_en_progreso
+    logger.info("[DIAG-MATCH] ejecutar_ciclo_match iniciado, _prioridad_recuperacion=%s", _prioridad_recuperacion)
     if _match_en_progreso:
         logger.warning("[MATCH] ciclo de match ya en ejecucion, se omite esta llamada (reentrada)")
         return
@@ -110,7 +111,6 @@ async def _ciclo_match():
     for pid, ts in list(_prioridad_recuperacion.items()):
         if (ahora_local - ts).total_seconds() >= MARGEN_PRIORIDAD:
             del _prioridad_recuperacion[pid]
-
     # paso 1: obtener pedidos urgentes (con prioridad post-heartbeat) + normales
     urgentes, normales = _obtener_pedidos_planificables()
     pedidos = urgentes + normales
