@@ -115,6 +115,11 @@ def obtener_pcbot_de_usuario(usuario_id: int) -> str:
     return resultado
 
 
+def obtener_todos_pcbots_conectados() -> list:
+    """devuelve lista de todos los pcbot_ids conectados actualmente."""
+    return list(_conexiones_por_pcbot.keys())
+
+
 def obtener_usuario_de_pcbot(pcbot_id: str) -> int:
     """devuelve el usuario_id asociado a un pcbot, o None."""
     datos = _conexiones_por_pcbot.get(pcbot_id)

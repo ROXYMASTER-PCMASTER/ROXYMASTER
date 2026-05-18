@@ -184,11 +184,8 @@ def _obtener_pedidos_planificables() -> (list, list):
 
     ahora = _ahora_dt()
 
-    # --- grupo urgente: pedidos en_progreso con deficit y prioridad activa ---
-    urgente_ids = [
-        pid for pid, ts in _prioridad_recuperacion.items()
-        if (ahora - ts).total_seconds() < MARGEN_PRIORIDAD
-    ]
+    # --- grupo urgente: todos los pedidos con prioridad activa (sin filtro de tiempo) ---
+    urgente_ids = list(_prioridad_recuperacion.keys())
     urgentes = []
     if urgente_ids:
         urgentes = ejecutar_sql(

@@ -14,6 +14,7 @@ from uuid import uuid4
 from ws_manager import (
     obtener_pcbots_de_usuario,
     obtener_pcbot_de_usuario,
+    obtener_todos_pcbots_conectados,
     enviar_comando_al_pcbot,
 )
 from db import ejecutar_sql, ejecutar_insercion, ejecutar_sql_unico
@@ -106,11 +107,6 @@ async def _ciclo_match():
     # paso 0.1: liberar asignaciones que ya cumplieron su duracion
     await _liberar_asignaciones_vencidas()
 
-    # paso 0.2: limpiar prioridades de recuperacion caducadas
-    ahora_local = _ahora_dt()
-    for pid, ts in list(_prioridad_recuperacion.items()):
-        if (ahora_local - ts).total_seconds() >= MARGEN_PRIORIDAD:
-            del _prioridad_recuperacion[pid]
     # paso 1: obtener pedidos urgentes (con prioridad post-heartbeat) + normales
     urgentes, normales = _obtener_pedidos_planificables()
     pedidos = urgentes + normales
@@ -130,8 +126,18 @@ async def _ciclo_match():
         pedidos_por_usuario.setdefault(uid, []).append(p)
 
     for uid, pedidos_user in pedidos_por_usuario.items():
-        # obtener pcbots y perfiles libres una sola vez para este usuario
-        pcbots = _obtener_pcbots_usuario(uid)
+        # verificar si hay pedidos urgentes para este usuario
+        # los urgentes pueden asignarse a cualquier PCBot disponible
+        tiene_urgentes = any(
+            p.get("id") in _prioridad_recuperacion for p in pedidos_user
+        )
+        if tiene_urgentes:
+            pcbots = obtener_todos_pcbots_conectados()
+            logger.info("[MATCH] usuario %s tiene pedidos urgentes, usando todos los pcbots conectados: %s",
+                        uid, pcbots)
+        else:
+            pcbots = _obtener_pcbots_usuario(uid)
+
         if not pcbots:
             logger.info("[MATCH] usuario %s sin pcbots, saltando %d pedidos",
                         uid, len(pedidos_user))
